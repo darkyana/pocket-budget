@@ -32,15 +32,18 @@ export interface Settings {
   commitments: Commitment[]
   /** 走账账户名：自由输入、自动记忆 */
   accounts: string[]
+  /** 最近一次记账用的账户：作为下次弹层的默认值（便利性字段，可空） */
+  lastAccount?: string
 }
 
 /**
  * 事件：append-only，唯一事实源。
  * 所有视图数字（今日已花、周剩余、月底推算、义务状态）都从事件流实时推导，永远不落库。
+ * account 是事实属性（钱从哪个账户出的），不参与任何额度计算——不做账户余额台账。
  */
 export type MoneyEvent =
-  | { id: string; ts: number; kind: 'rhythm'; category: string; amount: number; note: string }
-  | { id: string; ts: number; kind: 'pool'; pool: string; dir: 'out' | 'in'; amount: number; note: string }
+  | { id: string; ts: number; kind: 'rhythm'; category: string; amount: number; note: string; account?: string }
+  | { id: string; ts: number; kind: 'pool'; pool: string; dir: 'out' | 'in'; amount: number; note: string; account?: string }
   | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; monthKey: string; paid: boolean }
   | { id: string; ts: number; kind: 'transfer'; from: string; to: string; amount: number; note: string }
 

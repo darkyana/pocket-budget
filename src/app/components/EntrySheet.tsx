@@ -13,12 +13,15 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
   const addPoolEntry = useApp((s) => s.addPoolEntry)
   const addTransfer = useApp((s) => s.addTransfer)
   const accounts = useApp((s) => s.settings.accounts)
+  const lastAccount = useApp((s) => s.settings.lastAccount)
 
+  const defaultAccount = lastAccount ?? accounts[0] ?? ''
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [dir, setDir] = useState<'out' | 'in'>('out')
-  const [from, setFrom] = useState(accounts[0] ?? '')
-  const [to, setTo] = useState(accounts[1] ?? '')
+  const [account, setAccount] = useState(defaultAccount)
+  const [from, setFrom] = useState(defaultAccount)
+  const [to, setTo] = useState(accounts.find((a) => a !== defaultAccount) ?? '')
 
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
@@ -27,8 +30,8 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
 
   function submit() {
     if (!canSubmit) return
-    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim())
-    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim())
+    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim(), account)
+    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim(), account)
     else addTransfer(from.trim(), to.trim(), amountNum, note.trim())
     onClose()
   }
@@ -82,12 +85,20 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
                 placeholder="如：工资卡"
               />
             </div>
-            <datalist id="account-list">
-              {accounts.map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
           </>
+        )}
+        {target.type !== 'transfer' && (
+          <div className="field-row">
+            <label htmlFor="ef-account">用的哪个账户（可空）</label>
+            <input
+              id="ef-account"
+              className="field"
+              list="account-list"
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+              placeholder="如：现金 / 微信"
+            />
+          </div>
         )}
         <div className="field-row">
           <label htmlFor="ef-amount">金额（元）</label>
@@ -108,6 +119,11 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
           <label htmlFor="ef-note">备注（可空）</label>
           <input id="ef-note" className="field" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
+        <datalist id="account-list">
+          {accounts.map((a) => (
+            <option key={a} value={a} />
+          ))}
+        </datalist>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消

@@ -20,13 +20,19 @@ function persist(s: { settings: Settings; events: MoneyEvent[] }) {
   saveState(state).catch((err) => console.error('落盘失败', err))
 }
 
+/** 记账时记住账户：新名字进账户列表，并作为下次弹层的默认账户 */
+function withUsedAccount(settings: Settings, account: string): Settings {
+  const next = withAccount(settings, account)
+  return account && next.lastAccount !== account ? { ...next, lastAccount: account } : next
+}
+
 interface AppState {
   ready: boolean
   settings: Settings
   events: MoneyEvent[]
   init(): Promise<void>
-  addRhythm(category: string, amount: number, note: string): void
-  addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string): void
+  addRhythm(category: string, amount: number, note: string, account: string): void
+  addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string, account: string): void
   toggleCommitment(name: string): void
   addTransfer(from: string, to: string, amount: number, note: string): void
   /** 设置就地修改：给一个可变的深拷贝，改完统一落盘 */
@@ -47,15 +53,34 @@ export const useApp = create<AppState>()((set, get) => ({
     set({ ready: true, settings: state.settings, events: state.events })
   },
 
-  addRhythm(category, amount, note) {
-    const e: MoneyEvent = { id: uid(), ts: Date.now(), kind: 'rhythm', category, amount, note }
-    set((s) => ({ events: [...s.events, e] }))
+  addRhythm(category, amount, note, account) {
+    const acct = account.trim()
+    const e: MoneyEvent = {
+      id: uid(),
+      ts: Date.now(),
+      kind: 'rhythm',
+      category,
+      amount,
+      note,
+      ...(acct ? { account: acct } : {}),
+    }
+    set((s) => ({ events: [...s.events, e], settings: withUsedAccount(s.settings, acct) }))
     persist(get())
   },
 
-  addPoolEntry(pool, dir, amount, note) {
-    const e: MoneyEvent = { id: uid(), ts: Date.now(), kind: 'pool', pool, dir, amount, note }
-    set((s) => ({ events: [...s.events, e] }))
+  addPoolEntry(pool, dir, amount, note, account) {
+    const acct = account.trim()
+    const e: MoneyEvent = {
+      id: uid(),
+      ts: Date.now(),
+      kind: 'pool',
+      pool,
+      dir,
+      amount,
+      note,
+      ...(acct ? { account: acct } : {}),
+    }
+    set((s) => ({ events: [...s.events, e], settings: withUsedAccount(s.settings, acct) }))
     persist(get())
   },
 
@@ -78,10 +103,10 @@ export const useApp = create<AppState>()((set, get) => ({
 
   addTransfer(from, to, amount, note) {
     const e: MoneyEvent = { id: uid(), ts: Date.now(), kind: 'transfer', from, to, amount, note }
-    set((s) => {
-      const settings = withAccount(withAccount(s.settings, from), to)
-      return { events: [...s.events, e], settings }
-    })
+    set((s) => ({
+      events: [...s.events, e],
+      settings: withUsedAccount(withAccount(s.settings, to), from),
+    }))
     persist(get())
   },
 

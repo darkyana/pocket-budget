@@ -10,10 +10,10 @@ import { money } from '../format'
 function describe(e: MoneyEvent): { label: string; amount: string } {
   switch (e.kind) {
     case 'rhythm':
-      return { label: `节律 · ${e.category}`, amount: money(e.amount) }
+      return { label: `节律 · ${e.category}${e.account ? ` · ${e.account}` : ''}`, amount: money(e.amount) }
     case 'pool':
       return {
-        label: `预算池 · ${e.pool} ${e.dir === 'out' ? '支出' : '回血'}`,
+        label: `预算池 · ${e.pool} ${e.dir === 'out' ? '支出' : '回血'}${e.account ? ` · ${e.account}` : ''}`,
         amount: `${e.dir === 'in' ? '+' : ''}${money(e.amount)}`,
       }
     case 'commitment':
