@@ -21,20 +21,36 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   background: #dcd8d0;
   font-family: -apple-system, 'PingFang SC', system-ui, sans-serif;
   color: var(--ink);
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+}
+
+/* React 挂载根节点：body 是 flex 容器，#root 作为直接子元素必须显式定宽，
+   否则按内容收缩（shrink-to-fit），.phone 的 width:100% 会跟着内容变窄 */
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .phone {
   width: 100%;
   max-width: 430px;
+  height: 100%;
+  /* 滚动收进手机框内部并常驻（scroll 而非 auto），内容宽度在三个页面间完全一致；
+     移动端 overlay 滚动条不占位，无感 */
+  overflow-y: scroll;
   background: var(--bg);
-  min-height: 100vh;
   position: relative;
   padding: calc(env(safe-area-inset-top) + 16px) 16px 130px;
 }
