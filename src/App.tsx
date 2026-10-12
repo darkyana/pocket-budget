@@ -1,0 +1,45 @@
+import { useEffect, useState } from 'react'
+import { useApp } from './app/store'
+import { useToast } from './app/toast'
+import { Today } from './app/pages/Today'
+import { Records } from './app/pages/Records'
+import { SettingsPage } from './app/pages/Settings'
+
+type Tab = 'today' | 'records' | 'settings'
+const TABS: Array<[Tab, string, string]> = [
+  ['today', '🥣', '今日'],
+  ['records', '🧾', '流水'],
+  ['settings', '⚙️', '设置'],
+]
+
+export function App() {
+  const ready = useApp((s) => s.ready)
+  const init = useApp((s) => s.init)
+  const toastMsg = useToast((s) => s.msg)
+  const [tab, setTab] = useState<Tab>('today')
+
+  useEffect(() => {
+    void init()
+  }, [init])
+
+  if (!ready) return null
+  return (
+    <div className="phone">
+      <span className="expe-tag">实验版 · 数据在本机</span>
+      <div>
+        {tab === 'today' && <Today />}
+        {tab === 'records' && <Records />}
+        {tab === 'settings' && <SettingsPage />}
+      </div>
+      <nav className="tabs">
+        {TABS.map(([k, ic, label]) => (
+          <button type="button" key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
+            <span className="ic">{ic}</span>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {toastMsg ? <div className="toast">{toastMsg}</div> : null}
+    </div>
+  )
+}

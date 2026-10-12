@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — 一次性原型（v2：三页小工具），不属于正式产品，用完即弃。
+  问题：一个"生成可靠凭证记录 + 引导性记账"的手机工具应该怎么组织？
+  页面：今日（overview + 记一笔入口）/ 流水（一览 + 导出 + 清空）/ 设置（日型节律·义务·预算池）。
+  数据：localStorage 持久化（可清空重置），不碰任何真实账本文件。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>[原型] 口袋账房 · 三页</title>
+<style>
+  :root{
+    --bg:#f4f2ee; --card:#fff; --ink:#1d1a16; --ink2:#6f675c;
+    --line:#e6e1d8; --accent:#2f6f4f; --warn:#c25b3a; --over:#b3261e;
+    --ok:#2f6f4f; --chip:#eee9df;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#dcd8d0;font-family:-apple-system,"PingFang SC",system-ui,sans-serif;color:var(--ink);
+       display:flex;justify-content:center;min-height:100vh}
+  .phone{width:100%;max-width:430px;background:var(--bg);min-height:100vh;position:relative;
+         padding:calc(env(safe-area-inset-top) + 16px) 16px 130px}
+  .proto-tag{position:absolute;top:6px;right:12px;font-size:10px;color:#a00;background:#ffe9e9;
+             padding:2px 8px;border-radius:8px;z-index:5}
+  h1{font-size:20px;margin-bottom:2px}
+  .sub{font-size:12px;color:var(--ink2);margin-bottom:14px}
+  .card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;
+        box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .row{display:flex;justify-content:space-between;align-items:baseline}
+  .muted{color:var(--ink2)} .small{font-size:12px} .big{font-size:28px;font-weight:700}
+  .bar{height:8px;background:var(--chip);border-radius:4px;margin-top:8px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:4px}
+  button{font:inherit;border:none;background:var(--ink);color:#fff;border-radius:12px;
+         padding:10px 18px;font-weight:600}
+  .btn2{background:var(--chip);color:var(--ink);font-size:12px;padding:5px 10px;border-radius:9px;font-weight:500}
+  .btn-danger{background:#fadfdb;color:var(--over);font-size:12px;padding:5px 10px;border-radius:9px}
+  .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;
+        background:#fff;box-shadow:0 -2px 12px rgba(0,0,0,.08);display:flex;z-index:40;
+        padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{flex:1;background:none;color:var(--ink2);font-size:12px;padding:12px 0 10px;border-radius:0}
+  .tabs button.on{color:var(--accent);font-weight:700}
+  .tabs button .ic{display:block;font-size:20px;margin-bottom:2px}
+  .hscroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .hscroll::-webkit-scrollbar{display:none}
+  .hscroll>.pg{flex:0 0 100%;scroll-snap-align:start;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hscroll>.pg>.mini{background:var(--bg);border-radius:12px;padding:10px 12px}
+  .feed-item{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .day-head{font-size:12px;color:var(--ink2);margin:14px 0 4px;display:flex;justify-content:space-between}
+  .seg{display:flex;background:var(--chip);border-radius:11px;padding:3px;margin-bottom:14px}
+  .seg button{flex:1;background:none;color:var(--ink2);font-size:13px;padding:7px 0;border-radius:9px}
+  .seg button.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .setrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .setrow:last-child{border-bottom:none}
+  #toast{display:none;position:fixed;bottom:92px;left:50%;transform:translateX(-50%);
+    background:#111;color:#ffd97a;padding:8px 16px;border-radius:999px;font-size:13px;z-index:60}
+</style>
+</head>
+<body>
+<div class="phone">
+  <span class="proto-tag">PROTOTYPE · 假数据 · 可清空</span>
+  <div id="app"></div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div id="toast"></div>
+
+<script>
+window.onerror = function(msg, src, line, col){
+  document.getElementById('app').innerHTML =
+    '<pre style="color:#b3261e;white-space:pre-wrap;font-size:12px;padding-top:40px">JS错误：'+msg+
+    '\n行 '+line+' 列 '+col+'</pre>';
+};
+
+/* ================= 状态（localStorage，可清空） ================= */
+const KEY = "proto-pocket-v1";
+const DEFAULTS = {
+  tab: "today",
+  dayType: "周末日",
+  dayPlans: {
+    "工作日": [{name:"三餐",expect:50,today:0},{name:"交通",expect:10,today:0},{name:"咖啡",expect:20,today:0},{name:"日用",expect:30,today:0},{name:"其他",expect:20,today:0}],
+    "周末日": [{name:"三餐",expect:500,today:112},{name:"交通",expect:50,today:6},{name:"咖啡",expect:120,today:44},{name:"日用",expect:80,today:0},{name:"其他",expect:80,today:22}],
+  },
+  pools: [
+    {name:"购物", month:800, weekAllow:200, mSpent:340},
+    {name:"学习", month:300, weekAllow:75,  mSpent:60},
+    {name:"娱乐", month:400, weekAllow:100, mSpent:365},
+  ],
+  commitments: [
+    {name:"阿姨工资", amount:2600, paid:true},
+    {name:"狗粮",     amount:420,  paid:false},
+    {name:"房租",     amount:2600, paid:true},
+  ],
+  events: [],
+  accounts: ["现金", "工资卡", "投资账户"],
+};
+let S;
+try { const j = JSON.parse(localStorage.getItem(KEY)); S = (j && j.dayPlans) ? j : JSON.parse(JSON.stringify(DEFAULTS)); }
+catch(e){ S = JSON.parse(JSON.stringify(DEFAULTS)); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ================= 工具 ================= */
+const money = n => "¥" + Math.round(n);
+const pct = n => Math.max(0, Math.min(100, n*100));
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._h); toast._h = setTimeout(()=>t.style.display="none", 2000);
+}
+function ask(title, def){
+  const v = prompt(title, def===undefined?"":def);
+  if(v===null) return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+function sameDay(ts){ return new Date(ts).toDateString() === new Date().toDateString(); }
+function sameWeek(ts){
+  const d = new Date(ts), now = new Date();
+  const mon = x => { const t=new Date(x); t.setDate(t.getDate()-((t.getDay()+6)%7)); t.setHours(0,0,0,0); return t; };
+  return mon(d).getTime() === mon(now).getTime();
+}
+function sameMonth(ts){ const d=new Date(ts), n=new Date(); return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth(); }
+
+/* 派生：桶今日已花 = 种子 + 今日事件 */
+function bucketSpent(b){ return (b.today||0) + S.events.filter(e=>e.type==="rhythm"&&e.name===b.name&&sameDay(e.ts)).reduce((s,e)=>s+e.amount,0); }
+function poolSpent(p, span){
+  return (p.mSpent||0) * (span==="week" ? 7/31 : 1)
+    + S.events.filter(e=>e.type==="pool"&&e.name===p.name&&e.dir==="out"&&(span==="week"?sameWeek(e.ts):sameMonth(e.ts))).reduce((s,e)=>s+e.amount,0);
+}
+function buckets(){ return S.dayPlans[S.dayType] || []; }
+
+/* ================= 记一笔 ================= */
+function addRhythm(name){
+  const amt = ask("「节律 · "+name+"」花了多少？");
+  if(amt===null) return;
+  const note = prompt("备注（可空）") || "";
+  S.events.push({ts:Date.now(), type:"rhythm", name, amount:amt, note});
+  save(); render(); toast("已记：节律 · "+name+" "+money(amt));
+}
+function addPool(name){
+  const dir = confirm("「预算池 · "+name+"」\n确定 = 记支出　取消 = 记收入（池子回血）");
+  const amt = ask((dir?"支出":"收入")+"金额？");
+  if(amt===null) return;
+  S.events.push({ts:Date.now(), type:"pool", name, dir:dir?"out":"in", amount:amt, note:""});
+  save(); render(); toast("已记：预算池 · "+name+(dir?" 支出 ":" 收入 ")+money(amt));
+}
+function toggleCommitment(name){
+  const c = S.commitments.find(x=>x.name===name);
+  c.paid = !c.paid;
+  S.events.push({ts:Date.now(), type:"commitment", name, amount:c.amount, note:c.paid?"标记已付":"改回未付"});
+  save(); render(); toast(c.name + (c.paid?" ✓ 已付":" 改回未付"));
+}
+
+/* 走账流水：钱在账户间移动，不是消费 */
+function addTransfer(){
+  const from = prompt("从哪个账户转出？", S.accounts[0] || "");
+  if(!from) return;
+  if(!S.accounts.includes(from)){ S.accounts.push(from); }
+  const to = prompt("转到哪个账户？", S.accounts[1] || "");
+  if(!to) return;
+  if(!S.accounts.includes(to)){ S.accounts.push(to); }
+  const amt = ask("转了多少钱？"); if(amt===null) return;
+  const note = prompt("备注（可空）") || "";
+  S.events.push({ts:Date.now(), type:"transfer", name:from+" → "+to, amount:amt, note});
+  save(); render(); toast("已记走账："+from+" → "+to+" "+money(amt));
+}
+
+/* ================= 页面：今日 ================= */
+function pageToday(){
+  const bs = buckets();
+  const rhythmTotal = bs.reduce((s,b)=>s+bucketSpent(b),0);
+  const expectTotal = bs.reduce((s,b)=>s+b.expect,0);
+  const poolSorted = [...S.pools].sort((a,b)=>
+    ((b.weekAllow-poolSpent(b,"week"))-(a.weekAllow-poolSpent(a,"week"))));
+  const visible = poolSorted.filter(p=>p.weekAllow-poolSpent(p,"week")>0); // 超支即退场
+  const unpaid = S.commitments.filter(c=>!c.paid);
+  const pages = Math.max(1, Math.ceil(bs.length/4));
+
+  return `
+  <h1>今日</h1><div class="sub">2026年10月11日 周六 · 日型：${S.dayType}（设置里可换）</div>
+
+  <div class="card">
+    <div class="row"><b>节律</b>
+      <span class="small"><b style="font-size:15px;${rhythmTotal>expectTotal?'color:var(--over)':'color:var(--accent)'}">${rhythmTotal>expectTotal?"超 "+money(rhythmTotal-expectTotal):"还能花 "+money(expectTotal-rhythmTotal)}</b>
+      <span class="muted">/ 期望 ${money(expectTotal)} · 已花 ${money(rhythmTotal)}</span></span></div>
+    <div class="hscroll">
+      ${Array.from({length:pages},(_,pg)=>`
+      <div class="pg">
+        ${bs.slice(pg*4,pg*4+4).map(b=>{
+          const spent = bucketSpent(b), left = b.expect-spent;
+          return `<div class="mini" onclick="addRhythm('${b.name}')">
+          <div class="small muted">${b.name}</div>
+          <div class="row" style="margin-top:2px"><b style="font-size:17px;${left<0?'color:var(--over)':''}">${left>=0?money(left):"超 "+money(-left)}</b>
+            <span class="small muted">${money(spent)}</span></div>
+          <div class="bar"><i style="width:${pct(spent/b.expect)}%;
+            background:${left<0?'var(--over)':left<b.expect*.2?'var(--warn)':'var(--accent)'}"></i></div>
+        </div>`;}).join("")}
+      </div>`).join("")}
+    </div>
+    <div class="small muted" style="margin-top:8px">${pages>1?"左右滑动翻页（共 "+pages+" 页）· ":""}点卡片 = 记一笔该类消费</div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:6px"><b>预算池</b><span class="small muted">还能花 · 按剩余排序</span></div>
+    ${visible.length ? visible.map(p=>{
+      const wk = poolSpent(p,"week"), mo = poolSpent(p,"month");
+      const left = p.weekAllow-wk;
+      const proj = mo / (11/31); // 按本月进展推算月底
+      return `<div onclick="addPool('${p.name}')" style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <div class="row"><span>${p.name}</span>
+        <span class="small"><b>${money(left)}</b> <span class="muted">/ 本周 ${money(p.weekAllow)}</span></span></div>
+      <div class="bar"><i style="width:${pct(wk/p.weekAllow)}%;
+        background:${left<p.weekAllow*.2?'var(--warn)':'var(--accent)'}"></i></div>
+      <div class="small muted" style="margin-top:4px">月 ${money(mo)}/${money(p.month)} ·
+        推算月底 <b style="color:${proj>p.month*1.05?'var(--over)':'var(--ok)'}">${money(Math.round(proj))}</b></div>
+    </div>`;}).join("") : `<div class="small muted" style="padding:8px 0">本期所有池都已花完或超支——去流水页看详情，或设置里调整池子</div>`}
+    <div class="small muted" style="margin-top:8px">点池 = 记一笔该池收支（支出 / 回血）</div>
+  </div>
+
+  <div style="padding:2px 6px 14px;font-size:12px;color:var(--ink2)">
+    <div style="display:flex;justify-content:space-between;padding:3px 0">
+      <span>义务 · 本月</span><span>${unpaid.length?"未付 "+money(unpaid.reduce((s,c)=>s+c.amount,0)):"已结清"}</span></div>
+    ${S.commitments.map(c=>`
+      <div onclick="toggleCommitment('${c.name}')" style="display:flex;justify-content:space-between;padding:3px 0;border-top:1px dashed var(--line)">
+        <span>${c.name}${c.paid?"（已付）":""}</span>
+        <span style="${c.paid?'text-decoration:line-through':'color:var(--warn);font-weight:600'}">${money(c.amount)}</span>
+      </div>`).join("")}
+    <div class="small muted" style="margin-top:6px">点一条 = 切换 已付/未付（进流水）</div>
+  </div>
+
+  <div style="text-align:center;padding-bottom:8px">
+    <button class="btn2" onclick="addTransfer()">＋ 记一笔走账（现金/转卡/投资划转）</button>
+  </div>`;
+}
+
+/* ================= 页面：流水 ================= */
+function pageRecords(){
+  const evs = [...S.events].sort((a,b)=>b.ts-a.ts);
+  const label = {rhythm:"节律", pool:"预算池", commitment:"义务", transfer:"走账"};
+  return `
+  <h1>流水</h1><div class="sub">本机记录的全部经济事件 · ${evs.length} 笔</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn2" onclick="exportVouchers()">导出凭证文件</button>
+    <button class="btn-danger" onclick="clearEvents()">清空全部记录</button>
+  </div>
+  <div class="card">
+    ${evs.length ? evs.map(e=>`
+      <div class="feed-item">
+        <span>${label[e.type]} · ${e.name}${e.note?" <span class='muted small'>"+e.note+"</span>":""}
+          <span class="small muted" style="margin-left:6px">${new Date(e.ts).toLocaleString("zh-CN",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}</span></span>
+        <span>${e.type==="pool"&&e.dir==="in"?"+":"-"}${money(e.amount)}</span>
+      </div>`).join("")
+    : `<div class="small muted" style="padding:10px 0">还没有记录。回「今日」页点卡片/池/义务即可记。</div>`}
+  </div>`;
+}
+function exportVouchers(){
+  const blob = new Blob([JSON.stringify({exported_at:new Date().toISOString(), state:S}, null, 2)],
+    {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "凭证-" + new Date().toISOString().slice(0,16).replace(/[:T]/g,"") + ".json";
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("已导出凭证文件（示意格式）");
+}
+function clearEvents(){
+  if(!confirm("确定清空全部流水记录？设置（节律/义务/预算池）保留。")) return;
+  S.events = []; save(); render(); toast("已清空全部记录");
+}
+
+/* ================= 页面：设置 ================= */
+let setSeg = "rhythm"; // rhythm | commitment | pool
+function pageSettings(){
+  return `
+  <h1>设置</h1><div class="sub">日型节律方案 · 月义务 · 预算池（随时可调）</div>
+  <div class="seg">
+    ${[["rhythm","节律方案"],["commitment","义务"],["pool","预算池"]].map(([k,t])=>
+      `<button class="${setSeg===k?'on':''}" onclick="setSeg='${k}';render()">${t}</button>`).join("")}
+  </div>
+
+  ${setSeg==="rhythm" ? `
+  <div class="card">
+    <div class="row" style="margin-bottom:8px"><b>今天算哪种日子？</b>
+      <button class="btn2" onclick="switchDay()">切换日型</button></div>
+    <div class="small muted" style="margin-bottom:6px">当前：${S.dayType} · 每类金额 = 该日型的单日期望</div>
+    ${buckets().map((b,i)=>`
+      <div class="setrow">
+        <span onclick="editBucket(${i})" style="flex:1">${b.name} <span class="small muted">期望 ${money(b.expect)}</span></span>
+        <button class="btn-danger" onclick="delBucket(${i})">删</button>
+      </div>`).join("")}
+    <div style="margin-top:10px"><button class="btn2" onclick="addBucket()">＋ 新增节律类别</button></div>
+  </div>` : ""}
+
+  ${setSeg==="commitment" ? `
+  <div class="card">
+    <div class="small muted" style="margin-bottom:6px">每月固定要付的钱（点行改金额）</div>
+    ${S.commitments.map((c,i)=>`
+      <div class="setrow">
+        <span onclick="editCommitment(${i})" style="flex:1">${c.name} <span class="small muted">${money(c.amount)}/月</span></span>
+        <button class="btn-danger" onclick="delCommitment(${i})">删</button>
+      </div>`).join("")}
+    <div style="margin-top:10px"><button class="btn2" onclick="addCommitment()">＋ 新增义务</button></div>
+  </div>` : ""}
+
+  ${setSeg==="pool" ? `
+  <div class="card">
+    <div class="small muted" style="margin-bottom:6px">预算池（点行改月预算/周额度）</div>
+    ${S.pools.map((p,i)=>`
+      <div class="setrow">
+        <span onclick="editPool(${i})" style="flex:1">${p.name} <span class="small muted">月 ${money(p.month)} · 周 ${money(p.weekAllow)}</span></span>
+        <button class="btn-danger" onclick="delPool(${i})">删</button>
+      </div>`).join("")}
+    <div style="margin-top:10px"><button class="btn2" onclick="addPoolSetting()">＋ 新增预算池</button></div>
+  </div>` : ""}
+
+  <div style="margin-top:14px;text-align:center"><button class="btn-danger" onclick="resetAll()">恢复出厂（清空一切，含记录）</button></div>`;
+}
+function switchDay(){
+  const keys = Object.keys(S.dayPlans);
+  S.dayType = keys[(keys.indexOf(S.dayType)+1) % keys.length];
+  save(); render(); toast("日型切到："+S.dayType);
+}
+function addBucket(){
+  const name = prompt("新节律类别名（当前日型：" + S.dayType + "）");
+  if(!name) return;
+  const exp = ask(name+" 的单日期望金额？"); if(exp===null) return;
+  S.dayPlans[S.dayType].push({name, expect:exp, today:0}); save(); render();
+}
+function editBucket(i){
+  const b = S.dayPlans[S.dayType][i];
+  const exp = ask("「"+b.name+"」期望改为？", String(b.expect)); if(exp===null) return;
+  b.expect = exp; save(); render();
+}
+function delBucket(i){
+  if(!confirm("删除节律类别「"+S.dayPlans[S.dayType][i].name+"」？")) return;
+  S.dayPlans[S.dayType].splice(i,1); save(); render();
+}
+function addCommitment(){
+  const name = prompt("义务名称（如：狗粮）"); if(!name) return;
+  const amt = ask("每月金额？"); if(amt===null) return;
+  S.commitments.push({name, amount:amt, paid:false}); save(); render();
+}
+function editCommitment(i){
+  const c = S.commitments[i];
+  const amt = ask("「"+c.name+"」每月金额改为？", String(c.amount)); if(amt===null) return;
+  c.amount = amt; save(); render();
+}
+function delCommitment(i){
+  if(!confirm("删除义务「"+S.commitments[i].name+"」？")) return;
+  S.commitments.splice(i,1); save(); render();
+}
+function addPoolSetting(){
+  const name = prompt("预算池名称"); if(!name) return;
+  const month = ask("月预算？"); if(month===null) return;
+  const week = ask("每周额度？（常为月/4）", String(Math.round(month/4))); if(week===null) return;
+  S.pools.push({name, month, weekAllow:week, mSpent:0}); save(); render();
+}
+function editPool(i){
+  const p = S.pools[i];
+  const month = ask("「"+p.name+"」月预算改为？", String(p.month)); if(month===null) return;
+  const week = ask("每周额度改为？", String(p.weekAllow)); if(week===null) return;
+  p.month = month; p.weekAllow = week; save(); render();
+}
+function delPool(i){
+  if(!confirm("删除预算池「"+S.pools[i].name+"」？（已有记录保留在流水中）")) return;
+  S.pools.splice(i,1); save(); render();
+}
+function resetAll(){
+  if(!confirm("恢复出厂：清空全部设置与记录？")) return;
+  localStorage.removeItem(KEY);
+  S = JSON.parse(JSON.stringify(DEFAULTS)); S.tab = "settings"; save(); render();
+}
+
+/* ================= 框架 ================= */
+function render(){
+  const tabs = [["today","🥣","今日"],["records","🧾","流水"],["settings","⚙️","设置"]];
+  document.getElementById("tabs").innerHTML = tabs.map(([k,ic,t])=>
+    `<button class="${S.tab===k?'on':''}" onclick="S.tab='${k}';save();render()"><span class="ic">${ic}</span>${t}</button>`).join("");
+  document.getElementById("app").innerHTML =
+    (S.tab==="records" ? pageRecords() : S.tab==="settings" ? pageSettings() : pageToday());
+}
+render();
+</script>
+</body>
+</html>

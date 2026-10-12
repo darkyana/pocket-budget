@@ -1,0 +1,51 @@
+/**
+ * 数据结构版本：事件/设置结构有破坏性变更时 +1，并在 storage/migrate.ts 补迁移。
+ * v1 起步。
+ */
+export const SCHEMA_VERSION = 1
+
+export type DayTypeName = string
+
+/** 节律类别（按日型各存一套）：单日期望金额。今日已花不入库，由事件推导 */
+export interface RhythmBucket {
+  name: string
+  expect: number
+}
+
+/** 预算池：月预算摊到周 */
+export interface Pool {
+  name: string
+  month: number
+  weekAllow: number
+}
+
+/** 义务：月内固定项。付/未付不在这里存，由本月事件推导（月初自动回到未付） */
+export interface Commitment {
+  name: string
+  amount: number
+}
+
+export interface Settings {
+  dayType: DayTypeName
+  dayPlans: Record<DayTypeName, RhythmBucket[]>
+  pools: Pool[]
+  commitments: Commitment[]
+  /** 走账账户名：自由输入、自动记忆 */
+  accounts: string[]
+}
+
+/**
+ * 事件：append-only，唯一事实源。
+ * 所有视图数字（今日已花、周剩余、月底推算、义务状态）都从事件流实时推导，永远不落库。
+ */
+export type MoneyEvent =
+  | { id: string; ts: number; kind: 'rhythm'; category: string; amount: number; note: string }
+  | { id: string; ts: number; kind: 'pool'; pool: string; dir: 'out' | 'in'; amount: number; note: string }
+  | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; monthKey: string; paid: boolean }
+  | { id: string; ts: number; kind: 'transfer'; from: string; to: string; amount: number; note: string }
+
+export interface PersistedState {
+  schemaVersion: number
+  settings: Settings
+  events: MoneyEvent[]
+}
