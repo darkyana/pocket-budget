@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { commitmentsThisMonth, poolViews, rhythmToday, visiblePools } from '../../core/derive'
+import { commitmentsThisPeriod, poolViews, rhythmToday, visiblePools } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
@@ -25,7 +25,7 @@ export function Today() {
   const rhythm = rhythmToday(events, settings, now)
   const views = poolViews(events, settings, now)
   const pools = visiblePools(views)
-  const commitments = commitmentsThisMonth(events, settings, now)
+  const commitments = commitmentsThisPeriod(events, settings, now)
   const unpaidSum = commitments.filter((c) => !c.paid).reduce((s, c) => s + c.amount, 0)
   const pages = Math.max(1, Math.ceil(rhythm.buckets.length / 4))
 
@@ -139,7 +139,7 @@ export function Today() {
 
       <div className="commit-block">
         <div className="row" style={{ padding: '3px 0' }}>
-          <span>义务 · 本月</span>
+          <span>义务 · 本期</span>
           <span>
             {commitments.length === 0 ? '无' : commitments.every((c) => c.paid) ? '已结清' : `未付 ${money(unpaidSum)}`}
           </span>
@@ -156,6 +156,7 @@ export function Today() {
           >
             <span>
               {c.name}
+              {c.cycle === 'yearly' ? ' · 年' : ''}
               {c.paid ? '（已付）' : ''}
             </span>
             <span style={c.paid ? { textDecoration: 'line-through' } : { color: 'var(--warn)', fontWeight: 600 }}>

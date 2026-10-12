@@ -30,6 +30,7 @@ export function defaultSettings(now: Date): Settings {
       { name: '阿姨工资', amount: 2600 },
       { name: '狗粮', amount: 420 },
       { name: '房租', amount: 2600 },
+      { name: '视频会员年费', amount: 199, cycle: 'yearly' },
     ],
     accounts: ['现金', '工资卡', '投资账户'],
   }

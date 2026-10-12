@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { MoneyEvent, Settings } from './types'
 import {
   commitmentPaid,
-  commitmentsThisMonth,
+  commitmentsThisPeriod,
   dayLabel,
   groupByDay,
   poolViews,
@@ -18,7 +18,10 @@ const settings: Settings = {
     { name: '购物', month: 800, weekAllow: 200 },
     { name: '学习', month: 300, weekAllow: 75 },
   ],
-  commitments: [{ name: '狗粮', amount: 420 }],
+  commitments: [
+    { name: '狗粮', amount: 420 },
+    { name: '域名', amount: 600, cycle: 'yearly' },
+  ],
   accounts: ['现金'],
 }
 
@@ -33,8 +36,8 @@ const poolOut = (pool: string, amount: number, at: number): MoneyEvent =>
   ({ id: `po${++seq}`, ts: at, kind: 'pool', pool, dir: 'out', amount, note: '' })
 const poolIn = (pool: string, amount: number, at: number): MoneyEvent =>
   ({ id: `pi${++seq}`, ts: at, kind: 'pool', pool, dir: 'in', amount, note: '' })
-const commit = (item: string, paid: boolean, monthKey: string, at: number): MoneyEvent =>
-  ({ id: `c${++seq}`, ts: at, kind: 'commitment', item, amount: 420, monthKey, paid })
+const commit = (item: string, paid: boolean, periodKey: string, at: number): MoneyEvent =>
+  ({ id: `c${++seq}`, ts: at, kind: 'commitment', item, amount: 420, periodKey, paid })
 const transfer = (from: string, to: string, amount: number, at: number): MoneyEvent =>
   ({ id: `t${++seq}`, ts: at, kind: 'transfer', from, to, amount, note: '' })
 
@@ -85,26 +88,40 @@ describe('poolViews', () => {
   })
 })
 
-describe('commitmentPaid 义务状态', () => {
-  it('本月无事件 = 未付', () => {
-    expect(commitmentPaid([], '狗粮', NOW)).toBe(false)
+describe('commitmentPaid 义务状态（按周期）', () => {
+  it('本周期无事件 = 未付', () => {
+    expect(commitmentPaid([], '狗粮', 'monthly', NOW)).toBe(false)
+    expect(commitmentPaid([], '域名', 'yearly', NOW)).toBe(false)
   })
 
-  it('上月已付不影响本月：月度重置自动成立', () => {
+  it('月付：上月已付不影响本月', () => {
     const lastMonthTs = new Date(2026, 8, 20, 10).getTime() // 2026-09-20
     const events = [commit('狗粮', true, '2026-09', lastMonthTs)]
-    expect(commitmentPaid(events, '狗粮', NOW)).toBe(false)
+    expect(commitmentPaid(events, '狗粮', 'monthly', NOW)).toBe(false)
   })
 
-  it('本月多条事件取最新一条', () => {
+  it('月付：本月多条事件取最新一条', () => {
     const events = [commit('狗粮', true, '2026-10', ts(11, 9)), commit('狗粮', false, '2026-10', ts(11, 10))]
-    expect(commitmentPaid(events, '狗粮', NOW)).toBe(false)
+    expect(commitmentPaid(events, '狗粮', 'monthly', NOW)).toBe(false)
   })
 
-  it('commitmentsThisMonth 汇总', () => {
+  it('年付：年内跨月保持已付，次年回未付', () => {
+    const paidInOct = new Date(2026, 9, 5, 10).getTime()
+    const events = [commit('域名', true, '2026', paidInOct)]
+    expect(commitmentPaid(events, '域名', 'yearly', new Date(2026, 10, 20, 12))).toBe(true) // 11 月仍是本年
+    expect(commitmentPaid(events, '域名', 'yearly', new Date(2027, 0, 3, 12))).toBe(false) // 跨年重置
+  })
+
+  it('月键事件不会误匹配年付周期（防串周期）', () => {
+    const events = [commit('域名', true, '2026-10', ts(11, 9))]
+    expect(commitmentPaid(events, '域名', 'yearly', NOW)).toBe(false) // 年付周期键是 '2026'
+  })
+
+  it('commitmentsThisPeriod 汇总（含周期，旧数据默认月付）', () => {
     const events = [commit('狗粮', true, '2026-10', ts(11, 9))]
-    expect(commitmentsThisMonth(events, settings, NOW)).toEqual([
-      { name: '狗粮', amount: 420, paid: true },
+    expect(commitmentsThisPeriod(events, settings, NOW)).toEqual([
+      { name: '狗粮', amount: 420, cycle: 'monthly', paid: true },
+      { name: '域名', amount: 600, cycle: 'yearly', paid: false },
     ])
   })
 })

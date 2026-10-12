@@ -31,6 +31,11 @@ export function monthKeyOf(d: Date | number): string {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** 年键 'YYYY'：年付义务的归属周期 */
+export function yearKeyOf(d: Date | number): string {
+  return String(new Date(d).getFullYear())
+}
+
 /** 日键 'YYYY-MM-DD'（本地时区）：流水按天分组用 */
 export function dayKeyOf(d: Date | number): string {
   const t = new Date(d)

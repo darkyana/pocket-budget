@@ -1,8 +1,9 @@
 /**
  * 数据结构版本：事件/设置结构有破坏性变更时 +1，并在 storage/migrate.ts 补迁移。
  * v1 起步。
+ * v2：义务支持年付——事件 monthKey → periodKey（月付存 'YYYY-MM'，年付存 'YYYY'）。
  */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export type DayTypeName = string
 
@@ -19,10 +20,15 @@ export interface Pool {
   weekAllow: number
 }
 
-/** 义务：月内固定项。付/未付不在这里存，由本月事件推导（月初自动回到未付） */
+/** 义务周期：每月 / 每年 */
+export type CommitmentCycle = 'monthly' | 'yearly'
+
+/** 义务：固定项。付/未付不在这里存，由本周期事件推导（周期更替自动回到未付） */
 export interface Commitment {
   name: string
   amount: number
+  /** 周期。旧数据无此字段 = 每月 */
+  cycle?: CommitmentCycle
 }
 
 export interface Settings {
@@ -44,7 +50,7 @@ export interface Settings {
 export type MoneyEvent =
   | { id: string; ts: number; kind: 'rhythm'; category: string; amount: number; note: string; account?: string }
   | { id: string; ts: number; kind: 'pool'; pool: string; dir: 'out' | 'in'; amount: number; note: string; account?: string }
-  | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; monthKey: string; paid: boolean }
+  | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; periodKey: string; paid: boolean }
   | { id: string; ts: number; kind: 'transfer'; from: string; to: string; amount: number; note: string }
 
 export interface PersistedState {

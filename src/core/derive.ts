@@ -2,8 +2,8 @@
  * 派生层：从事件流 + 设置推导出所有视图数字。纯函数，无 IO 无 DOM。
  * 这里算错的数字会毁掉对工具的信任，所以本文件被 time.test / derive.test 盯着。
  */
-import type { MoneyEvent, Settings } from './types'
-import { dayKeyOf, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd } from './time'
+import type { CommitmentCycle, MoneyEvent, Settings } from './types'
+import { dayKeyOf, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
 
 /* ---------------- 节律：今日 ---------------- */
 
@@ -69,14 +69,19 @@ export function visiblePools(views: PoolView[]): PoolView[] {
   return views.filter((v) => v.weekLeft > 0).sort((a, b) => b.weekLeft - a.weekLeft)
 }
 
-/* ---------------- 义务：本月状态 ---------------- */
+/* ---------------- 义务：本周期状态 ---------------- */
 
-/** 义务状态 = 本月内该义务最后一条事件；本月无事件 = 未付（月度重置自动成立） */
-export function commitmentPaid(events: MoneyEvent[], name: string, now: Date): boolean {
-  const key = monthKeyOf(now)
+/** 义务的归属周期键：月付 'YYYY-MM'，年付 'YYYY' */
+export function commitmentPeriodKey(now: Date, cycle: CommitmentCycle): string {
+  return cycle === 'yearly' ? yearKeyOf(now) : monthKeyOf(now)
+}
+
+/** 义务状态 = 本周期内该义务最后一条事件；周期内无事件 = 未付（周期更替自动回到未付） */
+export function commitmentPaid(events: MoneyEvent[], name: string, cycle: CommitmentCycle, now: Date): boolean {
+  const key = commitmentPeriodKey(now, cycle)
   let last: Extract<MoneyEvent, { kind: 'commitment' }> | undefined
   for (const e of events) {
-    if (e.kind === 'commitment' && e.item === name && e.monthKey === key && (!last || e.ts >= last.ts)) {
+    if (e.kind === 'commitment' && e.item === name && e.periodKey === key && (!last || e.ts >= last.ts)) {
       last = e
     }
   }
@@ -86,15 +91,15 @@ export function commitmentPaid(events: MoneyEvent[], name: string, now: Date): b
 export interface CommitmentView {
   name: string
   amount: number
+  cycle: CommitmentCycle
   paid: boolean
 }
 
-export function commitmentsThisMonth(events: MoneyEvent[], settings: Settings, now: Date): CommitmentView[] {
-  return settings.commitments.map((c) => ({
-    name: c.name,
-    amount: c.amount,
-    paid: commitmentPaid(events, c.name, now),
-  }))
+export function commitmentsThisPeriod(events: MoneyEvent[], settings: Settings, now: Date): CommitmentView[] {
+  return settings.commitments.map((c) => {
+    const cycle = c.cycle ?? 'monthly'
+    return { name: c.name, amount: c.amount, cycle, paid: commitmentPaid(events, c.name, cycle, now) }
+  })
 }
 
 /* ---------------- 流水：按天分组 ---------------- */

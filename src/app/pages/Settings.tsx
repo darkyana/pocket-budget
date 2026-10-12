@@ -106,13 +106,19 @@ export function SettingsPage() {
 
   /* ---------------- 义务 ---------------- */
 
+  const cycleOptions = [
+    { value: 'monthly', label: '每月' },
+    { value: 'yearly', label: '每年' },
+  ]
+
   function editCommitment(index: number) {
     const c = settings.commitments[index]
     setForm({
       title: '编辑义务',
       fields: [
         { key: 'name', label: '名称', type: 'text', initial: c.name },
-        { key: 'amount', label: '每月金额（元）', type: 'number', initial: String(c.amount) },
+        { key: 'amount', label: '金额（元）', type: 'number', initial: String(c.amount) },
+        { key: 'cycle', label: '周期', type: 'select', options: cycleOptions, initial: c.cycle ?? 'monthly' },
       ],
       onSubmit: (values) => {
         const amount = num(values.amount)
@@ -120,8 +126,9 @@ export function SettingsPage() {
           toast('名称和金额都要填')
           return
         }
+        const cycle = values.cycle === 'yearly' ? 'yearly' : 'monthly'
         updateSettings((s) => {
-          s.commitments[index] = { name: values.name.trim(), amount }
+          s.commitments[index] = { name: values.name.trim(), amount, cycle }
         })
         setForm(null)
         toast('已保存')
@@ -133,8 +140,9 @@ export function SettingsPage() {
     setForm({
       title: '新增义务',
       fields: [
-        { key: 'name', label: '名称', type: 'text', placeholder: '如：狗粮' },
-        { key: 'amount', label: '每月金额（元）', type: 'number', placeholder: '如：420' },
+        { key: 'name', label: '名称', type: 'text', placeholder: '如：狗粮 / 域名' },
+        { key: 'amount', label: '金额（元）', type: 'number', placeholder: '如：420' },
+        { key: 'cycle', label: '周期', type: 'select', options: cycleOptions, initial: 'monthly' },
       ],
       onSubmit: (values) => {
         const amount = num(values.amount)
@@ -142,8 +150,9 @@ export function SettingsPage() {
           toast('名称和金额都要填')
           return
         }
+        const cycle = values.cycle === 'yearly' ? 'yearly' : 'monthly'
         updateSettings((s) => {
-          s.commitments.push({ name: values.name.trim(), amount })
+          s.commitments.push({ name: values.name.trim(), amount, cycle })
         })
         setForm(null)
         toast('已新增')
@@ -280,12 +289,15 @@ export function SettingsPage() {
       {seg === 'commitment' && (
         <div className="card">
           <div className="small muted" style={{ marginBottom: 6 }}>
-            每月固定要付的钱（点行改名称/金额）
+            每月 / 每年固定要付的钱（点行改名称、金额、周期）
           </div>
           {settings.commitments.map((c, i) => (
             <div className="setrow" key={`${c.name}-${i}`}>
               <button type="button" className="setrow-main" onClick={() => editCommitment(i)}>
-                {c.name} <span className="small muted">{money(c.amount)}/月</span>
+                {c.name}{' '}
+                <span className="small muted">
+                  {money(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
+                </span>
               </button>
               <ConfirmButton
                 label="删"

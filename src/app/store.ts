@@ -1,7 +1,6 @@
 import { create } from 'zustand'
-import { SCHEMA_VERSION, type MoneyEvent, type PersistedState, type Settings } from '../core/types'
-import { commitmentPaid, withAccount } from '../core/derive'
-import { monthKeyOf } from '../core/time'
+import { SCHEMA_VERSION, type CommitmentCycle, type MoneyEvent, type PersistedState, type Settings } from '../core/types'
+import { commitmentPaid, commitmentPeriodKey, withAccount } from '../core/derive'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
 import { parseVoucher } from '../storage/voucher'
@@ -87,14 +86,16 @@ export const useApp = create<AppState>()((set, get) => ({
   toggleCommitment(name) {
     const c = get().settings.commitments.find((x) => x.name === name)
     if (!c) return
-    const paid = !commitmentPaid(get().events, name, new Date())
+    const cycle: CommitmentCycle = c.cycle ?? 'monthly'
+    const now = new Date()
+    const paid = !commitmentPaid(get().events, name, cycle, now)
     const e: MoneyEvent = {
       id: uid(),
       ts: Date.now(),
       kind: 'commitment',
       item: name,
       amount: c.amount,
-      monthKey: monthKeyOf(new Date()),
+      periodKey: commitmentPeriodKey(now, cycle),
       paid,
     }
     set((s) => ({ events: [...s.events, e] }))
