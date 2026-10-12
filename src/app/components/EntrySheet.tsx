@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
 import { useApp } from '../store'
+import { dayKeyOf } from '../../core/time'
 
 export type EntryTarget =
   | { type: 'rhythm'; category: string }
@@ -22,6 +23,7 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
   const [account, setAccount] = useState(defaultAccount)
   const [from, setFrom] = useState(defaultAccount)
   const [to, setTo] = useState(accounts.find((a) => a !== defaultAccount) ?? '')
+  const [date, setDate] = useState(() => dayKeyOf(new Date()))
 
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
@@ -30,9 +32,9 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
 
   function submit() {
     if (!canSubmit) return
-    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim(), account)
-    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim(), account)
-    else addTransfer(from.trim(), to.trim(), amountNum, note.trim())
+    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim(), account, date)
+    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim(), account, date)
+    else addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
     onClose()
   }
 
@@ -118,6 +120,16 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
         <div className="field-row">
           <label htmlFor="ef-note">备注（可空）</label>
           <input id="ef-note" className="field" value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+        <div className="field-row">
+          <label htmlFor="ef-date">日期（补记时改这里）</label>
+          <input
+            id="ef-date"
+            className="field"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </div>
         <datalist id="account-list">
           {accounts.map((a) => (

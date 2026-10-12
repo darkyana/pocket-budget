@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type CommitmentCycle, type MoneyEvent, type PersistedState, type Settings } from '../core/types'
 import { commitmentPaid, commitmentPeriodKey, withAccount } from '../core/derive'
+import { timestampOf } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
 import { parseVoucher } from '../storage/voucher'
@@ -30,10 +31,10 @@ interface AppState {
   settings: Settings
   events: MoneyEvent[]
   init(): Promise<void>
-  addRhythm(category: string, amount: number, note: string, account: string): void
-  addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string, account: string): void
+  addRhythm(category: string, amount: number, note: string, account: string, date: string): void
+  addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
   toggleCommitment(name: string): void
-  addTransfer(from: string, to: string, amount: number, note: string): void
+  addTransfer(from: string, to: string, amount: number, note: string, date: string): void
   /** 设置就地修改：给一个可变的深拷贝，改完统一落盘 */
   updateSettings(mutate: (draft: Settings) => void): void
   clearEvents(): void
@@ -52,11 +53,11 @@ export const useApp = create<AppState>()((set, get) => ({
     set({ ready: true, settings: state.settings, events: state.events })
   },
 
-  addRhythm(category, amount, note, account) {
+  addRhythm(category, amount, note, account, date) {
     const acct = account.trim()
     const e: MoneyEvent = {
       id: uid(),
-      ts: Date.now(),
+      ts: timestampOf(date),
       kind: 'rhythm',
       category,
       amount,
@@ -67,11 +68,11 @@ export const useApp = create<AppState>()((set, get) => ({
     persist(get())
   },
 
-  addPoolEntry(pool, dir, amount, note, account) {
+  addPoolEntry(pool, dir, amount, note, account, date) {
     const acct = account.trim()
     const e: MoneyEvent = {
       id: uid(),
-      ts: Date.now(),
+      ts: timestampOf(date),
       kind: 'pool',
       pool,
       dir,
@@ -102,8 +103,8 @@ export const useApp = create<AppState>()((set, get) => ({
     persist(get())
   },
 
-  addTransfer(from, to, amount, note) {
-    const e: MoneyEvent = { id: uid(), ts: Date.now(), kind: 'transfer', from, to, amount, note }
+  addTransfer(from, to, amount, note, date) {
+    const e: MoneyEvent = { id: uid(), ts: timestampOf(date), kind: 'transfer', from, to, amount, note }
     set((s) => ({
       events: [...s.events, e],
       settings: withUsedAccount(withAccount(s.settings, to), from),

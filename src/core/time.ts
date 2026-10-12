@@ -42,6 +42,14 @@ export function dayKeyOf(d: Date | number): string {
   return `${monthKeyOf(t)}-${String(t.getDate()).padStart(2, '0')}`
 }
 
+/** 记账日期串（'YYYY-MM-DD' 或空）→ 时间戳：空 = 现在；有日期 = 该日 + 当前时分（用于补记） */
+export function timestampOf(dateStr: string, now = new Date()): number {
+  if (!dateStr) return now.getTime()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  if (!y || !m || !d) return now.getTime()
+  return new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds()).getTime()
+}
+
 export function dayOfMonth(d: Date | number): number {
   return new Date(d).getDate()
 }

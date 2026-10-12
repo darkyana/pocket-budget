@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayKeyOf, daysInMonth, isSameWeek, monthKeyOf, projectMonthEnd, startOfWeek } from './time'
+import { dayKeyOf, daysInMonth, isSameWeek, monthKeyOf, projectMonthEnd, startOfWeek, timestampOf } from './time'
 
 // 2026-10-05 是周一，2026-10-11 是周日
 describe('time', () => {
@@ -39,5 +39,12 @@ describe('time', () => {
     expect(projectMonthEnd(340, now)).toBeCloseTo(340 * (31 / 11))
     const firstDay = new Date(2026, 9, 1) // 月初第一天：推算 = 本月已花 × 31
     expect(projectMonthEnd(100, firstDay)).toBeCloseTo(3100)
+  })
+
+  it('timestampOf：空串 = 现在；日期串 = 该日 + 当前时分（补记场景）', () => {
+    const now = new Date(2026, 9, 12, 21, 30, 5)
+    expect(timestampOf('', now)).toBe(now.getTime())
+    expect(timestampOf('2026-10-11', now)).toBe(new Date(2026, 9, 11, 21, 30, 5).getTime())
+    expect(timestampOf('2026-01-03', now)).toBe(new Date(2026, 0, 3, 21, 30, 5).getTime())
   })
 })
