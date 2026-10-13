@@ -8,6 +8,7 @@ import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
 import { CommitmentSheet } from '../components/CommitmentSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
+import { Sheet } from '../components/Sheet'
 import { moneyExact } from '../format'
 
 function describe(e: MoneyEvent): { label: string; amount: string } {
@@ -44,6 +45,56 @@ function targetOf(e: MoneyEvent): EntryTarget | null {
   return null
 }
 
+/** 日期筛选弹层：草稿态，完成才生效；清除立即生效并关闭 */
+function DateFilterSheet({
+  fromDate,
+  toDate,
+  onApply,
+  onClose,
+}: {
+  fromDate: string
+  toDate: string
+  onApply(from: string, to: string): void
+  onClose(): void
+}) {
+  const [draftFrom, setDraftFrom] = useState(fromDate)
+  const [draftTo, setDraftTo] = useState(toDate)
+  return (
+    <Sheet title="按日期筛选" onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          onApply(draftFrom, draftTo)
+        }}
+      >
+        <div className="field-row">
+          <label htmlFor="df-from">开始日期（可空）</label>
+          <input
+            id="df-from"
+            className="field"
+            type="date"
+            value={draftFrom}
+            onChange={(e) => setDraftFrom(e.target.value)}
+          />
+        </div>
+        <div className="field-row">
+          <label htmlFor="df-to">结束日期（可空）</label>
+          <input id="df-to" className="field" type="date" value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
+        </div>
+        <div className="small muted" style={{ margin: '4px 0 12px' }}>
+          只填开始 = 从那天到现在；只填结束 = 截至那天
+        </div>
+        <div className="form-btns">
+          <button type="button" className="btn-ghost" onClick={() => onApply('', '')}>
+            清除
+          </button>
+          <button type="submit">完成</button>
+        </div>
+      </form>
+    </Sheet>
+  )
+}
+
 export function Records() {
   const settings = useApp((s) => s.settings)
   const events = useApp((s) => s.events)
@@ -53,11 +104,21 @@ export function Records() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端） */
+  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）；入口在按钮排，选择走半弹层 */
   const [accountFilter, setAccountFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const hasFilter = !!accountFilter || !!fromDate || !!toDate
+  const [filterSheet, setFilterSheet] = useState<'account' | 'date' | null>(null)
+
+  const dateLabel = (() => {
+    const f = fromDate ? fromDate.slice(5).replace('-', '/') : ''
+    const t = toDate ? toDate.slice(5).replace('-', '/') : ''
+    if (f && t) return fromDate === toDate ? f : `${f}–${t}`
+    if (f) return `${f} 起`
+    if (t) return `至 ${t}`
+    return ''
+  })()
 
   const filtered = events.filter((e) => {
     if (accountFilter) {
@@ -101,50 +162,13 @@ export function Records() {
       <div className="sub">
         {hasFilter ? `筛选中 · ${filtered.length}/${events.length} 笔` : `本机记录的全部经济事件 · ${events.length} 笔`}
       </div>
-      <div className="filter-bar">
-        <select
-          className="field filter-sel"
-          value={accountFilter}
-          onChange={(e) => setAccountFilter(e.target.value)}
-          aria-label="按账户筛选"
-        >
-          <option value="">全部账户</option>
-          {settings.accounts.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-        <input
-          className="field filter-date"
-          type="date"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
-          aria-label="开始日期"
-        />
-        <span className="muted small">–</span>
-        <input
-          className="field filter-date"
-          type="date"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
-          aria-label="结束日期"
-        />
-        {hasFilter && (
-          <button
-            type="button"
-            className="btn2"
-            onClick={() => {
-              setAccountFilter('')
-              setFromDate('')
-              setToDate('')
-            }}
-          >
-            清除
-          </button>
-        )}
-      </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
+          {accountFilter ? `账户 · ${accountFilter}` : '按账户筛选'}
+        </button>
+        <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
+          {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
+        </button>
         <button type="button" className="btn2" onClick={onExport}>
           导出凭证
         </button>
@@ -206,6 +230,47 @@ export function Records() {
       <div className="small muted" style={{ textAlign: 'center' }}>
         点一笔可编辑；节律/池子可互转改类（先批量记、回头分类）
       </div>
+      {filterSheet === 'account' && (
+        <Sheet title="按账户筛选" onClose={() => setFilterSheet(null)}>
+          <div className="picker-list">
+            <button
+              type="button"
+              className={accountFilter === '' ? 'on' : ''}
+              onClick={() => {
+                setAccountFilter('')
+                setFilterSheet(null)
+              }}
+            >
+              全部账户
+            </button>
+            {settings.accounts.map((a) => (
+              <button
+                type="button"
+                key={a}
+                className={accountFilter === a ? 'on' : ''}
+                onClick={() => {
+                  setAccountFilter(a)
+                  setFilterSheet(null)
+                }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
+      {filterSheet === 'date' && (
+        <DateFilterSheet
+          fromDate={fromDate}
+          toDate={toDate}
+          onApply={(f, t) => {
+            setFromDate(f)
+            setToDate(t)
+            setFilterSheet(null)
+          }}
+          onClose={() => setFilterSheet(null)}
+        />
+      )}
       {editingId &&
         (() => {
           const ev = events.find((x) => x.id === editingId)

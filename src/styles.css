@@ -281,23 +281,31 @@ button:disabled {
   color: var(--ink2);
 }
 
-/* 流水筛选栏 */
-.filter-bar {
+.btn2.on {
+  background: #e2efe7;
+  color: var(--accent);
+}
+
+/* 弹层内的选项列表（筛选等） */
+.picker-list {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 4px;
 }
-.filter-sel {
-  flex: 1;
-  min-width: 120px;
-  width: auto;
-  padding: 8px 10px;
+.picker-list button {
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 12px;
+  font: inherit;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--ink);
 }
-.filter-date {
-  width: auto;
-  padding: 8px 10px;
+.picker-list button.on {
+  background: var(--chip);
+  font-weight: 600;
 }
 .feed-item > span:first-child {
   min-width: 0;
