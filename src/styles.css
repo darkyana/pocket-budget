@@ -247,14 +247,25 @@ button:disabled {
   color: inherit;
 }
 
-/* 流水 */
+/* 流水（行本身可点开编辑） */
 .feed-item {
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
   padding: 9px 0;
+  border: none;
   border-bottom: 1px dashed var(--line);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  font-weight: 400;
   font-size: 14px;
+  color: inherit;
+  text-align: left;
+}
+.feed-item:active {
+  background: var(--chip);
 }
 .feed-item:last-child {
   border-bottom: none;

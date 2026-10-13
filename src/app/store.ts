@@ -7,7 +7,8 @@ import { loadState, requestPersistence, saveState } from '../storage/db'
 import { parseVoucher } from '../storage/voucher'
 
 /**
- * 应用状态：settings（可变快照） + events（append-only 事实源）。
+ * 应用状态：settings（可变快照） + events（事实源）。
+ * 事件由用户显式追加；编辑/删除同样是用户的显式修正——个人账本无下游对账，不做更正事件抵消。
  * 每次变更后整体落盘 IndexedDB；视图数字不在状态里，用 core/derive 实时推导。
  */
 
@@ -35,6 +36,9 @@ interface AppState {
   addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
   toggleCommitment(name: string): void
   addTransfer(from: string, to: string, amount: number, note: string, date: string): void
+  /** 编辑一笔：金额/备注/账户/日期覆盖原事件；日期变化时保留原时分秒。义务事件不可编辑 */
+  editEvent(id: string, patch: { amount: number; note: string; account: string; date: string }): void
+  deleteEvent(id: string): void
   /** 设置就地修改：给一个可变的深拷贝，改完统一落盘 */
   updateSettings(mutate: (draft: Settings) => void): void
   clearEvents(): void
@@ -109,6 +113,28 @@ export const useApp = create<AppState>()((set, get) => ({
       events: [...s.events, e],
       settings: withUsedAccount(withAccount(s.settings, to), from),
     }))
+    persist(get())
+  },
+
+  editEvent(id, patch) {
+    set((s) => ({
+      events: s.events.map((e): MoneyEvent => {
+        if (e.id !== id || e.kind === 'commitment') return e
+        const acct = patch.account.trim()
+        return {
+          ...e,
+          amount: patch.amount,
+          note: patch.note,
+          ts: timestampOf(patch.date, new Date(e.ts)), // 日期变化时保留原时分秒
+          ...(e.kind === 'transfer' ? {} : { account: acct || undefined }),
+        }
+      }),
+    }))
+    persist(get())
+  },
+
+  deleteEvent(id) {
+    set((s) => ({ events: s.events.filter((e) => e.id !== id) }))
     persist(get())
   },
 

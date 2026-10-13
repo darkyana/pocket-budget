@@ -1,10 +1,11 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { SCHEMA_VERSION, type MoneyEvent, type PersistedState } from '../../core/types'
 import { dayLabel, groupByDay } from '../../core/derive'
 import { downloadVoucherFile } from '../../storage/voucher'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
+import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { money } from '../format'
 
 function describe(e: MoneyEvent): { label: string; amount: string } {
@@ -23,6 +24,14 @@ function describe(e: MoneyEvent): { label: string; amount: string } {
   }
 }
 
+/** 编辑入口只对消费/走账开放；义务事件的「编辑」是再点一次切换 */
+function targetOf(e: MoneyEvent): EntryTarget | null {
+  if (e.kind === 'rhythm') return { type: 'rhythm', category: e.category }
+  if (e.kind === 'pool') return { type: 'pool', pool: e.pool }
+  if (e.kind === 'transfer') return { type: 'transfer' }
+  return null
+}
+
 function timeOf(ts: number): string {
   const t = new Date(ts)
   const mm = String(t.getMinutes()).padStart(2, '0')
@@ -36,6 +45,7 @@ export function Records() {
   const importVoucher = useApp((s) => s.importVoucher)
   const toast = useToast((s) => s.show)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState<{ id: string; target: EntryTarget } | null>(null)
 
   const groups = groupByDay(events)
   const now = new Date()
@@ -98,8 +108,18 @@ export function Records() {
               </div>
               {g.events.map((e) => {
                 const d = describe(e)
+                const target = targetOf(e)
                 return (
-                  <div className="feed-item" key={e.id}>
+                  <button
+                    type="button"
+                    className="feed-item"
+                    key={e.id}
+                    onClick={() =>
+                      target
+                        ? setEditing({ id: e.id, target })
+                        : toast('义务状态请在今日页点那一条切换')
+                    }
+                  >
                     <span>
                       {d.label}
                       {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
@@ -108,7 +128,7 @@ export function Records() {
                       </span>
                     </span>
                     <span style={{ whiteSpace: 'nowrap' }}>{d.amount}</span>
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -119,6 +139,16 @@ export function Records() {
           </div>
         )}
       </div>
+      <div className="small muted" style={{ textAlign: 'center' }}>
+        点一笔可编辑（金额 / 账户 / 备注 / 日期）或删除
+      </div>
+      {editing && (
+        <EntrySheet
+          target={editing.target}
+          existing={events.find((e) => e.id === editing.id)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </>
   )
 }

@@ -1,29 +1,45 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
+import { ConfirmButton } from './ConfirmButton'
 import { useApp } from '../store'
+import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
+import type { MoneyEvent } from '../../core/types'
 
 export type EntryTarget =
   | { type: 'rhythm'; category: string }
   | { type: 'pool'; pool: string }
   | { type: 'transfer' }
 
-/** 记一笔：入口即分类——从哪发起就记哪种锚（裁定 4） */
-export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose(): void }) {
+/** 记一笔：入口即分类——从哪发起就记哪种锚（裁定 4）。传 existing 即为编辑模式 */
+export function EntrySheet({
+  target,
+  onClose,
+  existing,
+}: {
+  target: EntryTarget
+  onClose(): void
+  existing?: MoneyEvent
+}) {
   const addRhythm = useApp((s) => s.addRhythm)
   const addPoolEntry = useApp((s) => s.addPoolEntry)
   const addTransfer = useApp((s) => s.addTransfer)
+  const editEvent = useApp((s) => s.editEvent)
+  const deleteEvent = useApp((s) => s.deleteEvent)
   const accounts = useApp((s) => s.settings.accounts)
   const lastAccount = useApp((s) => s.settings.lastAccount)
+  const toast = useToast((s) => s.show)
 
   const defaultAccount = lastAccount ?? accounts[0] ?? ''
-  const [amount, setAmount] = useState('')
-  const [note, setNote] = useState('')
-  const [dir, setDir] = useState<'out' | 'in'>('out')
-  const [account, setAccount] = useState(defaultAccount)
-  const [from, setFrom] = useState(defaultAccount)
-  const [to, setTo] = useState(accounts.find((a) => a !== defaultAccount) ?? '')
-  const [date, setDate] = useState(() => dayKeyOf(new Date()))
+  const [amount, setAmount] = useState(existing ? String(existing.amount) : '')
+  const [note, setNote] = useState(existing && 'note' in existing ? existing.note : '')
+  const [dir, setDir] = useState<'out' | 'in'>(existing?.kind === 'pool' ? existing.dir : 'out')
+  const [account, setAccount] = useState(
+    existing && existing.kind !== 'transfer' && existing.kind !== 'commitment' ? existing.account ?? '' : defaultAccount,
+  )
+  const [from, setFrom] = useState(existing?.kind === 'transfer' ? existing.from : defaultAccount)
+  const [to, setTo] = useState(existing?.kind === 'transfer' ? existing.to : accounts.find((a) => a !== defaultAccount) ?? '')
+  const [date, setDate] = useState(() => dayKeyOf(existing ? existing.ts : new Date()))
 
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
@@ -32,18 +48,26 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
 
   function submit() {
     if (!canSubmit) return
-    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim(), account, date)
-    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim(), account, date)
-    else addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
+    if (existing) {
+      editEvent(existing.id, { amount: amountNum, note: note.trim(), account, date })
+      toast('已更新')
+    } else if (target.type === 'rhythm') {
+      addRhythm(target.category, amountNum, note.trim(), account, date)
+    } else if (target.type === 'pool') {
+      addPoolEntry(target.pool, dir, amountNum, note.trim(), account, date)
+    } else {
+      addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
+    }
     onClose()
   }
 
-  const title =
+  const baseTitle =
     target.type === 'rhythm'
       ? `节律 · ${target.category}`
       : target.type === 'pool'
         ? `预算池 · ${target.pool}`
         : '走一笔账'
+  const title = existing ? `编辑 · ${baseTitle}` : baseTitle
 
   return (
     <Sheet title={title} onClose={onClose}>
@@ -141,9 +165,22 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose()
             取消
           </button>
           <button type="submit" disabled={!canSubmit}>
-            记下
+            {existing ? '保存' : '记下'}
           </button>
         </div>
+        {existing && (
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <ConfirmButton
+              label="删除这一笔"
+              confirmLabel="确认删除？"
+              onConfirm={() => {
+                deleteEvent(existing.id)
+                toast('已删除')
+                onClose()
+              }}
+            />
+          </div>
+        )}
       </form>
     </Sheet>
   )
