@@ -482,6 +482,14 @@ button:disabled {
   padding: 10px 18px;
   border-radius: 12px;
 }
+/* 动作按钮用浅底轻样式（危险按钮保留 .btn-danger 红调） */
+.dm-actions button:not(.btn-danger) {
+  background: var(--chip);
+  color: var(--ink);
+}
+.dm-actions button:not(.btn-danger):active {
+  background: #e2dccc;
+}
 .dm-hint {
   font-size: 11px;
   color: var(--ink2);
