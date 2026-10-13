@@ -1,23 +1,23 @@
 /**
- * 派生层：从事件流 + 设置推导出所有视图数字。纯函数，无 IO 无 DOM。
+ * 派生层：从流水 + 设置推导出所有视图数字。纯函数，无 IO 无 DOM。
  * 这里算错的数字会毁掉对工具的信任，所以本文件被 time.test / derive.test 盯着。
  */
-import type { CommitmentCycle, MoneyEvent, Settings } from './types'
+import type { ExpenseCycle, MoneyRecord, Settings } from './types'
 import { dayKeyOf, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
 
-/* ---------------- 节律：今日 ---------------- */
+/* ---------------- 日常：今日 ---------------- */
 
-export interface RhythmView {
+export interface RoutineView {
   name: string
   expect: number
   spent: number
   left: number
 }
 
-export function rhythmToday(events: MoneyEvent[], settings: Settings, now: Date) {
-  const buckets: RhythmView[] = (settings.dayPlans[settings.dayType] ?? []).map((b) => {
-    const spent = events.reduce((sum, e) => {
-      return e.kind === 'rhythm' && e.category === b.name && isSameDay(e.ts, now) ? sum + e.amount : sum
+export function routineToday(records: MoneyRecord[], settings: Settings, now: Date) {
+  const buckets: RoutineView[] = (settings.dayPlans[settings.dayType] ?? []).map((b) => {
+    const spent = records.reduce((sum, e) => {
+      return e.kind === 'routine' && e.category === b.name && isSameDay(e.ts, now) ? sum + e.amount : sum
     }, 0)
     return { name: b.name, expect: b.expect, spent, left: b.expect - spent }
   })
@@ -26,12 +26,13 @@ export function rhythmToday(events: MoneyEvent[], settings: Settings, now: Date)
   return { buckets, totalSpent, totalExpect, left: totalExpect - totalSpent }
 }
 
-/* ---------------- 预算池：本周 / 本月 / 推算 ---------------- */
+/* ---------------- 预算：本周 / 本月 / 推算 ---------------- */
 
-export interface PoolView {
+export interface BudgetView {
   name: string
   month: number
-  weekAllow: number
+  /** 周预算 = 月÷4（派生值，不落库） */
+  weekBudget: number
   /** 本周净支出（支出 − 回血） */
   weekSpent: number
   weekLeft: number
@@ -41,64 +42,64 @@ export interface PoolView {
   projection: number
 }
 
-function netPoolSpend(events: MoneyEvent[], poolName: string, inSpan: (ts: number) => boolean): number {
-  return events.reduce((sum, e) => {
-    if (e.kind !== 'pool' || e.pool !== poolName || !inSpan(e.ts)) return sum
+function netBudgetSpend(records: MoneyRecord[], budgetName: string, inSpan: (ts: number) => boolean): number {
+  return records.reduce((sum, e) => {
+    if (e.kind !== 'budget' || e.budget !== budgetName || !inSpan(e.ts)) return sum
     return sum + (e.dir === 'out' ? e.amount : -e.amount)
   }, 0)
 }
 
-export function poolViews(events: MoneyEvent[], settings: Settings, now: Date): PoolView[] {
-  return settings.pools.map((p) => {
-    const weekSpent = netPoolSpend(events, p.name, (ts) => isSameWeek(ts, now))
-    const monthSpent = netPoolSpend(events, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
+export function budgetViews(records: MoneyRecord[], settings: Settings, now: Date): BudgetView[] {
+  return settings.budgets.map((p) => {
+    const weekSpent = netBudgetSpend(records, p.name, (ts) => isSameWeek(ts, now))
+    const monthSpent = netBudgetSpend(records, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
     return {
       name: p.name,
       month: p.month,
-      weekAllow: p.weekAllow,
+      weekBudget: p.month / 4,
       weekSpent,
-      weekLeft: p.weekAllow - weekSpent,
+      weekLeft: p.month / 4 - weekSpent,
       monthSpent,
       projection: projectMonthEnd(monthSpent, now),
     }
   })
 }
 
-/** 裁定：超支的池子从首页退场；展示按本周剩余降序，只回答「现在还能在哪花钱」 */
-export function visiblePools(views: PoolView[]): PoolView[] {
+/** 裁定：超支的预算从首页退场；展示按本周剩余降序，只回答「现在还能在哪花钱」 */
+export function visibleBudgets(views: BudgetView[]): BudgetView[] {
   return views.filter((v) => v.weekLeft > 0).sort((a, b) => b.weekLeft - a.weekLeft)
 }
 
-/* ---------------- 义务：本周期状态 ---------------- */
+/* ---------------- 固定支出：本周期状态 ---------------- */
 
-/** 义务的归属周期键：月付 'YYYY-MM'，年付 'YYYY' */
-export function commitmentPeriodKey(now: Date, cycle: CommitmentCycle): string {
+/** 固定支出的归属周期键：月付 'YYYY-MM'，年付 'YYYY' */
+export function expensePeriodKey(now: Date, cycle: ExpenseCycle): string {
   return cycle === 'yearly' ? yearKeyOf(now) : monthKeyOf(now)
 }
 
-/** 义务状态 = 本周期内该义务最后一条事件；周期内无事件 = 未付（周期更替自动回到未付） */
-export function commitmentPaid(events: MoneyEvent[], name: string, cycle: CommitmentCycle, now: Date): boolean {
-  const key = commitmentPeriodKey(now, cycle)
-  let last: Extract<MoneyEvent, { kind: 'commitment' }> | undefined
-  for (const e of events) {
-    if (e.kind === 'commitment' && e.item === name && e.periodKey === key && (!last || e.ts >= last.ts)) {
+/** 固定支出状态 = 本周期内该固定支出最后一条流水；周期内无流水 = 未付（周期更替自动回到未付） */
+export function fixedExpensePaid(records: MoneyRecord[], name: string, cycle: ExpenseCycle, now: Date): boolean {
+  const key = expensePeriodKey(now, cycle)
+  let last: Extract<MoneyRecord, { kind: 'fixed' }> | undefined
+  for (const e of records) {
+    if (e.kind === 'fixed' && e.item === name && e.periodKey === key && (!last || e.ts >= last.ts)) {
       last = e
     }
   }
   return last ? last.paid : false
 }
 
-export interface CommitmentView {
+export interface FixedExpenseView {
   name: string
   amount: number
-  cycle: CommitmentCycle
+  cycle: ExpenseCycle
   paid: boolean
 }
 
-export function commitmentsThisPeriod(events: MoneyEvent[], settings: Settings, now: Date): CommitmentView[] {
-  return settings.commitments.map((c) => {
+export function fixedExpensesThisPeriod(records: MoneyRecord[], settings: Settings, now: Date): FixedExpenseView[] {
+  return settings.fixedExpenses.map((c) => {
     const cycle = c.cycle ?? 'monthly'
-    return { name: c.name, amount: c.amount, cycle, paid: commitmentPaid(events, c.name, cycle, now) }
+    return { name: c.name, amount: c.amount, cycle, paid: fixedExpensePaid(records, c.name, cycle, now) }
   })
 }
 
@@ -106,14 +107,14 @@ export function commitmentsThisPeriod(events: MoneyEvent[], settings: Settings, 
 
 export interface DayGroup {
   dayKey: string
-  events: MoneyEvent[]
-  /** 当日消费性支出（节律 + 池支出）；走账不是消费、义务不占当日额度，都不计 */
+  records: MoneyRecord[]
+  /** 当日消费性支出（日常 + 预算支出）；走账不是消费、固定支出不占当日额度，都不计 */
   outflow: number
 }
 
-export function groupByDay(events: MoneyEvent[]): DayGroup[] {
-  const map = new Map<string, MoneyEvent[]>()
-  for (const e of events) {
+export function groupByDay(records: MoneyRecord[]): DayGroup[] {
+  const map = new Map<string, MoneyRecord[]>()
+  for (const e of records) {
     const k = dayKeyOf(e.ts)
     const list = map.get(k)
     if (list) list.push(e)
@@ -124,11 +125,11 @@ export function groupByDay(events: MoneyEvent[]): DayGroup[] {
     .map(([dayKey, list]) => {
       const sorted = [...list].sort((a, b) => b.ts - a.ts)
       const outflow = sorted.reduce((s, e) => {
-        if (e.kind === 'rhythm') return s + e.amount
-        if (e.kind === 'pool' && e.dir === 'out') return s + e.amount
+        if (e.kind === 'routine') return s + e.amount
+        if (e.kind === 'budget' && e.dir === 'out') return s + e.amount
         return s
       }, 0)
-      return { dayKey, events: sorted, outflow }
+      return { dayKey, records: sorted, outflow }
     })
 }
 

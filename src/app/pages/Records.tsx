@@ -1,28 +1,28 @@
 import { useRef, useState } from 'react'
-import { SCHEMA_VERSION, type MoneyEvent, type PersistedState } from '../../core/types'
+import { SCHEMA_VERSION, type MoneyRecord, type PersistedState } from '../../core/types'
 import { dayKeyOf } from '../../core/time'
 import { dayLabel, groupByDay } from '../../core/derive'
 import { downloadVoucherFile } from '../../storage/voucher'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
-import { CommitmentSheet } from '../components/CommitmentSheet'
+import { FixedExpenseSheet } from '../components/FixedExpenseSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { Sheet } from '../components/Sheet'
 import { moneyExact } from '../format'
 
-function describe(e: MoneyEvent): { label: string; amount: string } {
+function describe(e: MoneyRecord): { label: string; amount: string } {
   switch (e.kind) {
-    case 'rhythm':
-      return { label: `节律 · ${e.category}${e.account ? ` · ${e.account}` : ''}`, amount: moneyExact(e.amount) }
-    case 'pool':
+    case 'routine':
+      return { label: `日常 · ${e.category}${e.account ? ` · ${e.account}` : ''}`, amount: moneyExact(e.amount) }
+    case 'budget':
       return {
-        label: `预算池 · ${e.pool} ${e.dir === 'out' ? '支出' : '回血'}${e.account ? ` · ${e.account}` : ''}`,
+        label: `预算 · ${e.budget} ${e.dir === 'out' ? '支出' : '回血'}${e.account ? ` · ${e.account}` : ''}`,
         amount: `${e.dir === 'in' ? '+' : ''}${moneyExact(e.amount)}`,
       }
-    case 'commitment':
+    case 'fixed':
       return {
-        label: `义务 · ${e.item} ${e.paid ? '标记已付' : '改回未付'}${e.account ? ` · ${e.account}` : ''}`,
+        label: `固定支出 · ${e.item} ${e.paid ? '标记已付' : '改回未付'}${e.account ? ` · ${e.account}` : ''}`,
         amount: moneyExact(e.amount),
       }
     case 'transfer':
@@ -31,16 +31,16 @@ function describe(e: MoneyEvent): { label: string; amount: string } {
 }
 
 /** 金额配色：支出墨色、收入（回血）绿、走账灰（非收支） */
-function amountClass(e: MoneyEvent): string {
-  if (e.kind === 'pool' && e.dir === 'in') return 'amt-in'
+function amountClass(e: MoneyRecord): string {
+  if (e.kind === 'budget' && e.dir === 'in') return 'amt-in'
   if (e.kind === 'transfer') return 'amt-transfer'
   return 'amt-out'
 }
 
-/** 消费/走账用通用记账弹层编辑；义务用专用弹层（日期+账户） */
-function targetOf(e: MoneyEvent): EntryTarget | null {
-  if (e.kind === 'rhythm') return { type: 'rhythm', category: e.category }
-  if (e.kind === 'pool') return { type: 'pool', pool: e.pool }
+/** 消费/走账用通用记账弹层编辑；固定支出用专用弹层（日期+账户） */
+function targetOf(e: MoneyRecord): EntryTarget | null {
+  if (e.kind === 'routine') return { type: 'routine', category: e.category }
+  if (e.kind === 'budget') return { type: 'budget', budget: e.budget }
   if (e.kind === 'transfer') return { type: 'transfer' }
   return null
 }
@@ -97,8 +97,8 @@ function DateFilterSheet({
 
 export function Records() {
   const settings = useApp((s) => s.settings)
-  const events = useApp((s) => s.events)
-  const clearEvents = useApp((s) => s.clearEvents)
+  const records = useApp((s) => s.records)
+  const clearRecords = useApp((s) => s.clearRecords)
   const importVoucher = useApp((s) => s.importVoucher)
   const toast = useToast((s) => s.show)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -120,7 +120,7 @@ export function Records() {
     return ''
   })()
 
-  const filtered = events.filter((e) => {
+  const filtered = records.filter((e) => {
     if (accountFilter) {
       if ('account' in e && e.account) {
         if (e.account !== accountFilter) return false
@@ -142,7 +142,7 @@ export function Records() {
   const now = new Date()
 
   function onExport() {
-    const state: PersistedState = { schemaVersion: SCHEMA_VERSION, settings, events }
+    const state: PersistedState = { schemaVersion: SCHEMA_VERSION, settings, records }
     const name = downloadVoucherFile(state)
     toast(`已导出 ${name}`)
   }
@@ -160,7 +160,7 @@ export function Records() {
     <>
       <h1>流水</h1>
       <div className="sub">
-        {hasFilter ? `筛选中 · ${filtered.length}/${events.length} 笔` : `本机记录的全部经济事件 · ${events.length} 笔`}
+        {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
@@ -179,7 +179,7 @@ export function Records() {
           label="清空全部记录"
           confirmLabel="确认清空？"
           onConfirm={() => {
-            clearEvents()
+            clearRecords()
             toast('已清空全部记录（设置保留）')
           }}
         />
@@ -203,7 +203,7 @@ export function Records() {
                 <span>{dayLabel(g.dayKey, now)}</span>
                 <span>支出 {moneyExact(g.outflow)}</span>
               </div>
-              {g.events.map((e) => {
+              {g.records.map((e) => {
                 const d = describe(e)
                 return (
                   <button type="button" className="feed-item" key={e.id} onClick={() => setEditingId(e.id)}>
@@ -221,14 +221,14 @@ export function Records() {
           ))
         ) : (
           <div className="small muted" style={{ padding: '10px 0' }}>
-            {events.length === 0
-              ? '还没有记录。回「今日」页点卡片 / 池 / 义务即可记。'
+            {records.length === 0
+              ? '还没有记录。回「今日」页点卡片 / 预算 / 固定支出即可记。'
               : '没有符合条件的记录——试试清除筛选。'}
           </div>
         )}
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>
-        点一笔可编辑；节律/池子可互转改类（先批量记、回头分类）
+        点一笔可编辑；日常/预算可互转改类（先批量记、回头分类）
       </div>
       {filterSheet === 'account' && (
         <Sheet title="按账户筛选" onClose={() => setFilterSheet(null)}>
@@ -273,10 +273,10 @@ export function Records() {
       )}
       {editingId &&
         (() => {
-          const ev = events.find((x) => x.id === editingId)
+          const ev = records.find((x) => x.id === editingId)
           if (!ev) return null
-          if (ev.kind === 'commitment') {
-            return <CommitmentSheet event={ev} onClose={() => setEditingId(null)} />
+          if (ev.kind === 'fixed') {
+            return <FixedExpenseSheet event={ev} onClose={() => setEditingId(null)} />
           }
           const target = targetOf(ev)
           return target ? <EntrySheet target={target} existing={ev} onClose={() => setEditingId(null)} /> : null

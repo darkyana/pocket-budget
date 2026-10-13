@@ -177,7 +177,7 @@ button:disabled {
   margin-bottom: 3px;
 }
 
-/* 节律 2×2 卡片（横向翻页） */
+/* 日常 2×2 卡片（横向翻页） */
 .hscroll {
   display: flex;
   overflow-x: auto;
@@ -209,8 +209,8 @@ button:disabled {
   background: var(--chip);
 }
 
-/* 预算池行 */
-.pool-row {
+/* 预算行 */
+.budget-row {
   display: block;
   width: 100%;
   text-align: left;
@@ -223,17 +223,17 @@ button:disabled {
   color: inherit;
   border-radius: 0;
 }
-.pool-row:last-of-type {
+.budget-row:last-of-type {
   border-bottom: none;
 }
 
-/* 义务小票 */
-.commit-block {
+/* 固定支出小票 */
+.fixed-block {
   padding: 2px 6px 14px;
   font-size: 12px;
   color: var(--ink2);
 }
-.commit-item {
+.fixed-item {
   display: flex;
   justify-content: space-between;
   width: 100%;

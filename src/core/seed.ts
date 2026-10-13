@@ -1,6 +1,6 @@
 import type { Settings } from './types'
 
-/** 首次启动的样例设置：沿用原型 DEFAULTS 的真实感数据；事件从空开始，绝不预埋假流水 */
+/** 首次启动的样例设置：沿用原型 DEFAULTS 的真实感数据；流水从空开始，绝不预埋假数据 */
 export function defaultSettings(now: Date): Settings {
   const weekend = now.getDay() === 0 || now.getDay() === 6
   return {
@@ -21,12 +21,12 @@ export function defaultSettings(now: Date): Settings {
         { name: '其他', expect: 80 },
       ],
     },
-    pools: [
-      { name: '购物', month: 800, weekAllow: 200 },
-      { name: '学习', month: 300, weekAllow: 75 },
-      { name: '娱乐', month: 400, weekAllow: 100 },
+    budgets: [
+      { name: '购物', month: 800 },
+      { name: '学习', month: 300 },
+      { name: '娱乐', month: 400 },
     ],
-    commitments: [
+    fixedExpenses: [
       { name: '阿姨工资', amount: 2600 },
       { name: '狗粮', amount: 420 },
       { name: '房租', amount: 2600 },

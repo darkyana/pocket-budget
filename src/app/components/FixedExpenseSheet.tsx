@@ -6,18 +6,18 @@ import { useApp } from '../store'
 import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
 import { money } from '../format'
-import type { MoneyEvent } from '../../core/types'
+import type { MoneyRecord } from '../../core/types'
 
-/** 编辑义务事件：只开放付款日期与账户（金额随设置走，义务无备注） */
-export function CommitmentSheet({
+/** 编辑固定支出流水：只开放付款日期与账户（金额随设置走，固定支出无备注） */
+export function FixedExpenseSheet({
   event,
   onClose,
 }: {
-  event: Extract<MoneyEvent, { kind: 'commitment' }>
+  event: Extract<MoneyRecord, { kind: 'fixed' }>
   onClose(): void
 }) {
-  const editCommitment = useApp((s) => s.editCommitment)
-  const deleteEvent = useApp((s) => s.deleteEvent)
+  const editFixedExpense = useApp((s) => s.editFixedExpense)
+  const deleteRecord = useApp((s) => s.deleteRecord)
   const accounts = useApp((s) => s.settings.accounts)
   const toast = useToast((s) => s.show)
 
@@ -25,11 +25,11 @@ export function CommitmentSheet({
   const [date, setDate] = useState(() => dayKeyOf(event.ts))
 
   return (
-    <Sheet title={`编辑 · 义务 · ${event.item}`} onClose={onClose}>
+    <Sheet title={`编辑 · 固定支出 · ${event.item}`} onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          editCommitment(event.id, { account, date })
+          editFixedExpense(event.id, { account, date })
           toast('已更新')
           onClose()
         }}
@@ -62,7 +62,7 @@ export function CommitmentSheet({
             label="删除这一条（撤销切换）"
             confirmLabel="确认删除？"
             onConfirm={() => {
-              deleteEvent(event.id)
+              deleteRecord(event.id)
               toast('已删除')
               onClose()
             }}

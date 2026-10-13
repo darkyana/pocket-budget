@@ -25,13 +25,13 @@ export function isSameWeek(a: Date | number, b: Date | number): boolean {
   return startOfWeek(a).getTime() === startOfWeek(b).getTime()
 }
 
-/** 月键 'YYYY-MM'：义务状态按它归属月份 */
+/** 月键 'YYYY-MM'：固定支出状态按它归属月份 */
 export function monthKeyOf(d: Date | number): string {
   const t = new Date(d)
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`
 }
 
-/** 年键 'YYYY'：年付义务的归属周期 */
+/** 年键 'YYYY'：年付固定支出的归属周期 */
 export function yearKeyOf(d: Date | number): string {
   return String(new Date(d).getFullYear())
 }

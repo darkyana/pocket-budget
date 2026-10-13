@@ -5,7 +5,7 @@ import { ConfirmButton } from '../components/ConfirmButton'
 import { FormSheet, type FieldDef } from '../components/FormSheet'
 import { money } from '../format'
 
-type Seg = 'rhythm' | 'commitment' | 'pool'
+type Seg = 'routine' | 'fixed' | 'budget'
 
 interface FormSpec {
   title: string
@@ -19,7 +19,7 @@ export function SettingsPage() {
   const updateSettings = useApp((s) => s.updateSettings)
   const factoryReset = useApp((s) => s.factoryReset)
   const toast = useToast((s) => s.show)
-  const [seg, setSeg] = useState<Seg>('rhythm')
+  const [seg, setSeg] = useState<Seg>('routine')
   const [form, setForm] = useState<FormSpec | null>(null)
 
   const dayTypes = Object.keys(settings.dayPlans)
@@ -30,12 +30,12 @@ export function SettingsPage() {
     return Number.isFinite(n) && n > 0 ? n : null
   }
 
-  /* ---------------- 节律方案 ---------------- */
+  /* ---------------- 日常 ---------------- */
 
   function editBucket(index: number) {
     const b = buckets[index]
     setForm({
-      title: `编辑节律类别（${settings.dayType}）`,
+      title: `编辑日常（${settings.dayType}）`,
       fields: [
         { key: 'name', label: '类别名', type: 'text', initial: b.name },
         { key: 'expect', label: '单日期望（元）', type: 'number', initial: String(b.expect) },
@@ -57,7 +57,7 @@ export function SettingsPage() {
 
   function addBucket() {
     setForm({
-      title: `新增节律类别（${settings.dayType}）`,
+      title: `新增日常（${settings.dayType}）`,
       fields: [
         { key: 'name', label: '类别名', type: 'text', placeholder: '如：咖啡' },
         { key: 'expect', label: '单日期望（元）', type: 'number', placeholder: '如：20' },
@@ -104,17 +104,17 @@ export function SettingsPage() {
     toast(`日型「${name}」已删`)
   }
 
-  /* ---------------- 义务 ---------------- */
+  /* ---------------- 固定支出 ---------------- */
 
   const cycleOptions = [
     { value: 'monthly', label: '每月' },
     { value: 'yearly', label: '每年' },
   ]
 
-  function editCommitment(index: number) {
-    const c = settings.commitments[index]
+  function editFixedExpense(index: number) {
+    const c = settings.fixedExpenses[index]
     setForm({
-      title: '编辑义务',
+      title: '编辑固定支出',
       fields: [
         { key: 'name', label: '名称', type: 'text', initial: c.name },
         { key: 'amount', label: '金额（元）', type: 'number', initial: String(c.amount) },
@@ -128,7 +128,7 @@ export function SettingsPage() {
         }
         const cycle = values.cycle === 'yearly' ? 'yearly' : 'monthly'
         updateSettings((s) => {
-          s.commitments[index] = { name: values.name.trim(), amount, cycle }
+          s.fixedExpenses[index] = { name: values.name.trim(), amount, cycle }
         })
         setForm(null)
         toast('已保存')
@@ -136,9 +136,9 @@ export function SettingsPage() {
     })
   }
 
-  function addCommitment() {
+  function addFixedExpense() {
     setForm({
-      title: '新增义务',
+      title: '新增固定支出',
       fields: [
         { key: 'name', label: '名称', type: 'text', placeholder: '如：狗粮 / 域名' },
         { key: 'amount', label: '金额（元）', type: 'number', placeholder: '如：420' },
@@ -152,7 +152,7 @@ export function SettingsPage() {
         }
         const cycle = values.cycle === 'yearly' ? 'yearly' : 'monthly'
         updateSettings((s) => {
-          s.commitments.push({ name: values.name.trim(), amount, cycle })
+          s.fixedExpenses.push({ name: values.name.trim(), amount, cycle })
         })
         setForm(null)
         toast('已新增')
@@ -160,26 +160,24 @@ export function SettingsPage() {
     })
   }
 
-  /* ---------------- 预算池 ---------------- */
+  /* ---------------- 预算 ---------------- */
 
-  function editPool(index: number) {
-    const p = settings.pools[index]
+  function editBudget(index: number) {
+    const p = settings.budgets[index]
     setForm({
-      title: '编辑预算池',
+      title: '编辑预算',
       fields: [
-        { key: 'name', label: '池名', type: 'text', initial: p.name },
+        { key: 'name', label: '名称', type: 'text', initial: p.name },
         { key: 'month', label: '月预算（元）', type: 'number', initial: String(p.month) },
-        { key: 'weekAllow', label: '每周额度（元）', type: 'number', initial: String(p.weekAllow) },
       ],
       onSubmit: (values) => {
         const month = num(values.month)
-        const weekAllow = num(values.weekAllow)
-        if (!values.name.trim() || month === null || weekAllow === null) {
-          toast('池名、月预算、周额度都要填')
+        if (!values.name.trim() || month === null) {
+          toast('名称和月预算都要填')
           return
         }
         updateSettings((s) => {
-          s.pools[index] = { name: values.name.trim(), month, weekAllow }
+          s.budgets[index] = { name: values.name.trim(), month }
         })
         setForm(null)
         toast('已保存')
@@ -187,23 +185,21 @@ export function SettingsPage() {
     })
   }
 
-  function addPool() {
+  function addBudget() {
     setForm({
-      title: '新增预算池',
+      title: '新增预算',
       fields: [
-        { key: 'name', label: '池名', type: 'text', placeholder: '如：购物' },
+        { key: 'name', label: '名称', type: 'text', placeholder: '如：购物' },
         { key: 'month', label: '月预算（元）', type: 'number', placeholder: '如：800' },
-        { key: 'weekAllow', label: '每周额度（元，常为月/4）', type: 'number', placeholder: '如：200' },
       ],
       onSubmit: (values) => {
         const month = num(values.month)
-        const weekAllow = num(values.weekAllow)
-        if (!values.name.trim() || month === null || weekAllow === null) {
-          toast('池名、月预算、周额度都要填')
+        if (!values.name.trim() || month === null) {
+          toast('名称和月预算都要填')
           return
         }
         updateSettings((s) => {
-          s.pools.push({ name: values.name.trim(), month, weekAllow })
+          s.budgets.push({ name: values.name.trim(), month })
         })
         setForm(null)
         toast('已新增')
@@ -214,13 +210,13 @@ export function SettingsPage() {
   return (
     <>
       <h1>设置</h1>
-      <div className="sub">日型节律方案 · 月义务 · 预算池（随时可调）</div>
+      <div className="sub">日型日常 · 月固定支出 · 预算（随时可调）</div>
       <div className="seg">
         {(
           [
-            ['rhythm', '节律方案'],
-            ['commitment', '义务'],
-            ['pool', '预算池'],
+            ['routine', '日常'],
+            ['fixed', '固定支出'],
+            ['budget', '预算'],
           ] as Array<[Seg, string]>
         ).map(([k, t]) => (
           <button type="button" key={k} className={seg === k ? 'on' : ''} onClick={() => setSeg(k)}>
@@ -229,7 +225,7 @@ export function SettingsPage() {
         ))}
       </div>
 
-      {seg === 'rhythm' && (
+      {seg === 'routine' && (
         <div className="card">
           <div className="row" style={{ marginBottom: 4 }}>
             <b>今天算哪种日子？</b>
@@ -280,20 +276,20 @@ export function SettingsPage() {
           ))}
           <div style={{ marginTop: 10 }}>
             <button type="button" className="btn2" onClick={addBucket}>
-              ＋ 新增节律类别
+              ＋ 新增日常
             </button>
           </div>
         </div>
       )}
 
-      {seg === 'commitment' && (
+      {seg === 'fixed' && (
         <div className="card">
           <div className="small muted" style={{ marginBottom: 6 }}>
             每月 / 每年固定要付的钱（点行改名称、金额、周期）
           </div>
-          {settings.commitments.map((c, i) => (
+          {settings.fixedExpenses.map((c, i) => (
             <div className="setrow" key={`${c.name}-${i}`}>
-              <button type="button" className="setrow-main" onClick={() => editCommitment(i)}>
+              <button type="button" className="setrow-main" onClick={() => editFixedExpense(i)}>
                 {c.name}{' '}
                 <span className="small muted">
                   {money(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
@@ -304,7 +300,7 @@ export function SettingsPage() {
                 confirmLabel="确认删？"
                 onConfirm={() => {
                   updateSettings((s) => {
-                    s.commitments.splice(i, 1)
+                    s.fixedExpenses.splice(i, 1)
                   })
                   toast('已删')
                 }}
@@ -312,24 +308,24 @@ export function SettingsPage() {
             </div>
           ))}
           <div style={{ marginTop: 10 }}>
-            <button type="button" className="btn2" onClick={addCommitment}>
-              ＋ 新增义务
+            <button type="button" className="btn2" onClick={addFixedExpense}>
+              ＋ 新增固定支出
             </button>
           </div>
         </div>
       )}
 
-      {seg === 'pool' && (
+      {seg === 'budget' && (
         <div className="card">
           <div className="small muted" style={{ marginBottom: 6 }}>
-            预算池（点行改月预算 / 周额度）
+            预算（点行改月预算 / 周额度）
           </div>
-          {settings.pools.map((p, i) => (
+          {settings.budgets.map((p, i) => (
             <div className="setrow" key={`${p.name}-${i}`}>
-              <button type="button" className="setrow-main" onClick={() => editPool(i)}>
+              <button type="button" className="setrow-main" onClick={() => editBudget(i)}>
                 {p.name}{' '}
                 <span className="small muted">
-                  月 {money(p.month)} · 周 {money(p.weekAllow)}
+                  月 {money(p.month)} · 周 {money(p.month / 4)}（自动）
                 </span>
               </button>
               <ConfirmButton
@@ -337,7 +333,7 @@ export function SettingsPage() {
                 confirmLabel="确认删？"
                 onConfirm={() => {
                   updateSettings((s) => {
-                    s.pools.splice(i, 1)
+                    s.budgets.splice(i, 1)
                   })
                   toast('已删（历史记录保留在流水里）')
                 }}
@@ -345,8 +341,8 @@ export function SettingsPage() {
             </div>
           ))}
           <div style={{ marginTop: 10 }}>
-            <button type="button" className="btn2" onClick={addPool}>
-              ＋ 新增预算池
+            <button type="button" className="btn2" onClick={addBudget}>
+              ＋ 新增预算
             </button>
           </div>
         </div>

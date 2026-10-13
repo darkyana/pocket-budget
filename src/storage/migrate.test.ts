@@ -1,47 +1,75 @@
 import { describe, expect, it } from 'vitest'
 import { freshState, migrate } from './migrate'
-import { SCHEMA_VERSION, type MoneyEvent } from '../core/types'
 
-/** 构造一份 v1 老数据：义务事件还叫 monthKey（类型按 unknown 传，模拟磁盘上的旧结构） */
-function v1State(): unknown {
-  const base = freshState()
-  return {
-    ...base,
-    schemaVersion: 1,
-    events: [
-      { id: 'a', ts: 1, kind: 'rhythm', category: '三餐', amount: 30, note: '', account: '现金' },
-      { id: 'b', ts: 2, kind: 'commitment', item: '狗粮', amount: 420, monthKey: '2026-10', paid: true },
-    ],
-  }
+/** 构造一份 v1 老数据：固定支出流水还叫 monthKey（类型按 unknown 传，模拟磁盘上的旧结构） */
+const v1 = {
+  schemaVersion: 1,
+  settings: {
+    dayType: '工作日',
+    dayPlans: {},
+    pools: [{ name: '购物', month: 800, weekAllow: 200 }],
+    commitments: [{ name: '狗粮', amount: 420 }],
+    accounts: [],
+  },
+  events: [
+    { id: 'a', ts: 1, kind: 'rhythm', category: '咖啡', amount: 20, note: '' },
+    { id: 'b', ts: 2, kind: 'pool', pool: '购物', dir: 'out', amount: 100, note: '' },
+    { id: 'c', ts: 3, kind: 'commitment', item: '狗粮', amount: 420, monthKey: '2026-09', paid: true },
+    { id: 'd', ts: 4, kind: 'transfer', from: '现金', to: '工资卡', amount: 500, note: '' },
+  ],
 }
 
 describe('migrate', () => {
-  it('v1 → v2：义务事件 monthKey 搬到 periodKey，值不变，字段不残留；其他事件原样', () => {
-    const out = migrate(v1State())
-    expect(out.schemaVersion).toBe(SCHEMA_VERSION)
-    const c = out.events.find((e) => e.kind === 'commitment') as Extract<MoneyEvent, { kind: 'commitment' }>
-    expect(c.periodKey).toBe('2026-10')
-    expect('monthKey' in c).toBe(false)
-    expect(c.paid).toBe(true)
-    expect(c.amount).toBe(420)
-    const r = out.events.find((e) => e.kind === 'rhythm')
-    expect(r).toBeDefined()
+  it('v1 → v3：monthKey 搬到 periodKey，kind 值与设置键统一到新术语，weekAllow 丢弃', () => {
+    const s = migrate(v1)
+    expect(s.schemaVersion).toBe(3)
+    expect(s.records.map((r) => r.kind)).toEqual(['routine', 'budget', 'fixed', 'transfer'])
+    const b = s.records[1] as any
+    expect(b.budget).toBe('购物')
+    expect(b.pool).toBeUndefined()
+    const f = s.records[2] as any
+    expect(f.periodKey).toBe('2026-09')
+    expect(f.monthKey).toBeUndefined()
+    expect(s.settings.budgets).toEqual([{ name: '购物', month: 800 }])
+    expect(s.settings.fixedExpenses).toEqual([{ name: '狗粮', amount: 420 }])
+    expect((s.settings as any).pools).toBeUndefined()
+    expect((s.settings as any).commitments).toBeUndefined()
   })
 
-  it('v2 数据原样通过（同一引用）', () => {
-    const v2 = freshState()
-    expect(migrate(v2)).toBe(v2)
+  it('v2 → v3：periodKey 保留，kind 与设置键统一', () => {
+    const v2 = {
+      ...v1,
+      schemaVersion: 2,
+      events: [
+        { id: 'c', ts: 3, kind: 'commitment', item: '狗粮', amount: 420, periodKey: '2026-09', paid: true },
+        { id: 'b', ts: 2, kind: 'pool', pool: '购物', dir: 'in', amount: 30, note: '' },
+      ],
+    }
+    const s = migrate(v2)
+    expect(s.schemaVersion).toBe(3)
+    expect(s.records[0].kind).toBe('fixed')
+    expect((s.records[0] as any).periodKey).toBe('2026-09')
+    expect(s.records[1].kind).toBe('budget')
+    expect((s.records[1] as any).budget).toBe('购物')
+    expect(s.settings.budgets).toEqual([{ name: '购物', month: 800 }])
+    expect(s.settings.fixedExpenses).toEqual([{ name: '狗粮', amount: 420 }])
   })
 
-  it('来自更新版本的数据回退出厂', () => {
-    const out = migrate({ schemaVersion: 99, settings: freshState().settings, events: [] })
-    expect(out.schemaVersion).toBe(SCHEMA_VERSION)
-    expect(out.events).toEqual([])
+  it('v3 数据原样通过（records 键），不重复迁移', () => {
+    const s = migrate(freshState())
+    expect(s.schemaVersion).toBe(3)
+    expect(s.records).toEqual([])
   })
 
-  it('非法数据回退出厂', () => {
-    expect(migrate(null).events).toEqual([])
-    expect(migrate('垃圾').events).toEqual([])
-    expect(migrate({ schemaVersion: 1, events: [] }).events).toEqual([]) // 缺 settings
+  it('损坏数据回退出厂', () => {
+    expect(migrate(null)).toEqual(freshState())
+    expect(migrate({ schemaVersion: 99, settings: {}, events: [] }).schemaVersion).toBe(3)
+    expect(migrate({ schemaVersion: 2, settings: null, events: [] })).toEqual(freshState())
+  })
+
+  it('迁移不丢流水（铁律）：旧事件逐条都有对应新流水', () => {
+    const s = migrate(v1)
+    expect(s.records).toHaveLength(v1.events.length)
+    expect(s.records.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd'])
   })
 })
