@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
 import { ConfirmButton } from './ConfirmButton'
+import { AccountPicker } from './AccountPicker'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
@@ -179,23 +180,21 @@ export function EntrySheet({
           <>
             <div className="field-row">
               <label htmlFor="ef-from">从哪个账户</label>
-              <input
+              <AccountPicker
                 id="ef-from"
-                className="field"
-                list="account-list"
                 value={from}
-                onChange={(e) => setFrom(e.target.value)}
+                onChange={setFrom}
+                accounts={accounts}
                 placeholder="如：现金"
               />
             </div>
             <div className="field-row">
               <label htmlFor="ef-to">转到哪个账户</label>
-              <input
+              <AccountPicker
                 id="ef-to"
-                className="field"
-                list="account-list"
                 value={to}
-                onChange={(e) => setTo(e.target.value)}
+                onChange={setTo}
+                accounts={accounts}
                 placeholder="如：工资卡"
               />
             </div>
@@ -204,12 +203,11 @@ export function EntrySheet({
         {target.type !== 'transfer' && (
           <div className="field-row">
             <label htmlFor="ef-account">用的哪个账户（可空）</label>
-            <input
+            <AccountPicker
               id="ef-account"
-              className="field"
-              list="account-list"
               value={account}
-              onChange={(e) => setAccount(e.target.value)}
+              onChange={setAccount}
+              accounts={accounts}
               placeholder="如：现金 / 微信"
             />
           </div>
@@ -243,11 +241,6 @@ export function EntrySheet({
             onChange={(e) => setDate(e.target.value)}
           />
         </div>
-        <datalist id="account-list">
-          {accounts.map((a) => (
-            <option key={a} value={a} />
-          ))}
-        </datalist>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消

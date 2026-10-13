@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
 import { ConfirmButton } from './ConfirmButton'
+import { AccountPicker } from './AccountPicker'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
@@ -38,12 +39,11 @@ export function CommitmentSheet({
         </div>
         <div className="field-row">
           <label htmlFor="cs-account">付款账户（可空）</label>
-          <input
+          <AccountPicker
             id="cs-account"
-            className="field"
-            list="commit-account-list"
             value={account}
-            onChange={(e) => setAccount(e.target.value)}
+            onChange={setAccount}
+            accounts={accounts}
             placeholder="如：现金 / 微信"
           />
         </div>
@@ -51,11 +51,6 @@ export function CommitmentSheet({
           <label htmlFor="cs-date">付款日期</label>
           <input id="cs-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <datalist id="commit-account-list">
-          {accounts.map((a) => (
-            <option key={a} value={a} />
-          ))}
-        </datalist>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消
