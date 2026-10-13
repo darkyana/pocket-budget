@@ -315,14 +315,9 @@ button:disabled {
 .day-head {
   font-size: 12px;
   color: var(--ink2);
-  margin: 18px 0 6px;
+  margin: 0 0 6px;
   display: flex;
   justify-content: space-between;
-}
-/* 只有列表第一组的日期去掉上边距。注意：每组日期都有单独的包裹 div，
-   .day-head:first-child 会误命中每一组（历史 bug：组间距从未生效过） */
-.card > div:first-child .day-head {
-  margin-top: 0;
 }
 
 /* 分段器（设置页 / 支出回血） */

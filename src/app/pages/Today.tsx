@@ -38,15 +38,15 @@ export function Today() {
 
       <div className="card">
         <div className="row">
-          <b>日常</b>
-          <span className="small">
-            <b style={{ fontSize: 15, color: routine.left < 0 ? 'var(--over)' : 'var(--accent)' }}>
-              {routine.left >= 0 ? `还能花 ${money(routine.left)}` : `超 ${money(-routine.left)}`}
-            </b>{' '}
-            <span className="muted">
-              / 期望 {money(routine.totalExpect)} · 已花 {money(routine.totalSpent)}
+          <span>
+            <b>日常</b>{' '}
+            <span className="small muted">
+              今日 {money(routine.totalSpent)}/{money(routine.totalExpect)}
             </span>
           </span>
+          <b style={{ fontSize: 15, color: routine.left < 0 ? 'var(--over)' : 'var(--accent)' }}>
+            {routine.left >= 0 ? `还能花 ${money(routine.left)}` : `超 ${money(-routine.left)}`}
+          </b>
         </div>
         {routine.buckets.length > 0 ? (
           <div className="hscroll">
@@ -91,9 +91,8 @@ export function Today() {
       </div>
 
       <div className="card">
-        <div className="row" style={{ marginBottom: 6 }}>
+        <div style={{ marginBottom: 6 }}>
           <b>预算</b>
-          <span className="small muted">还能花 · 按剩余排序</span>
         </div>
         {budgets.length > 0 ? (
           budgets.map((p) => (
@@ -104,10 +103,15 @@ export function Today() {
               onClick={() => setEntry({ type: 'budget', budget: p.name })}
             >
               <div className="row">
-                <span>{p.name}</span>
-                <span className="small">
-                  <b>{money(p.weekLeft)}</b> <span className="muted">/ 本周 {money(p.weekBudget)}</span>
+                <span>
+                  {p.name}{' '}
+                  <span className="small muted">
+                    本周 {money(p.weekSpent)}/{money(p.weekBudget)}
+                  </span>
                 </span>
+                <b className="small" style={{ color: p.weekLeft < p.weekBudget * 0.2 ? 'var(--warn)' : 'var(--accent)' }}>
+                  还能花 {money(p.weekLeft)}
+                </b>
               </div>
               <div className="bar">
                 <i
@@ -118,7 +122,7 @@ export function Today() {
                 />
               </div>
               <div className="small muted" style={{ marginTop: 4 }}>
-                月 {money(p.monthSpent)}/{money(p.month)} · 推算月底{' '}
+                月 {money(p.monthSpent)}/{money(p.month)} · 按日均推算{' '}
                 <b style={{ color: p.projection > p.month * 1.05 ? 'var(--over)' : 'var(--ok)' }}>
                   {money(p.projection)}
                 </b>

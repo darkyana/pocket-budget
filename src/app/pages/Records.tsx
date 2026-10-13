@@ -150,42 +150,42 @@ export function Records() {
         <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
           {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
         </button>
-        <button type="button" className="btn2" onClick={() => setDataSheet(true)}>
+        <button type="button" className="btn2" style={{ marginLeft: 'auto' }} onClick={() => setDataSheet(true)}>
           数据管理
         </button>
       </div>
-      <div className="card">
-        {groups.length > 0 ? (
-          groups.map((g) => (
-            <div key={g.dayKey}>
-              <div className="day-head">
-                <span>{dayLabel(g.dayKey, now)}</span>
-                <span>支出 {moneyExact(g.outflow)}</span>
-              </div>
-              {g.records.map((e) => {
-                const d = describe(e)
-                return (
-                  <button type="button" className="feed-item" key={e.id} onClick={() => setEditingId(e.id)}>
-                    <span>
-                      {d.label}
-                      {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
-                    </span>
-                    <span className={amountClass(e)} style={{ whiteSpace: 'nowrap' }}>
-                      {d.amount}
-                    </span>
-                  </button>
-                )
-              })}
+      {groups.length > 0 ? (
+        groups.map((g) => (
+          <div className="card" key={g.dayKey}>
+            <div className="day-head">
+              <span>{dayLabel(g.dayKey, now)}</span>
+              <span>支出 {moneyExact(g.outflow)}</span>
             </div>
-          ))
-        ) : (
+            {g.records.map((e) => {
+              const d = describe(e)
+              return (
+                <button type="button" className="feed-item" key={e.id} onClick={() => setEditingId(e.id)}>
+                  <span>
+                    {d.label}
+                    {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
+                  </span>
+                  <span className={amountClass(e)} style={{ whiteSpace: 'nowrap' }}>
+                    {d.amount}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ))
+      ) : (
+        <div className="card">
           <div className="small muted" style={{ padding: '10px 0' }}>
             {records.length === 0
               ? '还没有记录。回「今日」页点卡片 / 预算 / 固定支出即可记。'
               : '没有符合条件的记录——试试清除筛选。'}
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="small muted" style={{ textAlign: 'center' }}>
         点一笔可编辑；日常/预算可互转改类（先批量记、回头分类）
       </div>
