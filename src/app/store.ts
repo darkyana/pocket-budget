@@ -36,8 +36,10 @@ interface AppState {
   addPoolEntry(pool: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
   toggleCommitment(name: string): void
   addTransfer(from: string, to: string, amount: number, note: string, date: string): void
-  /** 编辑一笔：金额/备注/账户/日期覆盖原事件；日期变化时保留原时分秒。义务事件不可编辑 */
+  /** 编辑一笔：金额/备注/账户/日期覆盖原事件；日期变化时保留原时分秒。义务事件用 editCommitment */
   editEvent(id: string, patch: { amount: number; note: string; account: string; date: string }): void
+  /** 编辑义务事件：只开放付款日期与账户（金额随设置走）。日期变化时按该义务当前周期重算 periodKey */
+  editCommitment(id: string, patch: { account: string; date: string }): void
   deleteEvent(id: string): void
   /** 设置就地修改：给一个可变的深拷贝，改完统一落盘 */
   updateSettings(mutate: (draft: Settings) => void): void
@@ -127,6 +129,25 @@ export const useApp = create<AppState>()((set, get) => ({
           note: patch.note,
           ts: timestampOf(patch.date, new Date(e.ts)), // 日期变化时保留原时分秒
           ...(e.kind === 'transfer' ? {} : { account: acct || undefined }),
+        }
+      }),
+    }))
+    persist(get())
+  },
+
+  editCommitment(id, patch) {
+    set((s) => ({
+      events: s.events.map((e): MoneyEvent => {
+        if (e.id !== id || e.kind !== 'commitment') return e
+        const ts = timestampOf(patch.date, new Date(e.ts)) // 日期变化时保留原时分秒
+        // 周期键跟新日期走：补记到上月的付款归上月，本月回到未付
+        const cycle = s.settings.commitments.find((c) => c.name === e.item)?.cycle ?? 'monthly'
+        const acct = patch.account.trim()
+        return {
+          ...e,
+          ts,
+          periodKey: commitmentPeriodKey(new Date(ts), cycle),
+          account: acct || undefined,
         }
       }),
     }))

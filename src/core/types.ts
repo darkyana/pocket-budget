@@ -50,7 +50,7 @@ export interface Settings {
 export type MoneyEvent =
   | { id: string; ts: number; kind: 'rhythm'; category: string; amount: number; note: string; account?: string }
   | { id: string; ts: number; kind: 'pool'; pool: string; dir: 'out' | 'in'; amount: number; note: string; account?: string }
-  | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; periodKey: string; paid: boolean }
+  | { id: string; ts: number; kind: 'commitment'; item: string; amount: number; periodKey: string; paid: boolean; account?: string }
   | { id: string; ts: number; kind: 'transfer'; from: string; to: string; amount: number; note: string }
 
 export interface PersistedState {

@@ -5,6 +5,7 @@ import { downloadVoucherFile } from '../../storage/voucher'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
+import { CommitmentSheet } from '../components/CommitmentSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { money } from '../format'
 
@@ -18,13 +19,16 @@ function describe(e: MoneyEvent): { label: string; amount: string } {
         amount: `${e.dir === 'in' ? '+' : ''}${money(e.amount)}`,
       }
     case 'commitment':
-      return { label: `义务 · ${e.item} ${e.paid ? '标记已付' : '改回未付'}`, amount: money(e.amount) }
+      return {
+        label: `义务 · ${e.item} ${e.paid ? '标记已付' : '改回未付'}${e.account ? ` · ${e.account}` : ''}`,
+        amount: money(e.amount),
+      }
     case 'transfer':
       return { label: `走账 · ${e.from} → ${e.to}`, amount: money(e.amount) }
   }
 }
 
-/** 编辑入口只对消费/走账开放；义务事件的「编辑」是再点一次切换 */
+/** 消费/走账用通用记账弹层编辑；义务用专用弹层（日期+账户） */
 function targetOf(e: MoneyEvent): EntryTarget | null {
   if (e.kind === 'rhythm') return { type: 'rhythm', category: e.category }
   if (e.kind === 'pool') return { type: 'pool', pool: e.pool }
@@ -45,7 +49,7 @@ export function Records() {
   const importVoucher = useApp((s) => s.importVoucher)
   const toast = useToast((s) => s.show)
   const fileRef = useRef<HTMLInputElement>(null)
-  const [editing, setEditing] = useState<{ id: string; target: EntryTarget } | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const groups = groupByDay(events)
   const now = new Date()
@@ -108,18 +112,8 @@ export function Records() {
               </div>
               {g.events.map((e) => {
                 const d = describe(e)
-                const target = targetOf(e)
                 return (
-                  <button
-                    type="button"
-                    className="feed-item"
-                    key={e.id}
-                    onClick={() =>
-                      target
-                        ? setEditing({ id: e.id, target })
-                        : toast('义务状态请在今日页点那一条切换')
-                    }
-                  >
+                  <button type="button" className="feed-item" key={e.id} onClick={() => setEditingId(e.id)}>
                     <span>
                       {d.label}
                       {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
@@ -140,15 +134,18 @@ export function Records() {
         )}
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>
-        点一笔可编辑（金额 / 账户 / 备注 / 日期）或删除
+        点一笔可编辑（义务可改付款日期 / 账户）或删除
       </div>
-      {editing && (
-        <EntrySheet
-          target={editing.target}
-          existing={events.find((e) => e.id === editing.id)}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {editingId &&
+        (() => {
+          const ev = events.find((x) => x.id === editingId)
+          if (!ev) return null
+          if (ev.kind === 'commitment') {
+            return <CommitmentSheet event={ev} onClose={() => setEditingId(null)} />
+          }
+          const target = targetOf(ev)
+          return target ? <EntrySheet target={target} existing={ev} onClose={() => setEditingId(null)} /> : null
+        })()}
     </>
   )
 }
