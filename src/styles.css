@@ -172,9 +172,9 @@ button:disabled {
   font-weight: 700;
 }
 .tabs button .ic {
-  display: block;
-  font-size: 20px;
-  margin-bottom: 2px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3px;
 }
 
 /* 节律 2×2 卡片（横向翻页） */

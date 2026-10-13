@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Receipt, Settings, Sun, type LucideIcon } from 'lucide-react'
 import { useApp } from './app/store'
 import { useToast } from './app/toast'
 import { Today } from './app/pages/Today'
@@ -6,10 +7,10 @@ import { Records } from './app/pages/Records'
 import { SettingsPage } from './app/pages/Settings'
 
 type Tab = 'today' | 'records' | 'settings'
-const TABS: Array<[Tab, string, string]> = [
-  ['today', '🥣', '今日'],
-  ['records', '🧾', '流水'],
-  ['settings', '⚙️', '设置'],
+const TABS: Array<{ key: Tab; Icon: LucideIcon; label: string }> = [
+  { key: 'today', Icon: Sun, label: '今日' },
+  { key: 'records', Icon: Receipt, label: '流水' },
+  { key: 'settings', Icon: Settings, label: '设置' },
 ]
 
 export function App() {
@@ -32,9 +33,11 @@ export function App() {
         {tab === 'settings' && <SettingsPage />}
       </div>
       <nav className="tabs">
-        {TABS.map(([k, ic, label]) => (
-          <button type="button" key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
-            <span className="ic">{ic}</span>
+        {TABS.map(({ key, Icon, label }) => (
+          <button type="button" key={key} className={tab === key ? 'on' : ''} onClick={() => setTab(key)}>
+            <span className="ic">
+              <Icon size={22} strokeWidth={2} />
+            </span>
             {label}
           </button>
         ))}
