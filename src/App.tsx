@@ -13,6 +13,13 @@ const TABS: Array<{ key: Tab; Icon: LucideIcon; label: string }> = [
   { key: 'settings', Icon: Settings, label: '设置' },
 ]
 
+/** 构建时注入的代码最近更新时间（vite define，见 vite.config.ts） */
+declare const __CODE_UPDATED_AT__: number
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const updatedAt = new Date(__CODE_UPDATED_AT__)
+const updatedLabel = `${pad(updatedAt.getMonth() + 1)}/${pad(updatedAt.getDate())} ${pad(updatedAt.getHours())}:${pad(updatedAt.getMinutes())}`
+
 export function App() {
   const ready = useApp((s) => s.ready)
   const init = useApp((s) => s.init)
@@ -26,7 +33,7 @@ export function App() {
   if (!ready) return null
   return (
     <div className="phone">
-      <span className="expe-tag">实验版 · 数据在本机</span>
+      <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>
       <div>
         {tab === 'today' && <Today />}
         {tab === 'records' && <Records />}

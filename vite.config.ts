@@ -1,11 +1,30 @@
 /// <reference types="vitest/config" />
+import { execSync } from 'node:child_process'
+import { readdirSync, statSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** 代码最近更新时间（ms）：git 最后提交；无 git 时退回 src 下最新的文件改动时间 */
+function codeUpdatedAt(): number {
+  try {
+    return Number(execSync('git log -1 --format=%ct').toString().trim()) * 1000
+  } catch {
+    let newest = 0
+    for (const f of readdirSync('src', { recursive: true })) {
+      const st = statSync(`src/${f}`)
+      if (st.isFile()) newest = Math.max(newest, st.mtimeMs)
+    }
+    return newest
+  }
+}
+
 // 本地 dev 用 '/'；GitHub Pages 构建时通过 BASE_URL=/pocket-budget/ 注入
 export default defineConfig({
   base: process.env.BASE_URL || '/',
+  define: {
+    __CODE_UPDATED_AT__: JSON.stringify(codeUpdatedAt()),
+  },
   plugins: [
     react(),
     VitePWA({
