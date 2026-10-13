@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type ExpenseCycle, type MoneyRecord, type PersistedState, type Settings } from '../core/types'
-import { fixedExpensePaid, expensePeriodKey, withAccount } from '../core/derive'
+import { fixedExpensePaid, expensePeriodKey, syncedDayType, withAccount } from '../core/derive'
 import { timestampOf } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
@@ -75,7 +75,8 @@ export const useApp = create<AppState>()((set, get) => ({
   async init() {
     const state = await loadState()
     await requestPersistence()
-    set({ ready: true, settings: state.settings, records: state.records })
+    // 启动对齐日型：清掉过期的手动指定，跨天/跨假期后「今天」自动回到日历推断
+    set({ ready: true, settings: syncedDayType(state.settings, new Date()), records: state.records })
   },
 
   addRhythm(category, amount, note, account, date) {

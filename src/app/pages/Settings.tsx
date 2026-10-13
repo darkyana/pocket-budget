@@ -1,4 +1,6 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
+import { todayDayType, monthQuickCalc } from '../../core/derive'
+import { dayKeyOf } from '../../core/time'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
@@ -23,7 +25,9 @@ export function SettingsPage() {
   const [form, setForm] = useState<FormSpec | null>(null)
 
   const dayTypes = Object.keys(settings.dayPlans)
-  const buckets = settings.dayPlans[settings.dayType] ?? []
+  /** 今日生效的日型：默认按日历自动（周末/法定节假日），点选可覆盖当天 */
+  const effDayType = todayDayType(settings, new Date())
+  const buckets = settings.dayPlans[effDayType] ?? []
 
   const num = (v: string | undefined): number | null => {
     const n = Number.parseFloat(v ?? '')
@@ -35,7 +39,7 @@ export function SettingsPage() {
   function editBucket(index: number) {
     const b = buckets[index]
     setForm({
-      title: `编辑日常（${settings.dayType}）`,
+      title: `编辑日常（${effDayType}）`,
       fields: [
         { key: 'name', label: '类别名', type: 'text', initial: b.name },
         { key: 'expect', label: '单日期望（元）', type: 'number', initial: String(b.expect) },
@@ -57,7 +61,7 @@ export function SettingsPage() {
 
   function addBucket() {
     setForm({
-      title: `新增日常（${settings.dayType}）`,
+      title: `新增日常（${effDayType}）`,
       fields: [
         { key: 'name', label: '类别名', type: 'text', placeholder: '如：咖啡' },
         { key: 'expect', label: '单日期望（元）', type: 'number', placeholder: '如：20' },
@@ -95,13 +99,6 @@ export function SettingsPage() {
         toast(`日型「${name}」已建并切换`)
       },
     })
-  }
-
-  function delDayType(name: string) {
-    updateSettings((s) => {
-      delete s.dayPlans[name]
-    })
-    toast(`日型「${name}」已删`)
   }
 
   /* ---------------- 固定支出 ---------------- */
@@ -210,13 +207,13 @@ export function SettingsPage() {
   return (
     <>
       <h1>设置</h1>
-      <div className="sub">日型日常 · 月固定支出 · 预算（随时可调）</div>
+      <div className="sub">日型日常 · 预算 · 固定支出（随时可调）</div>
       <div className="seg">
         {(
           [
             ['routine', '日常'],
-            ['fixed', '固定支出'],
             ['budget', '预算'],
+            ['fixed', '固定支出'],
           ] as Array<[Seg, string]>
         ).map(([k, t]) => (
           <button type="button" key={k} className={seg === k ? 'on' : ''} onClick={() => setSeg(k)}>
@@ -232,30 +229,27 @@ export function SettingsPage() {
           </div>
           <div className="chips">
             {dayTypes.map((name) => (
-              <Fragment key={name}>
-                <button
-                  type="button"
-                  className={name === settings.dayType ? 'chip on' : 'chip'}
-                  onClick={() => {
-                    updateSettings((s) => {
-                      s.dayType = name
-                    })
-                    toast(`日型切到：${name}`)
-                  }}
-                >
-                  {name}
-                </button>
-                {dayTypes.length > 1 && name !== settings.dayType ? (
-                  <ConfirmButton label="×" confirmLabel="删？" className="chip-x" onConfirm={() => delDayType(name)} />
-                ) : null}
-              </Fragment>
+              <button
+                type="button"
+                key={name}
+                className={name === effDayType ? 'chip on' : 'chip'}
+                onClick={() => {
+                  updateSettings((s) => {
+                    s.dayType = name
+                    s.dayTypeSetFor = dayKeyOf(new Date()) // 点选只覆盖今天，明天回到自动
+                  })
+                  toast(`日型切到：${name}（今天）`)
+                }}
+              >
+                {name}
+              </button>
             ))}
             <button type="button" className="btn2" onClick={addDayType}>
               ＋ 日型
             </button>
           </div>
           <div className="small muted" style={{ marginBottom: 6 }}>
-            当前：{settings.dayType} · 每类金额 = 该日型的单日期望
+            当前：{effDayType} · 按周末与法定节假日自动选，点选只改今天
           </div>
           {buckets.map((b, i) => (
             <div className="setrow" key={`${b.name}-${i}`}>
@@ -347,6 +341,61 @@ export function SettingsPage() {
           </div>
         </div>
       )}
+
+      <div className="card">
+        <div className="row" style={{ marginBottom: 6 }}>
+          <b>本月速算</b>
+          <span className="small muted">按当前设置与日历推算</span>
+        </div>
+        {(() => {
+          const qc = monthQuickCalc(settings, new Date())
+          return (
+            <table className="quick-table">
+              <thead>
+                <tr>
+                  <th>项目</th>
+                  <th>构成</th>
+                  <th className="num">金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>日常</td>
+                  <td className="muted">
+                    工作日 {qc.workDays} 天 × {money(qc.workExpect)} + 休息日 {qc.restDays} 天 × {money(qc.restExpect)}
+                  </td>
+                  <td className="num">{money(qc.routineTotal)}</td>
+                </tr>
+                <tr>
+                  <td>预算</td>
+                  <td className="muted">{qc.budgetCount} 项月额度</td>
+                  <td className="num">{money(qc.budgetTotal)}</td>
+                </tr>
+                <tr>
+                  <td>固定支出 · 月付</td>
+                  <td className="muted">{qc.fixedMonthlyCount} 项</td>
+                  <td className="num">{money(qc.fixedMonthlyTotal)}</td>
+                </tr>
+                <tr>
+                  <td>固定支出 · 年付</td>
+                  <td className="muted">
+                    {qc.fixedYearlyCount} 项共 {money(qc.fixedYearlyTotal)}（÷12 月摊）
+                  </td>
+                  <td className="num">{money(qc.fixedYearlyAmortized)}</td>
+                </tr>
+                <tr className="sum">
+                  <td>本月合计</td>
+                  <td className="muted">日常 + 预算 + 固定</td>
+                  <td className="num">{money(qc.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          )
+        })()}
+        <div className="small muted" style={{ marginTop: 8 }}>
+          休息日 = 周末与法定节假日（调休上班除外）；自定义日型与当天的手动点选不计入速算
+        </div>
+      </div>
 
       <div style={{ marginTop: 14, textAlign: 'center' }}>
         <ConfirmButton

@@ -2,8 +2,101 @@
  * 派生层：从流水 + 设置推导出所有视图数字。纯函数，无 IO 无 DOM。
  * 这里算错的数字会毁掉对工具的信任，所以本文件被 time.test / derive.test 盯着。
  */
-import type { ExpenseCycle, MoneyRecord, Settings } from './types'
-import { dayKeyOf, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
+import type { DayTypeName, ExpenseCycle, MoneyRecord, Settings } from './types'
+import { dayKeyOf, daysInMonth, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
+import { isRestDay } from './holidays'
+
+/* ---------------- 日型：推断与生效 ---------------- */
+
+/** 按日历自动推断日型：休息日（周末/法定节假日，调休上班除外）→ 休息型，否则工作型 */
+export function autoDayType(now: Date, dayTypes: DayTypeName[]): DayTypeName {
+  const rest = dayTypes.includes('周末日') ? '周末日' : (dayTypes.find((t) => t !== '工作日') ?? dayTypes[0] ?? '工作日')
+  const work = dayTypes.includes('工作日') ? '工作日' : (dayTypes[0] ?? '工作日')
+  return isRestDay(now) ? rest : work
+}
+
+/** 今日生效的日型：当天手动指定优先（指定的类型还得存在），否则按日历推断 */
+export function todayDayType(settings: Settings, now: Date): DayTypeName {
+  if (settings.dayTypeSetFor === dayKeyOf(now) && settings.dayPlans[settings.dayType]) return settings.dayType
+  return autoDayType(now, Object.keys(settings.dayPlans))
+}
+
+/** 启动时对齐落库的 dayType：清掉过期的手动指定，使设置快照与派生结果一致（导出/对账友好） */
+export function syncedDayType(settings: Settings, now: Date): Settings {
+  const eff = todayDayType(settings, now)
+  const stale = settings.dayTypeSetFor !== undefined && settings.dayTypeSetFor !== dayKeyOf(now)
+  if (settings.dayType === eff && !stale) return settings
+  return { ...settings, dayType: eff, dayTypeSetFor: stale ? undefined : settings.dayTypeSetFor }
+}
+
+/* ---------------- 本月速算：按设置 + 日历的静态估算 ---------------- */
+
+export interface MonthQuickCalc {
+  /** 本月按日历推断的工作日 / 休息日天数（调休上班的周末算工作日） */
+  workDays: number
+  restDays: number
+  /** 两种日型的单日期望合计（明细展示用） */
+  workExpect: number
+  restExpect: number
+  /** 日常部分 = 逐日按日型累加期望 */
+  routineTotal: number
+  budgetCount: number
+  budgetTotal: number
+  fixedMonthlyCount: number
+  fixedMonthlyTotal: number
+  fixedYearlyCount: number
+  fixedYearlyTotal: number
+  /** 年付合计 ÷12 的月摊值 */
+  fixedYearlyAmortized: number
+  total: number
+}
+
+/**
+ * 本月速算：不动流水，只按当前设置 + 本月日历静态推算「这个月按计划会花多少」。
+ * 逐日用 autoDayType 推断（含法定节假日与调休）；自定义日型与当天的手动点选不计入。
+ */
+export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
+  const dayTypes = Object.keys(settings.dayPlans)
+  const days = daysInMonth(now)
+  let workDays = 0
+  let restDays = 0
+  let routineTotal = 0
+  let workExpect = 0
+  let restExpect = 0
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(now.getFullYear(), now.getMonth(), d)
+    const expect = (settings.dayPlans[autoDayType(date, dayTypes)] ?? []).reduce((s, b) => s + b.expect, 0)
+    if (isRestDay(date)) {
+      restDays++
+      restExpect = expect
+    } else {
+      workDays++
+      workExpect = expect
+    }
+    routineTotal += expect
+  }
+  const budgetTotal = settings.budgets.reduce((s, b) => s + b.month, 0)
+  const monthly = settings.fixedExpenses.filter((c) => (c.cycle ?? 'monthly') === 'monthly')
+  const yearly = settings.fixedExpenses.filter((c) => c.cycle === 'yearly')
+  const fixedMonthlyTotal = monthly.reduce((s, c) => s + c.amount, 0)
+  const fixedYearlyTotal = yearly.reduce((s, c) => s + c.amount, 0)
+  const fixedYearlyAmortized = fixedYearlyTotal / 12
+  return {
+    workDays,
+    restDays,
+    workExpect,
+    restExpect,
+    routineTotal,
+    budgetCount: settings.budgets.length,
+    budgetTotal,
+    fixedMonthlyCount: monthly.length,
+    fixedMonthlyTotal,
+    fixedYearlyCount: yearly.length,
+    fixedYearlyTotal,
+    fixedYearlyAmortized,
+    total: routineTotal + budgetTotal + fixedMonthlyTotal + fixedYearlyAmortized,
+  }
+}
 
 /* ---------------- 日常：今日 ---------------- */
 
@@ -15,7 +108,7 @@ export interface RoutineView {
 }
 
 export function routineToday(records: MoneyRecord[], settings: Settings, now: Date) {
-  const buckets: RoutineView[] = (settings.dayPlans[settings.dayType] ?? []).map((b) => {
+  const buckets: RoutineView[] = (settings.dayPlans[todayDayType(settings, now)] ?? []).map((b) => {
     const spent = records.reduce((sum, e) => {
       return e.kind === 'routine' && e.category === b.name && isSameDay(e.ts, now) ? sum + e.amount : sum
     }, 0)

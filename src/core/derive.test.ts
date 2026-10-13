@@ -6,6 +6,7 @@ import {
   dayLabel,
   groupByDay,
   budgetViews,
+  monthQuickCalc,
   routineToday,
   visibleBudgets,
   withAccount,
@@ -13,6 +14,8 @@ import {
 
 const settings: Settings = {
   dayType: '工作日',
+  // 钉住当天日型：routineToday 的日型走「当天指定优先，否则按日历推断」，测试固定用工作日
+  dayTypeSetFor: '2026-10-11',
   dayPlans: { 工作日: [{ name: '三餐', expect: 50 }, { name: '咖啡', expect: 20 }] },
   budgets: [
     { name: '购物', month: 800 },
@@ -148,6 +151,37 @@ describe('groupByDay 流水分组', () => {
     expect(dayLabel('2026-10-11', NOW)).toBe('今天')
     expect(dayLabel('2026-10-10', NOW)).toBe('昨天')
     expect(dayLabel('2026-10-09', NOW)).toBe('10月9日 周五')
+  })
+})
+
+describe('monthQuickCalc 本月速算', () => {
+  it('2026-10：18 工作日 + 13 休息日（国庆 7 天、10-10 调休上班）；年付按月摊', () => {
+    const s: Settings = {
+      dayType: '工作日',
+      dayPlans: {
+        工作日: [{ name: '三餐', expect: 130 }],
+        周末日: [{ name: '三餐', expect: 830 }],
+      },
+      budgets: [
+        { name: '购物', month: 800 },
+        { name: '学习', month: 300 },
+      ],
+      fixedExpenses: [
+        { name: '狗粮', amount: 420 },
+        { name: '域名', amount: 600, cycle: 'yearly' },
+      ],
+      accounts: [],
+    }
+    const qc = monthQuickCalc(s, NOW) // NOW = 2026-10-11
+    expect(qc.workDays).toBe(18)
+    expect(qc.restDays).toBe(13)
+    expect(qc.workExpect).toBe(130)
+    expect(qc.restExpect).toBe(830)
+    expect(qc.routineTotal).toBe(18 * 130 + 13 * 830)
+    expect(qc.budgetTotal).toBe(1100)
+    expect(qc.fixedMonthlyTotal).toBe(420)
+    expect(qc.fixedYearlyAmortized).toBe(50)
+    expect(qc.total).toBe(18 * 130 + 13 * 830 + 1100 + 420 + 50)
   })
 })
 

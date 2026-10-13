@@ -34,6 +34,8 @@ export interface FixedExpense {
 
 export interface Settings {
   dayType: DayTypeName
+  /** 手动指定日型的生效日（'YYYY-MM-DD'）：点选只改这一天，跨天自动失效、回到日历推断 */
+  dayTypeSetFor?: string
   dayPlans: Record<DayTypeName, RoutineBucket[]>
   budgets: Budget[]
   fixedExpenses: FixedExpense[]

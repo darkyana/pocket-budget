@@ -8,6 +8,8 @@
   --ink2: #6f675c;
   --line: #e6e1d8;
   --accent: #2f6f4f;
+  /* 进度条常态填充：accent 的半透明版，避免整条实心绿太抢 */
+  --bar-accent: rgba(47, 111, 79, 0.35);
   --warn: #c25b3a;
   --over: #b3261e;
   --ok: #2f6f4f;
@@ -313,11 +315,13 @@ button:disabled {
 .day-head {
   font-size: 12px;
   color: var(--ink2);
-  margin: 24px 0 6px;
+  margin: 18px 0 6px;
   display: flex;
   justify-content: space-between;
 }
-.day-head:first-child {
+/* 只有列表第一组的日期去掉上边距。注意：每组日期都有单独的包裹 div，
+   .day-head:first-child 会误命中每一组（历史 bug：组间距从未生效过） */
+.card > div:first-child .day-head {
   margin-top: 0;
 }
 
@@ -390,12 +394,38 @@ button:disabled {
   background: var(--accent);
   color: #fff;
 }
-.chip-x {
-  background: var(--card);
-  border-radius: 999px;
-  padding: 6px 10px;
+
+/* 本月速算表 */
+.quick-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.quick-table th {
+  text-align: left;
   font-size: 12px;
-  color: var(--over);
+  color: var(--ink2);
+  font-weight: 600;
+  padding: 2px 0 6px;
+  border-bottom: 1px solid var(--line);
+}
+.quick-table td {
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  vertical-align: top;
+}
+.quick-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.quick-table td:first-child {
+  white-space: nowrap;
+  padding-right: 10px;
+}
+.quick-table .sum td {
+  font-weight: 700;
+  border-top: 1px solid var(--line);
+  border-bottom: none;
 }
 
 /* 底部弹层 */

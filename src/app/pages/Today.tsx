@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fixedExpensesThisPeriod, budgetViews, routineToday, visibleBudgets } from '../../core/derive'
+import { fixedExpensesThisPeriod, budgetViews, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
@@ -33,7 +33,7 @@ export function Today() {
     <>
       <h1>今日</h1>
       <div className="sub">
-        {todayHeadline(now)} · 日型：{settings.dayType}（设置里可换）
+        {todayHeadline(now)} · 日型：{todayDayType(settings, now)}（按日历自动，设置里可改）
       </div>
 
       <div className="card">
@@ -69,9 +69,9 @@ export function Today() {
                     <div className="bar">
                       <i
                         style={{
-                          width: `${pct(b.spent / b.expect)}%`,
+                          width: `${pct(b.left / b.expect)}%`,
                           background:
-                            b.left < 0 ? 'var(--over)' : b.left < b.expect * 0.2 ? 'var(--warn)' : 'var(--accent)',
+                            b.left < 0 ? 'var(--over)' : b.left < b.expect * 0.2 ? 'var(--warn)' : 'var(--bar-accent)',
                         }}
                       />
                     </div>
@@ -112,8 +112,8 @@ export function Today() {
               <div className="bar">
                 <i
                   style={{
-                    width: `${pct(p.weekSpent / p.weekBudget)}%`,
-                    background: p.weekLeft < p.weekBudget * 0.2 ? 'var(--warn)' : 'var(--accent)',
+                    width: `${pct(p.weekLeft / p.weekBudget)}%`,
+                    background: p.weekLeft < 0 ? 'var(--over)' : p.weekLeft < p.weekBudget * 0.2 ? 'var(--warn)' : 'var(--bar-accent)',
                   }}
                 />
               </div>
