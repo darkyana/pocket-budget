@@ -7,24 +7,24 @@ import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
 import { CommitmentSheet } from '../components/CommitmentSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
-import { money } from '../format'
+import { moneyExact } from '../format'
 
 function describe(e: MoneyEvent): { label: string; amount: string } {
   switch (e.kind) {
     case 'rhythm':
-      return { label: `节律 · ${e.category}${e.account ? ` · ${e.account}` : ''}`, amount: money(e.amount) }
+      return { label: `节律 · ${e.category}${e.account ? ` · ${e.account}` : ''}`, amount: moneyExact(e.amount) }
     case 'pool':
       return {
         label: `预算池 · ${e.pool} ${e.dir === 'out' ? '支出' : '回血'}${e.account ? ` · ${e.account}` : ''}`,
-        amount: `${e.dir === 'in' ? '+' : ''}${money(e.amount)}`,
+        amount: `${e.dir === 'in' ? '+' : ''}${moneyExact(e.amount)}`,
       }
     case 'commitment':
       return {
         label: `义务 · ${e.item} ${e.paid ? '标记已付' : '改回未付'}${e.account ? ` · ${e.account}` : ''}`,
-        amount: money(e.amount),
+        amount: moneyExact(e.amount),
       }
     case 'transfer':
-      return { label: `走账 · ${e.from} → ${e.to}`, amount: money(e.amount) }
+      return { label: `走账 · ${e.from} → ${e.to}`, amount: moneyExact(e.amount) }
   }
 }
 
@@ -34,12 +34,6 @@ function targetOf(e: MoneyEvent): EntryTarget | null {
   if (e.kind === 'pool') return { type: 'pool', pool: e.pool }
   if (e.kind === 'transfer') return { type: 'transfer' }
   return null
-}
-
-function timeOf(ts: number): string {
-  const t = new Date(ts)
-  const mm = String(t.getMinutes()).padStart(2, '0')
-  return `${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, '0')}:${mm}`
 }
 
 export function Records() {
@@ -108,7 +102,7 @@ export function Records() {
             <div key={g.dayKey}>
               <div className="day-head">
                 <span>{dayLabel(g.dayKey, now)}</span>
-                <span>支出 {money(g.outflow)}</span>
+                <span>支出 {moneyExact(g.outflow)}</span>
               </div>
               {g.events.map((e) => {
                 const d = describe(e)
@@ -117,9 +111,6 @@ export function Records() {
                     <span>
                       {d.label}
                       {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
-                      <span className="small muted" style={{ marginLeft: 6 }}>
-                        {timeOf(e.ts)}
-                      </span>
                     </span>
                     <span style={{ whiteSpace: 'nowrap' }}>{d.amount}</span>
                   </button>

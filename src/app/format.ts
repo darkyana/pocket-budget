@@ -1,5 +1,8 @@
 export const money = (n: number) => `¥${Math.round(n)}`
 
+/** 流水金额：精确到分 */
+export const moneyExact = (n: number) => `¥${n.toFixed(2)}`
+
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
 export function todayHeadline(now: Date): string {
