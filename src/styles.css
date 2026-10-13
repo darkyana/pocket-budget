@@ -270,6 +270,35 @@ button:disabled {
 .feed-item:last-child {
   border-bottom: none;
 }
+/* 金额配色：支出墨、收入（回血）绿、走账灰 */
+.amt-out {
+  color: var(--ink);
+}
+.amt-in {
+  color: var(--accent);
+}
+.amt-transfer {
+  color: var(--ink2);
+}
+
+/* 流水筛选栏 */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.filter-sel {
+  flex: 1;
+  min-width: 120px;
+  width: auto;
+  padding: 8px 10px;
+}
+.filter-date {
+  width: auto;
+  padding: 8px 10px;
+}
 .feed-item > span:first-child {
   min-width: 0;
 }

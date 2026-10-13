@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { SCHEMA_VERSION, type MoneyEvent, type PersistedState } from '../../core/types'
+import { dayKeyOf } from '../../core/time'
 import { dayLabel, groupByDay } from '../../core/derive'
 import { downloadVoucherFile } from '../../storage/voucher'
 import { useApp } from '../store'
@@ -28,6 +29,13 @@ function describe(e: MoneyEvent): { label: string; amount: string } {
   }
 }
 
+/** 金额配色：支出墨色、收入（回血）绿、走账灰（非收支） */
+function amountClass(e: MoneyEvent): string {
+  if (e.kind === 'pool' && e.dir === 'in') return 'amt-in'
+  if (e.kind === 'transfer') return 'amt-transfer'
+  return 'amt-out'
+}
+
 /** 消费/走账用通用记账弹层编辑；义务用专用弹层（日期+账户） */
 function targetOf(e: MoneyEvent): EntryTarget | null {
   if (e.kind === 'rhythm') return { type: 'rhythm', category: e.category }
@@ -45,7 +53,31 @@ export function Records() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  const groups = groupByDay(events)
+  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端） */
+  const [accountFilter, setAccountFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const hasFilter = !!accountFilter || !!fromDate || !!toDate
+
+  const filtered = events.filter((e) => {
+    if (accountFilter) {
+      if ('account' in e && e.account) {
+        if (e.account !== accountFilter) return false
+      } else if (e.kind === 'transfer') {
+        if (e.from !== accountFilter && e.to !== accountFilter) return false
+      } else {
+        return false // 无账户信息的条目在筛选具体账户时排除
+      }
+    }
+    if (fromDate || toDate) {
+      const k = dayKeyOf(e.ts)
+      if (fromDate && k < fromDate) return false
+      if (toDate && k > toDate) return false
+    }
+    return true
+  })
+
+  const groups = groupByDay(filtered)
   const now = new Date()
 
   function onExport() {
@@ -67,7 +99,50 @@ export function Records() {
     <>
       <h1>流水</h1>
       <div className="sub">
-        本机记录的全部经济事件 · {events.length} 笔
+        {hasFilter ? `筛选中 · ${filtered.length}/${events.length} 笔` : `本机记录的全部经济事件 · ${events.length} 笔`}
+      </div>
+      <div className="filter-bar">
+        <select
+          className="field filter-sel"
+          value={accountFilter}
+          onChange={(e) => setAccountFilter(e.target.value)}
+          aria-label="按账户筛选"
+        >
+          <option value="">全部账户</option>
+          {settings.accounts.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+        <input
+          className="field filter-date"
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          aria-label="开始日期"
+        />
+        <span className="muted small">–</span>
+        <input
+          className="field filter-date"
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          aria-label="结束日期"
+        />
+        {hasFilter && (
+          <button
+            type="button"
+            className="btn2"
+            onClick={() => {
+              setAccountFilter('')
+              setFromDate('')
+              setToDate('')
+            }}
+          >
+            清除
+          </button>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         <button type="button" className="btn2" onClick={onExport}>
@@ -112,7 +187,9 @@ export function Records() {
                       {d.label}
                       {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
                     </span>
-                    <span style={{ whiteSpace: 'nowrap' }}>{d.amount}</span>
+                    <span className={amountClass(e)} style={{ whiteSpace: 'nowrap' }}>
+                      {d.amount}
+                    </span>
                   </button>
                 )
               })}
@@ -120,7 +197,9 @@ export function Records() {
           ))
         ) : (
           <div className="small muted" style={{ padding: '10px 0' }}>
-            还没有记录。回「今日」页点卡片 / 池 / 义务即可记。
+            {events.length === 0
+              ? '还没有记录。回「今日」页点卡片 / 池 / 义务即可记。'
+              : '没有符合条件的记录——试试清除筛选。'}
           </div>
         )}
       </div>
