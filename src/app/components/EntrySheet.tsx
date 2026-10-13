@@ -30,6 +30,7 @@ export function EntrySheet({
   const deleteEvent = useApp((s) => s.deleteEvent)
   const accounts = useApp((s) => s.settings.accounts)
   const lastAccount = useApp((s) => s.settings.lastAccount)
+  const lastTransferTo = useApp((s) => s.settings.lastTransferTo)
   const pools = useApp((s) => s.settings.pools)
   const dayPlans = useApp((s) => s.settings.dayPlans)
   const toast = useToast((s) => s.show)
@@ -40,6 +41,10 @@ export function EntrySheet({
   const poolOptions = [...new Set([...pools.map((p) => p.name), ...(existing?.kind === 'pool' ? [existing.pool] : [])])]
 
   const defaultAccount = lastAccount ?? accounts[0] ?? ''
+  const defaultTo =
+    lastTransferTo && lastTransferTo !== defaultAccount
+      ? lastTransferTo
+      : (accounts.find((a) => a !== defaultAccount) ?? '')
   const [amount, setAmount] = useState(existing ? String(existing.amount) : '')
   const [note, setNote] = useState(existing && 'note' in existing ? existing.note : '')
   const [dir, setDir] = useState<'out' | 'in'>(existing?.kind === 'pool' ? existing.dir : 'out')
@@ -52,7 +57,7 @@ export function EntrySheet({
     existing && existing.kind !== 'transfer' && existing.kind !== 'commitment' ? existing.account ?? '' : defaultAccount,
   )
   const [from, setFrom] = useState(existing?.kind === 'transfer' ? existing.from : defaultAccount)
-  const [to, setTo] = useState(existing?.kind === 'transfer' ? existing.to : accounts.find((a) => a !== defaultAccount) ?? '')
+  const [to, setTo] = useState(existing?.kind === 'transfer' ? existing.to : defaultTo)
   const [date, setDate] = useState(() => dayKeyOf(existing ? existing.ts : new Date()))
   /** 「再记一笔」：记下后弹层不关、字段原样保留，方便改个数连续记 */
   const [again, setAgain] = useState(false)

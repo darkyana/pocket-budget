@@ -40,6 +40,8 @@ export interface Settings {
   accounts: string[]
   /** 最近一次记账用的账户：作为下次弹层的默认值（便利性字段，可空） */
   lastAccount?: string
+  /** 最近一次走账转入的账户：走账弹层「转到哪个账户」的默认值 */
+  lastTransferTo?: string
 }
 
 /**

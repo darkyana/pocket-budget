@@ -27,6 +27,11 @@ function withUsedAccount(settings: Settings, account: string): Settings {
   return account && next.lastAccount !== account ? { ...next, lastAccount: account } : next
 }
 
+/** 走账时记住转入账户：下次走账弹层的「转到哪个账户」默认值 */
+function withTransferTo(settings: Settings, to: string): Settings {
+  return to && settings.lastTransferTo !== to ? { ...settings, lastTransferTo: to } : settings
+}
+
 interface AppState {
   ready: boolean
   settings: Settings
@@ -127,7 +132,7 @@ export const useApp = create<AppState>()((set, get) => ({
     const e: MoneyEvent = { id: uid(), ts: timestampOf(date), kind: 'transfer', from, to, amount, note }
     set((s) => ({
       events: [...s.events, e],
-      settings: withUsedAccount(withAccount(s.settings, to), from),
+      settings: withTransferTo(withUsedAccount(withAccount(s.settings, to), from), to),
     }))
     persist(get())
   },
