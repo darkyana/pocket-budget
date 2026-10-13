@@ -125,7 +125,7 @@ export function Records() {
         )}
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>
-        点一笔可编辑（义务可改付款日期 / 账户）或删除
+        点一笔可编辑；节律/池子可互转改类（先批量记、回头分类）
       </div>
       {editingId &&
         (() => {

@@ -26,15 +26,28 @@ export function EntrySheet({
   const addPoolEntry = useApp((s) => s.addPoolEntry)
   const addTransfer = useApp((s) => s.addTransfer)
   const editEvent = useApp((s) => s.editEvent)
+  const saveEntryEvent = useApp((s) => s.saveEntryEvent)
   const deleteEvent = useApp((s) => s.deleteEvent)
   const accounts = useApp((s) => s.settings.accounts)
   const lastAccount = useApp((s) => s.settings.lastAccount)
+  const pools = useApp((s) => s.settings.pools)
+  const dayPlans = useApp((s) => s.settings.dayPlans)
   const toast = useToast((s) => s.show)
+
+  /** 编辑模式（节律/池子）下可切换锚：批量补录后回头分类的工作流 */
+  const kindSwitchable = !!existing && (existing.kind === 'rhythm' || existing.kind === 'pool')
+  const rhythmCategoryOptions = [...new Set([...Object.values(dayPlans).flat().map((b) => b.name), ...(existing?.kind === 'rhythm' ? [existing.category] : [])])]
+  const poolOptions = [...new Set([...pools.map((p) => p.name), ...(existing?.kind === 'pool' ? [existing.pool] : [])])]
 
   const defaultAccount = lastAccount ?? accounts[0] ?? ''
   const [amount, setAmount] = useState(existing ? String(existing.amount) : '')
   const [note, setNote] = useState(existing && 'note' in existing ? existing.note : '')
   const [dir, setDir] = useState<'out' | 'in'>(existing?.kind === 'pool' ? existing.dir : 'out')
+  const [kindSel, setKindSel] = useState<'rhythm' | 'pool'>(existing?.kind === 'pool' ? 'pool' : 'rhythm')
+  const [categoryPick, setCategoryPick] = useState(
+    existing?.kind === 'rhythm' ? existing.category : rhythmCategoryOptions[0] ?? '',
+  )
+  const [poolPick, setPoolPick] = useState(existing?.kind === 'pool' ? existing.pool : poolOptions[0] ?? '')
   const [account, setAccount] = useState(
     existing && existing.kind !== 'transfer' && existing.kind !== 'commitment' ? existing.account ?? '' : defaultAccount,
   )
@@ -47,12 +60,25 @@ export function EntrySheet({
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
   const transferOk = amountOk && from.trim() !== '' && to.trim() !== '' && from.trim() !== to.trim()
-  const canSubmit = target.type === 'transfer' ? transferOk : amountOk
+  const switchOk = kindSel === 'rhythm' ? categoryPick !== '' : poolPick !== ''
+  const canSubmit = kindSwitchable ? amountOk && switchOk : target.type === 'transfer' ? transferOk : amountOk
 
   function submit() {
     if (!canSubmit) return
     if (existing) {
-      editEvent(existing.id, { amount: amountNum, note: note.trim(), account, date })
+      if (kindSwitchable) {
+        saveEntryEvent(existing.id, {
+          kind: kindSel,
+          ...(kindSel === 'rhythm' ? { category: categoryPick } : { pool: poolPick }),
+          dir,
+          amount: amountNum,
+          note: note.trim(),
+          account,
+          date,
+        })
+      } else {
+        editEvent(existing.id, { amount: amountNum, note: note.trim(), account, date })
+      }
       toast('已更新')
       onClose()
       return
@@ -73,7 +99,13 @@ export function EntrySheet({
       : target.type === 'pool'
         ? `预算池 · ${target.pool}`
         : '走一笔账'
-  const title = existing ? `编辑 · ${baseTitle}` : baseTitle
+  const title = !existing
+    ? baseTitle
+    : kindSwitchable
+      ? kindSel === 'rhythm'
+        ? `编辑 · 节律 · ${categoryPick}`
+        : `编辑 · 预算池 · ${poolPick}`
+      : `编辑 · ${baseTitle}`
 
   return (
     <Sheet
@@ -94,7 +126,41 @@ export function EntrySheet({
           submit()
         }}
       >
-        {target.type === 'pool' && (
+        {kindSwitchable && (
+          <div className="seg" style={{ marginBottom: 12 }}>
+            <button type="button" className={kindSel === 'rhythm' ? 'on' : ''} onClick={() => setKindSel('rhythm')}>
+              节律
+            </button>
+            <button type="button" className={kindSel === 'pool' ? 'on' : ''} onClick={() => setKindSel('pool')}>
+              预算池
+            </button>
+          </div>
+        )}
+        {kindSwitchable && kindSel === 'rhythm' && (
+          <div className="field-row">
+            <label htmlFor="ef-cat">节律类别</label>
+            <select id="ef-cat" className="field" value={categoryPick} onChange={(e) => setCategoryPick(e.target.value)}>
+              {rhythmCategoryOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {kindSwitchable && kindSel === 'pool' && (
+          <div className="field-row">
+            <label htmlFor="ef-pool">预算池</label>
+            <select id="ef-pool" className="field" value={poolPick} onChange={(e) => setPoolPick(e.target.value)}>
+              {poolOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {(target.type === 'pool' || (kindSwitchable && kindSel === 'pool')) && (
           <div className="seg" style={{ marginBottom: 12 }}>
             <button type="button" className={dir === 'out' ? 'on' : ''} onClick={() => setDir('out')}>
               支出
