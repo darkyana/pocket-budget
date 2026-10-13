@@ -394,10 +394,29 @@ button:disabled {
     animation: none;
   }
 }
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
 .sheet-title {
   font-size: 16px;
   font-weight: 700;
-  margin-bottom: 14px;
+}
+.again-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink2);
+}
+.again-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
 }
 
 /* 表单 */

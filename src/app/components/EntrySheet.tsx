@@ -4,6 +4,7 @@ import { ConfirmButton } from './ConfirmButton'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
+import { money } from '../format'
 import type { MoneyEvent } from '../../core/types'
 
 export type EntryTarget =
@@ -40,6 +41,8 @@ export function EntrySheet({
   const [from, setFrom] = useState(existing?.kind === 'transfer' ? existing.from : defaultAccount)
   const [to, setTo] = useState(existing?.kind === 'transfer' ? existing.to : accounts.find((a) => a !== defaultAccount) ?? '')
   const [date, setDate] = useState(() => dayKeyOf(existing ? existing.ts : new Date()))
+  /** 「再记一笔」：记下后弹层不关、字段原样保留，方便改个数连续记 */
+  const [again, setAgain] = useState(false)
 
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
@@ -51,12 +54,15 @@ export function EntrySheet({
     if (existing) {
       editEvent(existing.id, { amount: amountNum, note: note.trim(), account, date })
       toast('已更新')
-    } else if (target.type === 'rhythm') {
-      addRhythm(target.category, amountNum, note.trim(), account, date)
-    } else if (target.type === 'pool') {
-      addPoolEntry(target.pool, dir, amountNum, note.trim(), account, date)
-    } else {
-      addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
+      onClose()
+      return
+    }
+    if (target.type === 'rhythm') addRhythm(target.category, amountNum, note.trim(), account, date)
+    else if (target.type === 'pool') addPoolEntry(target.pool, dir, amountNum, note.trim(), account, date)
+    else addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
+    if (again) {
+      toast(`已记 ${money(amountNum)}`)
+      return
     }
     onClose()
   }
@@ -70,7 +76,18 @@ export function EntrySheet({
   const title = existing ? `编辑 · ${baseTitle}` : baseTitle
 
   return (
-    <Sheet title={title} onClose={onClose}>
+    <Sheet
+      title={title}
+      onClose={onClose}
+      headerExtra={
+        existing ? undefined : (
+          <label className="again-toggle">
+            <input type="checkbox" checked={again} onChange={(e) => setAgain(e.target.checked)} />
+            再记一笔
+          </label>
+        )
+      }
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault()
