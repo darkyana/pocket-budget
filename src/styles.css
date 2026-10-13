@@ -456,6 +456,38 @@ button:disabled {
   accent-color: var(--accent);
 }
 
+/* 数据管理弹层：分组标签 + 整宽按钮 + 按钮下的小字说明 */
+.dm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  margin: 16px 0 8px;
+}
+.dm-label:first-child {
+  margin-top: 0;
+}
+.dm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dm-actions > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dm-actions button {
+  width: 100%;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: 12px;
+}
+.dm-hint {
+  font-size: 11px;
+  color: var(--ink2);
+  padding: 0 2px;
+}
+
 .combo {
   position: relative;
 }

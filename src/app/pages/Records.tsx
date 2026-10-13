@@ -1,11 +1,9 @@
-import { useRef, useState } from 'react'
-import { SCHEMA_VERSION, type MoneyRecord, type PersistedState } from '../../core/types'
+import { useState } from 'react'
+import { type MoneyRecord } from '../../core/types'
 import { dayKeyOf } from '../../core/time'
 import { dayLabel, groupByDay } from '../../core/derive'
-import { downloadVoucherFile } from '../../storage/voucher'
 import { useApp } from '../store'
-import { useToast } from '../toast'
-import { ConfirmButton } from '../components/ConfirmButton'
+import { DataSheet } from '../components/DataSheet'
 import { FixedExpenseSheet } from '../components/FixedExpenseSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { Sheet } from '../components/Sheet'
@@ -98,10 +96,6 @@ function DateFilterSheet({
 export function Records() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
-  const clearRecords = useApp((s) => s.clearRecords)
-  const importVoucher = useApp((s) => s.importVoucher)
-  const toast = useToast((s) => s.show)
-  const fileRef = useRef<HTMLInputElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）；入口在按钮排，选择走半弹层 */
@@ -110,6 +104,8 @@ export function Records() {
   const [toDate, setToDate] = useState('')
   const hasFilter = !!accountFilter || !!fromDate || !!toDate
   const [filterSheet, setFilterSheet] = useState<'account' | 'date' | null>(null)
+  /** 导出/导入/清空收拢进数据管理弹层 */
+  const [dataSheet, setDataSheet] = useState(false)
 
   const dateLabel = (() => {
     const f = fromDate ? fromDate.slice(5).replace('-', '/') : ''
@@ -141,21 +137,6 @@ export function Records() {
   const groups = groupByDay(filtered)
   const now = new Date()
 
-  function onExport() {
-    const state: PersistedState = { schemaVersion: SCHEMA_VERSION, settings, records }
-    const name = downloadVoucherFile(state)
-    toast(`已导出 ${name}`)
-  }
-
-  async function onImport(file: File) {
-    try {
-      importVoucher(await file.text())
-      toast('已导入凭证（整包替换）')
-    } catch (err) {
-      toast(err instanceof Error ? `导入失败：${err.message}` : '导入失败')
-    }
-  }
-
   return (
     <>
       <h1>流水</h1>
@@ -169,31 +150,9 @@ export function Records() {
         <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
           {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
         </button>
-        <button type="button" className="btn2" onClick={onExport}>
-          导出凭证
+        <button type="button" className="btn2" onClick={() => setDataSheet(true)}>
+          数据管理
         </button>
-        <button type="button" className="btn2" onClick={() => fileRef.current?.click()}>
-          导入凭证
-        </button>
-        <ConfirmButton
-          label="清空全部记录"
-          confirmLabel="确认清空？"
-          onConfirm={() => {
-            clearRecords()
-            toast('已清空全部记录（设置保留）')
-          }}
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void onImport(f)
-            e.target.value = ''
-          }}
-        />
       </div>
       <div className="card">
         {groups.length > 0 ? (
@@ -230,6 +189,7 @@ export function Records() {
       <div className="small muted" style={{ textAlign: 'center' }}>
         点一笔可编辑；日常/预算可互转改类（先批量记、回头分类）
       </div>
+      {dataSheet && <DataSheet onClose={() => setDataSheet(false)} />}
       {filterSheet === 'account' && (
         <Sheet title="按账户筛选" onClose={() => setFilterSheet(null)}>
           <div className="picker-list">
