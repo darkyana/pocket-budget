@@ -222,8 +222,8 @@ export function SettingsPage() {
     setForm({
       title: '新增固定支出',
       fields: [
-        { key: 'name', label: '名称', type: 'text', placeholder: '如：狗粮 / 域名' },
-        { key: 'amount', label: '金额（元）', type: 'number', placeholder: '如：420' },
+        { key: 'name', label: '名称', type: 'text', placeholder: '如：宠物粮 / 域名' },
+        { key: 'amount', label: '金额（元）', type: 'number', placeholder: '如：400' },
         { key: 'cycle', label: '周期', type: 'select', options: cycleOptions, initial: 'monthly' },
       ],
       onSubmit: (values) => {

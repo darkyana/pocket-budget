@@ -334,7 +334,7 @@ function delBucket(i){
   S.dayPlans[S.dayType].splice(i,1); save(); render();
 }
 function addCommitment(){
-  const name = prompt("义务名称（如：狗粮）"); if(!name) return;
+  const name = prompt("义务名称（如：宠物粮）"); if(!name) return;
   const amt = ask("每月金额？"); if(amt===null) return;
   S.commitments.push({name, amount:amt, paid:false}); save(); render();
 }
