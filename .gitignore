@@ -6,6 +6,7 @@ dev-dist/
 .DS_Store
 .skill/
 pocket-budget-xhs.zip
+.privacy-blocklist
 
 # 本地保留，不上 GitHub
 xhs/
