@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { todayDayType, monthQuickCalc } from '../../core/derive'
 import { dayKeyOf } from '../../core/time'
+import { useDragSort } from '../components/dragSort'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
@@ -8,6 +9,12 @@ import { FormSheet, type FieldDef } from '../components/FormSheet'
 import { money } from '../format'
 
 type Seg = 'routine' | 'fixed' | 'budget'
+
+/** 数组内挪一项到新位置（updateSettings 的可变 draft 上就地用） */
+function arrayMove<T>(arr: T[], from: number, to: number) {
+  const [x] = arr.splice(from, 1)
+  arr.splice(to, 0, x)
+}
 
 interface FormSpec {
   title: string
@@ -28,6 +35,23 @@ export function SettingsPage() {
   /** 今日生效的日型：默认按日历自动（周末/法定节假日），点选可覆盖当天 */
   const effDayType = todayDayType(settings, new Date())
   const buckets = settings.dayPlans[effDayType] ?? []
+
+  /** 三张列表各自的长按拖拽排序（日常按当前日型的列表） */
+  const dragRoutine = useDragSort(buckets.length, (from, to) =>
+    updateSettings((s) => {
+      arrayMove(s.dayPlans[effDayType], from, to)
+    }),
+  )
+  const dragBudget = useDragSort(settings.budgets.length, (from, to) =>
+    updateSettings((s) => {
+      arrayMove(s.budgets, from, to)
+    }),
+  )
+  const dragFixed = useDragSort(settings.fixedExpenses.length, (from, to) =>
+    updateSettings((s) => {
+      arrayMove(s.fixedExpenses, from, to)
+    }),
+  )
 
   const num = (v: string | undefined): number | null => {
     const n = Number.parseFloat(v ?? '')
@@ -251,23 +275,33 @@ export function SettingsPage() {
           <div className="small muted" style={{ marginBottom: 6 }}>
             当前：{effDayType} · 按周末与法定节假日自动选，点选只改今天
           </div>
-          {buckets.map((b, i) => (
-            <div className="setrow" key={`${b.name}-${i}`}>
-              <button type="button" className="setrow-main" onClick={() => editBucket(i)}>
-                {b.name} <span className="small muted">期望 {money(b.expect)}</span>
-              </button>
-              <ConfirmButton
-                label="删"
-                confirmLabel="确认删？"
-                onConfirm={() => {
-                  updateSettings((s) => {
-                    s.dayPlans[s.dayType].splice(i, 1)
-                  })
-                  toast('已删')
-                }}
-              />
-            </div>
-          ))}
+          {buckets.map((b, i) => {
+            const p = dragRoutine.rowProps(i)
+            return (
+              <div key={`${b.name}-${i}`} {...p}>
+                <button
+                  type="button"
+                  className="setrow-main"
+                  onClick={() => {
+                    if (dragRoutine.guardClick()) return
+                    editBucket(i)
+                  }}
+                >
+                  {b.name} <span className="small muted">期望 {money(b.expect)}</span>
+                </button>
+                <ConfirmButton
+                  label="删"
+                  confirmLabel="确认删？"
+                  onConfirm={() => {
+                    updateSettings((s) => {
+                      s.dayPlans[s.dayType].splice(i, 1)
+                    })
+                    toast('已删')
+                  }}
+                />
+              </div>
+            )
+          })}
           <div style={{ marginTop: 10 }}>
             <button type="button" className="btn2" onClick={addBucket}>
               ＋ 新增日常
@@ -281,26 +315,36 @@ export function SettingsPage() {
           <div className="small muted" style={{ marginBottom: 6 }}>
             每月 / 每年固定要付的钱（点行改名称、金额、周期）
           </div>
-          {settings.fixedExpenses.map((c, i) => (
-            <div className="setrow" key={`${c.name}-${i}`}>
-              <button type="button" className="setrow-main" onClick={() => editFixedExpense(i)}>
-                {c.name}{' '}
-                <span className="small muted">
-                  {money(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
-                </span>
-              </button>
-              <ConfirmButton
-                label="删"
-                confirmLabel="确认删？"
-                onConfirm={() => {
-                  updateSettings((s) => {
-                    s.fixedExpenses.splice(i, 1)
-                  })
-                  toast('已删')
-                }}
-              />
-            </div>
-          ))}
+          {settings.fixedExpenses.map((c, i) => {
+            const p = dragFixed.rowProps(i)
+            return (
+              <div key={`${c.name}-${i}`} {...p}>
+                <button
+                  type="button"
+                  className="setrow-main"
+                  onClick={() => {
+                    if (dragFixed.guardClick()) return
+                    editFixedExpense(i)
+                  }}
+                >
+                  {c.name}{' '}
+                  <span className="small muted">
+                    {money(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
+                  </span>
+                </button>
+                <ConfirmButton
+                  label="删"
+                  confirmLabel="确认删？"
+                  onConfirm={() => {
+                    updateSettings((s) => {
+                      s.fixedExpenses.splice(i, 1)
+                    })
+                    toast('已删')
+                  }}
+                />
+              </div>
+            )
+          })}
           <div style={{ marginTop: 10 }}>
             <button type="button" className="btn2" onClick={addFixedExpense}>
               ＋ 新增固定支出
@@ -314,26 +358,36 @@ export function SettingsPage() {
           <div className="small muted" style={{ marginBottom: 6 }}>
             预算（点行改月预算 / 周额度）
           </div>
-          {settings.budgets.map((p, i) => (
-            <div className="setrow" key={`${p.name}-${i}`}>
-              <button type="button" className="setrow-main" onClick={() => editBudget(i)}>
-                {p.name}{' '}
-                <span className="small muted">
-                  月 {money(p.month)} · 周 {money(p.month / 4)}（自动）
-                </span>
-              </button>
-              <ConfirmButton
-                label="删"
-                confirmLabel="确认删？"
-                onConfirm={() => {
-                  updateSettings((s) => {
-                    s.budgets.splice(i, 1)
-                  })
-                  toast('已删（历史记录保留在流水里）')
-                }}
-              />
-            </div>
-          ))}
+          {settings.budgets.map((p, i) => {
+            const d = dragBudget.rowProps(i)
+            return (
+              <div key={`${p.name}-${i}`} {...d}>
+                <button
+                  type="button"
+                  className="setrow-main"
+                  onClick={() => {
+                    if (dragBudget.guardClick()) return
+                    editBudget(i)
+                  }}
+                >
+                  {p.name}{' '}
+                  <span className="small muted">
+                    月 {money(p.month)} · 周 {money(p.month / 4)}（自动）
+                  </span>
+                </button>
+                <ConfirmButton
+                  label="删"
+                  confirmLabel="确认删？"
+                  onConfirm={() => {
+                    updateSettings((s) => {
+                      s.budgets.splice(i, 1)
+                    })
+                    toast('已删（历史记录保留在流水里）')
+                  }}
+                />
+              </div>
+            )
+          })}
           <div style={{ marginTop: 10 }}>
             <button type="button" className="btn2" onClick={addBudget}>
               ＋ 新增预算

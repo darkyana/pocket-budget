@@ -390,6 +390,24 @@ button:disabled {
   color: #fff;
 }
 
+/* 设置行：长按拖拽排序（useDragSort） */
+.setrow {
+  transition: transform 0.15s ease;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+/* 被拎起的行：跟手浮动，不参与 transition */
+.setrow.drag-sorting {
+  transition: none;
+  position: relative;
+  z-index: 10;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+
 /* 本月速算表 */
 .quick-table {
   width: 100%;
