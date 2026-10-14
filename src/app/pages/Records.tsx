@@ -93,17 +93,104 @@ function DateFilterSheet({
   )
 }
 
+/** 分类筛选 token：细分 = routine:分类名 / budget:预算名；固定支出/走账只有大类 token */
+function catHit(e: MoneyRecord, tokens: string[]): boolean {
+  if (e.kind === 'routine') return tokens.includes(`routine:${e.category}`)
+  if (e.kind === 'budget') return tokens.includes(`budget:${e.budget}`)
+  return tokens.includes(e.kind)
+}
+
+/** 分类筛选弹层：草稿态多选 chips。「全部日常/全部预算」是细分的主开关——点 = 全选细分，再点 = 全清；
+ *  固定支出/走账不细分，直接按类型选；多选取并集 */
+function CategoryFilterSheet({
+  selected,
+  routineCategories,
+  budgetNames,
+  onApply,
+  onClose,
+}: {
+  selected: string[]
+  routineCategories: string[]
+  budgetNames: string[]
+  onApply(tokens: string[]): void
+  onClose(): void
+}) {
+  const [draft, setDraft] = useState<string[]>(selected)
+  const toggle = (t: string) => setDraft((d) => (d.includes(t) ? d.filter((x) => x !== t) : [...d, t]))
+  const chip = (on: boolean) => (on ? 'chip on' : 'chip')
+  /** 主开关：全选/全清某前缀的细分 token */
+  const toggleAll = (prefix: 'routine:' | 'budget:', names: string[], allOn: boolean) =>
+    setDraft((d) => (allOn ? d.filter((t) => !t.startsWith(prefix)) : [...d.filter((t) => !t.startsWith(prefix)), ...names.map((n) => `${prefix}${n}`)]))
+  const allRoutineOn = routineCategories.length > 0 && routineCategories.every((c) => draft.includes(`routine:${c}`))
+  const allBudgetOn = budgetNames.length > 0 && budgetNames.every((b) => draft.includes(`budget:${b}`))
+  return (
+    <Sheet title="按分类筛选" onClose={onClose}>
+      <div className="dm-label">类型</div>
+      <div className="chips">
+        <button type="button" className={chip(allRoutineOn)} onClick={() => toggleAll('routine:', routineCategories, allRoutineOn)}>
+          全部日常
+        </button>
+        <button type="button" className={chip(allBudgetOn)} onClick={() => toggleAll('budget:', budgetNames, allBudgetOn)}>
+          全部预算
+        </button>
+        <button type="button" className={chip(draft.includes('fixed'))} onClick={() => toggle('fixed')}>
+          固定支出
+        </button>
+        <button type="button" className={chip(draft.includes('transfer'))} onClick={() => toggle('transfer')}>
+          走账
+        </button>
+      </div>
+      {routineCategories.length > 0 && (
+        <>
+          <div className="dm-label">日常分类（细分）</div>
+          <div className="chips">
+            {routineCategories.map((c) => (
+              <button key={c} type="button" className={chip(draft.includes(`routine:${c}`))} onClick={() => toggle(`routine:${c}`)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {budgetNames.length > 0 && (
+        <>
+          <div className="dm-label">预算（细分）</div>
+          <div className="chips">
+            {budgetNames.map((b) => (
+              <button key={b} type="button" className={chip(draft.includes(`budget:${b}`))} onClick={() => toggle(`budget:${b}`)}>
+                {b}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="small muted" style={{ margin: '4px 0 12px' }}>
+        「全部日常 / 全部预算」一键全选对应细分；多选取并集
+      </div>
+      <div className="form-btns">
+        <button type="button" className="btn-ghost" onClick={() => onApply([])}>
+          清除
+        </button>
+        <button type="button" onClick={() => onApply(draft)}>
+          完成
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
 export function Records() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）；入口在按钮排，选择走半弹层 */
+  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）+ 分类（大类/细分多选并集）；入口在按钮排，选择走半弹层 */
   const [accountFilter, setAccountFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const hasFilter = !!accountFilter || !!fromDate || !!toDate
-  const [filterSheet, setFilterSheet] = useState<'account' | 'date' | null>(null)
+  const [catFilter, setCatFilter] = useState<string[]>([])
+  const hasFilter = !!accountFilter || !!fromDate || !!toDate || catFilter.length > 0
+  const [filterSheet, setFilterSheet] = useState<'account' | 'date' | 'cat' | null>(null)
   /** 导出/导入/清空收拢进数据管理弹层 */
   const [dataSheet, setDataSheet] = useState(false)
 
@@ -131,11 +218,23 @@ export function Records() {
       if (fromDate && k < fromDate) return false
       if (toDate && k > toDate) return false
     }
+    if (catFilter.length > 0 && !catHit(e, catFilter)) return false
     return true
   })
 
   const groups = groupByDay(filtered)
   const now = new Date()
+
+  /** 细分选项来源：设置里定义的 + 流水里实际出现过（但设置已删）的名字，去重 */
+  const routineCategories = [
+    ...new Set([
+      ...Object.values(settings.dayPlans).flat().map((b) => b.name),
+      ...records.flatMap((e) => (e.kind === 'routine' ? [e.category] : [])),
+    ]),
+  ]
+  const budgetNames = [
+    ...new Set([...settings.budgets.map((b) => b.name), ...records.flatMap((e) => (e.kind === 'budget' ? [e.budget] : []))]),
+  ]
 
   return (
     <>
@@ -149,6 +248,9 @@ export function Records() {
         </button>
         <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
           {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
+        </button>
+        <button type="button" className={`btn2 ${catFilter.length ? 'on' : ''}`} onClick={() => setFilterSheet('cat')}>
+          {catFilter.length ? `分类 · ${catFilter.length} 项` : '按分类筛选'}
         </button>
         <button type="button" className="btn2" style={{ marginLeft: 'auto' }} onClick={() => setDataSheet(true)}>
           数据管理
@@ -226,6 +328,18 @@ export function Records() {
           onApply={(f, t) => {
             setFromDate(f)
             setToDate(t)
+            setFilterSheet(null)
+          }}
+          onClose={() => setFilterSheet(null)}
+        />
+      )}
+      {filterSheet === 'cat' && (
+        <CategoryFilterSheet
+          selected={catFilter}
+          routineCategories={routineCategories}
+          budgetNames={budgetNames}
+          onApply={(tokens) => {
+            setCatFilter(tokens)
             setFilterSheet(null)
           }}
           onClose={() => setFilterSheet(null)}
