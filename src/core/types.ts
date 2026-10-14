@@ -36,6 +36,8 @@ export interface Settings {
   dayType: DayTypeName
   /** 手动指定日型的生效日（'YYYY-MM-DD'）：点选只改这一天，跨天自动失效、回到日历推断 */
   dayTypeSetFor?: string
+  /** 本月速算用：日常的预计实际消耗比率（0~1，缺省 0.6）——期望是上限，不是每天花光 */
+  routineSpendRatio?: number
   dayPlans: Record<DayTypeName, RoutineBucket[]>
   budgets: Budget[]
   fixedExpenses: FixedExpense[]

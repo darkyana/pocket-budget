@@ -131,3 +131,46 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
 function preventTouchMove(e: TouchEvent) {
   e.preventDefault()
 }
+
+/**
+ * 长按触发动作（不拖拽，如今日页长按预算行跳流水）：
+ * 按住 ~450ms 触发一次；先移动 >10px 视为滚动取消；触发后的那次 click 被吞掉。
+ * 用法：铺到目标元素上，click 处理器先过 guardClick()。
+ */
+export function useLongPress(action: () => void) {
+  const press = useRef<{ y: number; timer: number } | null>(null)
+  const suppressClick = useRef(false)
+
+  function clear() {
+    if (press.current) window.clearTimeout(press.current.timer)
+    press.current = null
+  }
+
+  return {
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.button !== 0) return
+      const y = e.clientY
+      const timer = window.setTimeout(() => {
+        suppressClick.current = true
+        window.setTimeout(() => (suppressClick.current = false), 400)
+        action()
+      }, PRESS_MS)
+      press.current = { y, timer }
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (press.current && Math.abs(e.clientY - press.current.y) > CANCEL_SLOP) clear()
+    },
+    onPointerUp: clear,
+    onPointerCancel: clear,
+    onContextMenu: (e: React.MouseEvent) => {
+      if (press.current) e.preventDefault()
+    },
+    guardClick: () => {
+      if (suppressClick.current) {
+        suppressClick.current = false
+        return true
+      }
+      return false
+    },
+  }
+}

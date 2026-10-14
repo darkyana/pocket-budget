@@ -95,6 +95,16 @@ h1 {
 .muted {
   color: var(--ink2);
 }
+/* 行内文字超链接（如「调整比率」） */
+.link {
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0;
+  border-radius: 0;
+  text-decoration: underline;
+}
 .small {
   font-size: 12px;
 }

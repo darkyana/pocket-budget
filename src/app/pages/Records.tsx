@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { type MoneyRecord } from '../../core/types'
 import { dayKeyOf } from '../../core/time'
 import { dayLabel, groupByDay } from '../../core/derive'
@@ -101,17 +101,19 @@ function catHit(e: MoneyRecord, tokens: string[]): boolean {
 }
 
 /** 分类筛选弹层：草稿态多选 chips。「全部日常/全部预算」是细分的主开关——点 = 全选细分，再点 = 全清；
- *  固定支出/走账不细分，直接按类型选；多选取并集 */
+ *  固定支出/走账不细分，直接按类型选；多选取并集。chip 上的数字 = 账户/日期范围内的笔数 */
 function CategoryFilterSheet({
   selected,
   routineCategories,
   budgetNames,
+  counts,
   onApply,
   onClose,
 }: {
   selected: string[]
   routineCategories: string[]
   budgetNames: string[]
+  counts: { routine: number; budget: number; fixed: number; transfer: number; routineCat: Record<string, number>; budgetCat: Record<string, number> }
   onApply(tokens: string[]): void
   onClose(): void
 }) {
@@ -128,16 +130,16 @@ function CategoryFilterSheet({
       <div className="dm-label">类型</div>
       <div className="chips">
         <button type="button" className={chip(allRoutineOn)} onClick={() => toggleAll('routine:', routineCategories, allRoutineOn)}>
-          全部日常
+          全部日常 {counts.routine}
         </button>
         <button type="button" className={chip(allBudgetOn)} onClick={() => toggleAll('budget:', budgetNames, allBudgetOn)}>
-          全部预算
+          全部预算 {counts.budget}
         </button>
         <button type="button" className={chip(draft.includes('fixed'))} onClick={() => toggle('fixed')}>
-          固定支出
+          固定支出 {counts.fixed}
         </button>
         <button type="button" className={chip(draft.includes('transfer'))} onClick={() => toggle('transfer')}>
-          走账
+          走账 {counts.transfer}
         </button>
       </div>
       {routineCategories.length > 0 && (
@@ -146,7 +148,7 @@ function CategoryFilterSheet({
           <div className="chips">
             {routineCategories.map((c) => (
               <button key={c} type="button" className={chip(draft.includes(`routine:${c}`))} onClick={() => toggle(`routine:${c}`)}>
-                {c}
+                {c} {counts.routineCat[c] ?? 0}
               </button>
             ))}
           </div>
@@ -158,14 +160,14 @@ function CategoryFilterSheet({
           <div className="chips">
             {budgetNames.map((b) => (
               <button key={b} type="button" className={chip(draft.includes(`budget:${b}`))} onClick={() => toggle(`budget:${b}`)}>
-                {b}
+                {b} {counts.budgetCat[b] ?? 0}
               </button>
             ))}
           </div>
         </>
       )}
       <div className="small muted" style={{ margin: '4px 0 12px' }}>
-        「全部日常 / 全部预算」一键全选对应细分；多选取并集
+        「全部日常 / 全部预算」一键全选对应细分；多选取并集。数字 = 当前账户/日期筛选范围内的笔数
       </div>
       <div className="form-btns">
         <button type="button" className="btn-ghost" onClick={() => onApply([])}>
@@ -182,6 +184,8 @@ function CategoryFilterSheet({
 export function Records() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
+  const pendingCatTokens = useApp((s) => s.pendingCatTokens)
+  const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）+ 分类（大类/细分多选并集）；入口在按钮排，选择走半弹层 */
@@ -191,6 +195,15 @@ export function Records() {
   const [catFilter, setCatFilter] = useState<string[]>([])
   const hasFilter = !!accountFilter || !!fromDate || !!toDate || catFilter.length > 0
   const [filterSheet, setFilterSheet] = useState<'account' | 'date' | 'cat' | null>(null)
+
+  // 跨页跳转预置的分类筛选（今日页长按预算行）：挂载时消费一次
+  useEffect(() => {
+    if (pendingCatTokens.length > 0) {
+      setCatFilter(pendingCatTokens)
+      clearPendingCats()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   /** 导出/导入/清空收拢进数据管理弹层 */
   const [dataSheet, setDataSheet] = useState(false)
 
@@ -203,7 +216,8 @@ export function Records() {
     return ''
   })()
 
-  const filtered = records.filter((e) => {
+  /** 账户 + 日期范围（分类计数的口径：分类条件不参与，数字在切换分类时保持稳定） */
+  const matchScope = (e: MoneyRecord) => {
     if (accountFilter) {
       if ('account' in e && e.account) {
         if (e.account !== accountFilter) return false
@@ -218,9 +232,10 @@ export function Records() {
       if (fromDate && k < fromDate) return false
       if (toDate && k > toDate) return false
     }
-    if (catFilter.length > 0 && !catHit(e, catFilter)) return false
     return true
-  })
+  }
+
+  const filtered = records.filter((e) => matchScope(e) && (catFilter.length === 0 || catHit(e, catFilter)))
 
   const groups = groupByDay(filtered)
   const now = new Date()
@@ -235,6 +250,17 @@ export function Records() {
   const budgetNames = [
     ...new Set([...settings.budgets.map((b) => b.name), ...records.flatMap((e) => (e.kind === 'budget' ? [e.budget] : []))]),
   ]
+
+  /** 分类弹层的计数：按账户/日期范围（不含分类条件） */
+  const scoped = records.filter(matchScope)
+  const catCounts = {
+    routine: scoped.filter((e) => e.kind === 'routine').length,
+    budget: scoped.filter((e) => e.kind === 'budget').length,
+    fixed: scoped.filter((e) => e.kind === 'fixed').length,
+    transfer: scoped.filter((e) => e.kind === 'transfer').length,
+    routineCat: Object.fromEntries(routineCategories.map((c) => [c, scoped.filter((e) => e.kind === 'routine' && e.category === c).length])),
+    budgetCat: Object.fromEntries(budgetNames.map((b) => [b, scoped.filter((e) => e.kind === 'budget' && e.budget === b).length])),
+  }
 
   return (
     <>
@@ -338,6 +364,7 @@ export function Records() {
           selected={catFilter}
           routineCategories={routineCategories}
           budgetNames={budgetNames}
+          counts={catCounts}
           onApply={(tokens) => {
             setCatFilter(tokens)
             setFilterSheet(null)

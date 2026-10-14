@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { todayDayType, monthQuickCalc } from '../../core/derive'
+import { useRef, useState } from 'react'
+import { todayDayType, monthQuickCalc, DEFAULT_ROUTINE_RATIO } from '../../core/derive'
 import { dayKeyOf } from '../../core/time'
 import { useDragSort } from '../components/dragSort'
+import { Sheet } from '../components/Sheet'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
@@ -26,10 +27,15 @@ interface FormSpec {
 export function SettingsPage() {
   const settings = useApp((s) => s.settings)
   const updateSettings = useApp((s) => s.updateSettings)
+  const renameAnchor = useApp((s) => s.renameAnchor)
   const factoryReset = useApp((s) => s.factoryReset)
   const toast = useToast((s) => s.show)
   const [seg, setSeg] = useState<Seg>('routine')
   const [form, setForm] = useState<FormSpec | null>(null)
+  /** 日常实际比率调整弹层（本月速算用） */
+  const [ratioSheet, setRatioSheet] = useState(false)
+  /** 合并确认的武装态：改名撞到已有名字时，第一次「保存」只提示，第二次才真的合并 */
+  const mergeArmed = useRef<{ name: string } | null>(null)
 
   const dayTypes = Object.keys(settings.dayPlans)
   /** 今日生效的日型：默认按日历自动（周末/法定节假日），点选可覆盖当天 */
@@ -62,6 +68,7 @@ export function SettingsPage() {
 
   function editBucket(index: number) {
     const b = buckets[index]
+    mergeArmed.current = null
     setForm({
       title: `编辑日常（${effDayType}）`,
       fields: [
@@ -70,15 +77,42 @@ export function SettingsPage() {
       ],
       onSubmit: (values) => {
         const expect = num(values.expect)
-        if (!values.name.trim() || expect === null) {
+        const name = values.name.trim()
+        if (!name || expect === null) {
           toast('类别名和期望金额都要填')
           return
         }
-        updateSettings((s) => {
-          s.dayPlans[s.dayType][index] = { name: values.name.trim(), expect }
-        })
-        setForm(null)
-        toast('已保存')
+        if (name === b.name) {
+          updateSettings((s) => {
+            s.dayPlans[effDayType][index] = { name, expect }
+          })
+          setForm(null)
+          toast('已保存')
+          return
+        }
+        // 撞名 = 合并：第一次只提示，第二次确认才执行；历史流水同步改名
+        const dup = buckets.some((x, i) => i !== index && x.name === name)
+        if (dup && mergeArmed.current?.name !== name) {
+          mergeArmed.current = { name }
+          toast(`「${name}」在当前日型里已存在——再点一次「保存」合并（历史流水归入它，期望沿用对方）`)
+          return
+        }
+        mergeArmed.current = null
+        if (dup) {
+          updateSettings((s) => {
+            s.dayPlans[effDayType].splice(index, 1)
+          })
+          renameAnchor('routine', b.name, name)
+          setForm(null)
+          toast(`已合并到「${name}」，历史流水同步改名`)
+        } else {
+          updateSettings((s) => {
+            s.dayPlans[effDayType][index] = { name, expect }
+          })
+          renameAnchor('routine', b.name, name)
+          setForm(null)
+          toast('已保存，历史流水已同步改名')
+        }
       },
     })
   }
@@ -134,6 +168,7 @@ export function SettingsPage() {
 
   function editFixedExpense(index: number) {
     const c = settings.fixedExpenses[index]
+    mergeArmed.current = null
     setForm({
       title: '编辑固定支出',
       fields: [
@@ -143,16 +178,42 @@ export function SettingsPage() {
       ],
       onSubmit: (values) => {
         const amount = num(values.amount)
-        if (!values.name.trim() || amount === null) {
+        const name = values.name.trim()
+        if (!name || amount === null) {
           toast('名称和金额都要填')
           return
         }
         const cycle = values.cycle === 'yearly' ? 'yearly' : 'monthly'
-        updateSettings((s) => {
-          s.fixedExpenses[index] = { name: values.name.trim(), amount, cycle }
-        })
-        setForm(null)
-        toast('已保存')
+        if (name === c.name) {
+          updateSettings((s) => {
+            s.fixedExpenses[index] = { name, amount, cycle }
+          })
+          setForm(null)
+          toast('已保存')
+          return
+        }
+        const dup = settings.fixedExpenses.some((x, i) => i !== index && x.name === name)
+        if (dup && mergeArmed.current?.name !== name) {
+          mergeArmed.current = { name }
+          toast(`「${name}」已存在——再点一次「保存」合并（历史流水归入它，金额/周期沿用对方）`)
+          return
+        }
+        mergeArmed.current = null
+        if (dup) {
+          updateSettings((s) => {
+            s.fixedExpenses.splice(index, 1)
+          })
+          renameAnchor('fixed', c.name, name)
+          setForm(null)
+          toast(`已合并到「${name}」，历史流水同步改名`)
+        } else {
+          updateSettings((s) => {
+            s.fixedExpenses[index] = { name, amount, cycle }
+          })
+          renameAnchor('fixed', c.name, name)
+          setForm(null)
+          toast('已保存，历史流水已同步改名')
+        }
       },
     })
   }
@@ -185,6 +246,7 @@ export function SettingsPage() {
 
   function editBudget(index: number) {
     const p = settings.budgets[index]
+    mergeArmed.current = null
     setForm({
       title: '编辑预算',
       fields: [
@@ -193,15 +255,41 @@ export function SettingsPage() {
       ],
       onSubmit: (values) => {
         const month = num(values.month)
-        if (!values.name.trim() || month === null) {
+        const name = values.name.trim()
+        if (!name || month === null) {
           toast('名称和月预算都要填')
           return
         }
-        updateSettings((s) => {
-          s.budgets[index] = { name: values.name.trim(), month }
-        })
-        setForm(null)
-        toast('已保存')
+        if (name === p.name) {
+          updateSettings((s) => {
+            s.budgets[index] = { name, month }
+          })
+          setForm(null)
+          toast('已保存')
+          return
+        }
+        const dup = settings.budgets.some((x, i) => i !== index && x.name === name)
+        if (dup && mergeArmed.current?.name !== name) {
+          mergeArmed.current = { name }
+          toast(`「${name}」已存在——再点一次「保存」合并（历史流水归入它，月额度沿用对方）`)
+          return
+        }
+        mergeArmed.current = null
+        if (dup) {
+          updateSettings((s) => {
+            s.budgets.splice(index, 1)
+          })
+          renameAnchor('budget', p.name, name)
+          setForm(null)
+          toast(`已合并到「${name}」，历史流水同步改名`)
+        } else {
+          updateSettings((s) => {
+            s.budgets[index] = { name, month }
+          })
+          renameAnchor('budget', p.name, name)
+          setForm(null)
+          toast('已保存，历史流水已同步改名')
+        }
       },
     })
   }
@@ -397,9 +485,21 @@ export function SettingsPage() {
       )}
 
       <div className="card">
-        <div className="row" style={{ marginBottom: 6 }}>
+        <div className="row" style={{ marginBottom: 10 }}>
           <b>本月速算</b>
-          <span className="small muted">按当前设置与日历推算</span>
+          <span className="small muted">
+            按当前设置与日历推算 ·{' '}
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                mergeArmed.current = null
+                setRatioSheet(true)
+              }}
+            >
+              调整比率
+            </button>
+          </span>
         </div>
         {(() => {
           const qc = monthQuickCalc(settings, new Date())
@@ -417,6 +517,7 @@ export function SettingsPage() {
                   <td>日常</td>
                   <td className="muted">
                     工作日 {qc.workDays} 天 × {money(qc.workExpect)} + 休息日 {qc.restDays} 天 × {money(qc.restExpect)}
+                    （全额 {money(qc.routineBase)} × 实际 {Math.round(qc.ratio * 100)}%）
                   </td>
                   <td className="num">{money(qc.routineTotal)}</td>
                 </tr>
@@ -461,6 +562,41 @@ export function SettingsPage() {
           }}
         />
       </div>
+
+      {ratioSheet && (
+        <Sheet title="调整日常实际比率" onClose={() => setRatioSheet(false)}>
+          <div className="small muted" style={{ marginBottom: 14, lineHeight: 1.7 }}>
+            日常的单日期望是「这种日子合理消费的上限」，并不是每天都会把它花光。
+            本月速算按这个比率把期望全额折算成预计实际花费——只影响速算的估算，
+            不影响今日页的期望与进度条。
+          </div>
+          <div className="row" style={{ gap: 10, marginBottom: 8 }}>
+            <input
+              type="range"
+              min={10}
+              max={100}
+              step={5}
+              value={Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}
+              onChange={(e) => {
+                const pctVal = Number(e.target.value)
+                updateSettings((s) => {
+                  s.routineSpendRatio = pctVal / 100
+                })
+              }}
+              style={{ flex: 1, accentColor: 'var(--accent)' }}
+            />
+            <b style={{ whiteSpace: 'nowrap' }}>{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
+          </div>
+          <div className="small muted" style={{ marginBottom: 12 }}>
+            缺省 60%，调整即时保存
+          </div>
+          <div className="form-btns">
+            <button type="button" className="btn-ghost" onClick={() => setRatioSheet(false)}>
+              完成
+            </button>
+          </div>
+        </Sheet>
+      )}
 
       {form && <FormSheet {...form} onClose={() => setForm(null)} />}
     </>

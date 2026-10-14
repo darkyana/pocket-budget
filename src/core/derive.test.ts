@@ -7,6 +7,7 @@ import {
   groupByDay,
   budgetViews,
   monthQuickCalc,
+  renameRecordAnchor,
   routineToday,
   visibleBudgets,
   withAccount,
@@ -155,33 +156,63 @@ describe('groupByDay 流水分组', () => {
 })
 
 describe('monthQuickCalc 本月速算', () => {
-  it('2026-10：18 工作日 + 13 休息日（国庆 7 天、10-10 调休上班）；年付按月摊', () => {
-    const s: Settings = {
-      dayType: '工作日',
-      dayPlans: {
-        工作日: [{ name: '三餐', expect: 130 }],
-        周末日: [{ name: '三餐', expect: 830 }],
-      },
-      budgets: [
-        { name: '购物', month: 800 },
-        { name: '学习', month: 300 },
-      ],
-      fixedExpenses: [
-        { name: '狗粮', amount: 420 },
-        { name: '域名', amount: 600, cycle: 'yearly' },
-      ],
-      accounts: [],
-    }
-    const qc = monthQuickCalc(s, NOW) // NOW = 2026-10-11
+  const base: Settings = {
+    dayType: '工作日',
+    dayPlans: {
+      工作日: [{ name: '三餐', expect: 130 }],
+      周末日: [{ name: '三餐', expect: 830 }],
+    },
+    budgets: [
+      { name: '购物', month: 800 },
+      { name: '学习', month: 300 },
+    ],
+    fixedExpenses: [
+      { name: '狗粮', amount: 420 },
+      { name: '域名', amount: 600, cycle: 'yearly' },
+    ],
+    accounts: [],
+  }
+
+  it('2026-10：18 工作日 + 13 休息日；日常按实际比率折算（缺省 60%）', () => {
+    const qc = monthQuickCalc(base, NOW) // NOW = 2026-10-11
     expect(qc.workDays).toBe(18)
     expect(qc.restDays).toBe(13)
     expect(qc.workExpect).toBe(130)
     expect(qc.restExpect).toBe(830)
-    expect(qc.routineTotal).toBe(18 * 130 + 13 * 830)
+    expect(qc.routineBase).toBe(18 * 130 + 13 * 830)
+    expect(qc.ratio).toBe(0.6)
+    expect(qc.routineTotal).toBe((18 * 130 + 13 * 830) * 0.6)
     expect(qc.budgetTotal).toBe(1100)
     expect(qc.fixedMonthlyTotal).toBe(420)
     expect(qc.fixedYearlyAmortized).toBe(50)
-    expect(qc.total).toBe(18 * 130 + 13 * 830 + 1100 + 420 + 50)
+    expect(qc.total).toBe((18 * 130 + 13 * 830) * 0.6 + 1100 + 420 + 50)
+  })
+
+  it('比率可调：routineSpendRatio 覆盖缺省', () => {
+    const qc = monthQuickCalc({ ...base, routineSpendRatio: 1 }, NOW)
+    expect(qc.ratio).toBe(1)
+    expect(qc.routineTotal).toBe(18 * 130 + 13 * 830)
+  })
+})
+
+describe('renameRecordAnchor 锚改名联动', () => {
+  it('同名流水的锚字段一并改写，他类与不同名不动', () => {
+    const records = [
+      routine('三餐', 30, ts(11, 9)),
+      routine('咖啡', 25, ts(11, 10)),
+      budgetOut('三餐', 10, ts(11, 11)), // 预算里也有同名，不该被日常改名波及
+      commit('三餐', true, '2026-10', ts(11, 12)),
+    ]
+    const out = renameRecordAnchor(records, 'routine', '三餐', '食材')
+    expect(out[0]).toMatchObject({ kind: 'routine', category: '食材' })
+    expect(out[1]).toMatchObject({ kind: 'routine', category: '咖啡' })
+    expect(out[2]).toMatchObject({ kind: 'budget', budget: '三餐' })
+    expect(out[3]).toMatchObject({ kind: 'fixed', item: '三餐' })
+  })
+
+  it('无匹配时原数组原样返回', () => {
+    const records = [routine('三餐', 30, ts(11, 9))]
+    expect(renameRecordAnchor(records, 'budget', '购物', '别的')).toBe(records)
   })
 })
 

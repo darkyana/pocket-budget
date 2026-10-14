@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type ExpenseCycle, type MoneyRecord, type PersistedState, type Settings } from '../core/types'
-import { fixedExpensePaid, expensePeriodKey, syncedDayType, withAccount } from '../core/derive'
+import { fixedExpensePaid, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
 import { timestampOf } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
 import { parseVoucher } from '../storage/voucher'
+
+/** 底部页签 */
+export type Tab = 'today' | 'records' | 'settings'
 
 /**
  * 应用状态：settings（可变快照） + records（事实源）。
@@ -36,6 +39,10 @@ interface AppState {
   ready: boolean
   settings: Settings
   records: MoneyRecord[]
+  /** 当前页签（跨页跳转需要，如今日页长按预算跳流水） */
+  tab: Tab
+  /** 跨页跳转预置的分类筛选 tokens（'budget:购物' 等）；Records 挂载时消费并清空 */
+  pendingCatTokens: string[]
   init(): Promise<void>
   addRhythm(category: string, amount: number, note: string, account: string, date: string): void
   addBudgetEntry(budget: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
@@ -60,6 +67,12 @@ interface AppState {
   /** 编辑固定支出流水：只开放付款日期与账户（金额随设置走）。日期变化时按该固定支出当前周期重算 periodKey */
   editFixedExpense(id: string, patch: { account: string; date: string }): void
   deleteRecord(id: string): void
+  /** 显式修正：锚改名联动，把同名流水的锚字段一并改写（日常/预算/固定支出共用） */
+  renameAnchor(kind: 'routine' | 'budget' | 'fixed', from: string, to: string): void
+  goTab(tab: Tab): void
+  /** 跨页跳转：去流水页并预置分类筛选（Records 挂载时消费） */
+  jumpToRecords(tokens: string[]): void
+  clearPendingCats(): void
   /** 设置就地修改：给一个可变的深拷贝，改完统一落盘 */
   updateSettings(mutate: (draft: Settings) => void): void
   clearRecords(): void
@@ -71,6 +84,8 @@ export const useApp = create<AppState>()((set, get) => ({
   ready: false,
   settings: freshState().settings,
   records: [],
+  tab: 'today',
+  pendingCatTokens: [],
 
   async init() {
     const state = await loadState()
@@ -191,6 +206,24 @@ export const useApp = create<AppState>()((set, get) => ({
   deleteRecord(id) {
     set((s) => ({ records: s.records.filter((e) => e.id !== id) }))
     persist(get())
+  },
+
+  renameAnchor(kind, from, to) {
+    set((s) => ({ records: renameRecordAnchor(s.records, kind, from, to) }))
+    persist(get())
+  },
+
+  goTab(tab) {
+    set({ tab })
+  },
+
+  /** 跨页跳转：去流水页并预置分类筛选（Records 挂载时消费） */
+  jumpToRecords(tokens) {
+    set({ tab: 'records', pendingCatTokens: tokens })
+  },
+
+  clearPendingCats() {
+    set({ pendingCatTokens: [] })
   },
 
   updateSettings(mutate) {

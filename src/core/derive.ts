@@ -8,6 +8,32 @@ import { isRestDay } from './holidays'
 
 /* ---------------- 日型：推断与生效 ---------------- */
 
+/** 显式修正：锚改名的联动改写——同名流水的锚字段一并更新；无匹配时原数组原样返回 */
+export function renameRecordAnchor(
+  records: MoneyRecord[],
+  kind: 'routine' | 'budget' | 'fixed',
+  from: string,
+  to: string,
+): MoneyRecord[] {
+  let changed = false
+  const next = records.map((e) => {
+    if (kind === 'routine' && e.kind === 'routine' && e.category === from) {
+      changed = true
+      return { ...e, category: to }
+    }
+    if (kind === 'budget' && e.kind === 'budget' && e.budget === from) {
+      changed = true
+      return { ...e, budget: to }
+    }
+    if (kind === 'fixed' && e.kind === 'fixed' && e.item === from) {
+      changed = true
+      return { ...e, item: to }
+    }
+    return e
+  })
+  return changed ? next : records
+}
+
 /** 按日历自动推断日型：休息日（周末/法定节假日，调休上班除外）→ 休息型，否则工作型 */
 export function autoDayType(now: Date, dayTypes: DayTypeName[]): DayTypeName {
   const rest = dayTypes.includes('周末日') ? '周末日' : (dayTypes.find((t) => t !== '工作日') ?? dayTypes[0] ?? '工作日')
@@ -31,6 +57,9 @@ export function syncedDayType(settings: Settings, now: Date): Settings {
 
 /* ---------------- 本月速算：按设置 + 日历的静态估算 ---------------- */
 
+/** 日常预计实际消耗比率的缺省值：期望是上限，不是每天花光 */
+export const DEFAULT_ROUTINE_RATIO = 0.6
+
 export interface MonthQuickCalc {
   /** 本月按日历推断的工作日 / 休息日天数（调休上班的周末算工作日） */
   workDays: number
@@ -38,7 +67,11 @@ export interface MonthQuickCalc {
   /** 两种日型的单日期望合计（明细展示用） */
   workExpect: number
   restExpect: number
-  /** 日常部分 = 逐日按日型累加期望 */
+  /** 逐日按日型累加的期望全额（未折比率） */
+  routineBase: number
+  /** 生效的实际消耗比率（0~1） */
+  ratio: number
+  /** 日常部分 = 期望全额 × 比率 */
   routineTotal: number
   budgetCount: number
   budgetTotal: number
@@ -54,13 +87,14 @@ export interface MonthQuickCalc {
 /**
  * 本月速算：不动流水，只按当前设置 + 本月日历静态推算「这个月按计划会花多少」。
  * 逐日用 autoDayType 推断（含法定节假日与调休）；自定义日型与当天的手动点选不计入。
+ * 日常按「实际消耗比率」折算（期望是上限，缺省 60%）。
  */
 export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
   const dayTypes = Object.keys(settings.dayPlans)
   const days = daysInMonth(now)
   let workDays = 0
   let restDays = 0
-  let routineTotal = 0
+  let routineBase = 0
   let workExpect = 0
   let restExpect = 0
   for (let d = 1; d <= days; d++) {
@@ -73,8 +107,10 @@ export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
       workDays++
       workExpect = expect
     }
-    routineTotal += expect
+    routineBase += expect
   }
+  const ratio = settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO
+  const routineTotal = routineBase * ratio
   const budgetTotal = settings.budgets.reduce((s, b) => s + b.month, 0)
   const monthly = settings.fixedExpenses.filter((c) => (c.cycle ?? 'monthly') === 'monthly')
   const yearly = settings.fixedExpenses.filter((c) => c.cycle === 'yearly')
@@ -86,6 +122,8 @@ export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
     restDays,
     workExpect,
     restExpect,
+    routineBase,
+    ratio,
     routineTotal,
     budgetCount: settings.budgets.length,
     budgetTotal,

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fixedExpensesThisPeriod, budgetViews, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
+import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { money, todayHeadline } from '../format'
 
@@ -11,8 +12,16 @@ export function Today() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
   const toggleFixedExpense = useApp((s) => s.toggleFixedExpense)
+  const jumpToRecords = useApp((s) => s.jumpToRecords)
   const toast = useToast((s) => s.show)
   const [entry, setEntry] = useState<EntryTarget | null>(null)
+
+  /** 长按预算行 → 跳流水页并筛出该预算的全部条目 */
+  const pressBudget = useRef('')
+  const budgetPress = useLongPress(() => {
+    jumpToRecords([`budget:${pressBudget.current}`])
+    toast(`流水已筛选：${pressBudget.current}`)
+  })
 
   // 每分钟醒一次：跨零点后「今天」自动翻页，数字不至于停在昨天
   const [, setTick] = useState(0)
@@ -100,7 +109,18 @@ export function Today() {
               type="button"
               className="budget-row"
               key={p.name}
-              onClick={() => setEntry({ type: 'budget', budget: p.name })}
+              onClick={() => {
+                if (budgetPress.guardClick()) return
+                setEntry({ type: 'budget', budget: p.name })
+              }}
+              onPointerDown={(e) => {
+                pressBudget.current = p.name
+                budgetPress.onPointerDown(e)
+              }}
+              onPointerMove={budgetPress.onPointerMove}
+              onPointerUp={budgetPress.onPointerUp}
+              onPointerCancel={budgetPress.onPointerCancel}
+              onContextMenu={budgetPress.onContextMenu}
             >
               <div className="row">
                 <span>
@@ -137,7 +157,7 @@ export function Today() {
           </div>
         )}
         <div className="small muted" style={{ marginTop: 8 }}>
-          点预算 = 记一笔该预算收支（支出 / 回血）
+          点预算 = 记一笔该预算收支 · 长按 = 去流水看它的全部条目
         </div>
       </div>
 
