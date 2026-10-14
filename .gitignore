@@ -1,5 +1,8 @@
 node_modules/
 dist/
+dist-xhs/
 dev-dist/
 *.local
 .DS_Store
+.skill/
+pocket-budget-xhs.zip

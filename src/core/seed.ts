@@ -1,6 +1,6 @@
 import type { Settings } from './types'
 
-/** 首次启动的样例设置：沿用原型 DEFAULTS 的真实感数据；流水从空开始，绝不预埋假数据 */
+/** 首次启动的样例设置：全部使用虚构示例数据；流水从空开始，绝不预埋假数据 */
 export function defaultSettings(now: Date): Settings {
   const weekend = now.getDay() === 0 || now.getDay() === 6
   return {
@@ -27,11 +27,11 @@ export function defaultSettings(now: Date): Settings {
       { name: '娱乐', month: 400 },
     ],
     fixedExpenses: [
-      { name: '阿姨工资', amount: 2600 },
-      { name: '狗粮', amount: 420 },
-      { name: '房租', amount: 2600 },
-      { name: '视频会员年费', amount: 199, cycle: 'yearly' },
+      { name: '家政服务', amount: 2000 },
+      { name: '宠物粮', amount: 400 },
+      { name: '物业费', amount: 3000 },
+      { name: '会员年费', amount: 200, cycle: 'yearly' },
     ],
-    accounts: ['现金', '工资卡', '投资账户'],
+    accounts: ['现金', '储蓄卡', '备用金'],
   }
 }

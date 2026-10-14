@@ -23,10 +23,10 @@ const settings: Settings = {
     { name: '学习', month: 300 },
   ],
   fixedExpenses: [
-    { name: '狗粮', amount: 420 },
-    { name: '域名', amount: 600, cycle: 'yearly' },
-  ],
-  accounts: ['现金'],
+      { name: '宠物粮', amount: 400 },
+      { name: '域名', amount: 600, cycle: 'yearly' },
+    ],
+    accounts: ['现金'],
 }
 
 // 2026-10-05（周一）～ 2026-10-11（周日）是同一周；NOW 取周日 20:00
@@ -94,19 +94,19 @@ describe('budgetViews', () => {
 
 describe('fixedExpensePaid 固定支出状态（按周期）', () => {
   it('本周期无流水 = 未付', () => {
-    expect(fixedExpensePaid([], '狗粮', 'monthly', NOW)).toBe(false)
+    expect(fixedExpensePaid([], '宠物粮', 'monthly', NOW)).toBe(false)
     expect(fixedExpensePaid([], '域名', 'yearly', NOW)).toBe(false)
   })
 
   it('月付：上月已付不影响本月', () => {
     const lastMonthTs = new Date(2026, 8, 20, 10).getTime() // 2026-09-20
-    const records = [commit('狗粮', true, '2026-09', lastMonthTs)]
-    expect(fixedExpensePaid(records, '狗粮', 'monthly', NOW)).toBe(false)
+    const records = [commit('宠物粮', true, '2026-09', lastMonthTs)]
+    expect(fixedExpensePaid(records, '宠物粮', 'monthly', NOW)).toBe(false)
   })
 
   it('月付：本月多条流水取最新一条', () => {
-    const records = [commit('狗粮', true, '2026-10', ts(11, 9)), commit('狗粮', false, '2026-10', ts(11, 10))]
-    expect(fixedExpensePaid(records, '狗粮', 'monthly', NOW)).toBe(false)
+    const records = [commit('宠物粮', true, '2026-10', ts(11, 9)), commit('宠物粮', false, '2026-10', ts(11, 10))]
+    expect(fixedExpensePaid(records, '宠物粮', 'monthly', NOW)).toBe(false)
   })
 
   it('年付：年内跨月保持已付，次年回未付', () => {
@@ -122,9 +122,9 @@ describe('fixedExpensePaid 固定支出状态（按周期）', () => {
   })
 
   it('fixedExpensesThisPeriod 汇总（含周期，旧数据默认月付）', () => {
-    const records = [commit('狗粮', true, '2026-10', ts(11, 9))]
+    const records = [commit('宠物粮', true, '2026-10', ts(11, 9))]
     expect(fixedExpensesThisPeriod(records, settings, NOW)).toEqual([
-      { name: '狗粮', amount: 420, cycle: 'monthly', paid: true },
+      { name: '宠物粮', amount: 400, cycle: 'monthly', paid: true },
       { name: '域名', amount: 600, cycle: 'yearly', paid: false },
     ])
   })
@@ -137,8 +137,8 @@ describe('groupByDay 流水分组', () => {
       routine('咖啡', 25, ts(11, 15)),
       budgetOut('购物', 100, ts(11, 10)),
       budgetIn('购物', 30, ts(11, 11)),
-      transfer('现金', '工资卡', 500, ts(11, 12)),
-      commit('狗粮', true, '2026-10', ts(11, 8)),
+      transfer('现金', '储蓄卡', 500, ts(11, 12)),
+      commit('宠物粮', true, '2026-10', ts(11, 8)),
     ]
     const groups = groupByDay(records)
     expect(groups.map((g) => g.dayKey)).toEqual(['2026-10-11', '2026-10-10'])
@@ -167,7 +167,7 @@ describe('monthQuickCalc 本月速算', () => {
       { name: '学习', month: 300 },
     ],
     fixedExpenses: [
-      { name: '狗粮', amount: 420 },
+      { name: '宠物粮', amount: 400 },
       { name: '域名', amount: 600, cycle: 'yearly' },
     ],
     accounts: [],
@@ -183,9 +183,9 @@ describe('monthQuickCalc 本月速算', () => {
     expect(qc.ratio).toBe(0.6)
     expect(qc.routineTotal).toBe((18 * 130 + 13 * 830) * 0.6)
     expect(qc.budgetTotal).toBe(1100)
-    expect(qc.fixedMonthlyTotal).toBe(420)
+    expect(qc.fixedMonthlyTotal).toBe(400)
     expect(qc.fixedYearlyAmortized).toBe(50)
-    expect(qc.total).toBe((18 * 130 + 13 * 830) * 0.6 + 1100 + 420 + 50)
+    expect(qc.total).toBe((18 * 130 + 13 * 830) * 0.6 + 1100 + 400 + 50)
   })
 
   it('比率可调：routineSpendRatio 覆盖缺省', () => {

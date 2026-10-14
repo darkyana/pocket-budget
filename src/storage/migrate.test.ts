@@ -8,14 +8,14 @@ const v1 = {
     dayType: '工作日',
     dayPlans: {},
     pools: [{ name: '购物', month: 800, weekAllow: 200 }],
-    commitments: [{ name: '狗粮', amount: 420 }],
+    commitments: [{ name: '宠物粮', amount: 400 }],
     accounts: [],
   },
   events: [
     { id: 'a', ts: 1, kind: 'rhythm', category: '咖啡', amount: 20, note: '' },
     { id: 'b', ts: 2, kind: 'pool', pool: '购物', dir: 'out', amount: 100, note: '' },
-    { id: 'c', ts: 3, kind: 'commitment', item: '狗粮', amount: 420, monthKey: '2026-09', paid: true },
-    { id: 'd', ts: 4, kind: 'transfer', from: '现金', to: '工资卡', amount: 500, note: '' },
+    { id: 'c', ts: 3, kind: 'commitment', item: '宠物粮', amount: 400, monthKey: '2026-09', paid: true },
+    { id: 'd', ts: 4, kind: 'transfer', from: '现金', to: '储蓄卡', amount: 500, note: '' },
   ],
 }
 
@@ -31,7 +31,7 @@ describe('migrate', () => {
     expect(f.periodKey).toBe('2026-09')
     expect(f.monthKey).toBeUndefined()
     expect(s.settings.budgets).toEqual([{ name: '购物', month: 800 }])
-    expect(s.settings.fixedExpenses).toEqual([{ name: '狗粮', amount: 420 }])
+    expect(s.settings.fixedExpenses).toEqual([{ name: '宠物粮', amount: 400 }])
     expect((s.settings as any).pools).toBeUndefined()
     expect((s.settings as any).commitments).toBeUndefined()
   })
@@ -41,7 +41,7 @@ describe('migrate', () => {
       ...v1,
       schemaVersion: 2,
       events: [
-        { id: 'c', ts: 3, kind: 'commitment', item: '狗粮', amount: 420, periodKey: '2026-09', paid: true },
+        { id: 'c', ts: 3, kind: 'commitment', item: '宠物粮', amount: 400, periodKey: '2026-09', paid: true },
         { id: 'b', ts: 2, kind: 'pool', pool: '购物', dir: 'in', amount: 30, note: '' },
       ],
     }
@@ -52,7 +52,7 @@ describe('migrate', () => {
     expect(s.records[1].kind).toBe('budget')
     expect((s.records[1] as any).budget).toBe('购物')
     expect(s.settings.budgets).toEqual([{ name: '购物', month: 800 }])
-    expect(s.settings.fixedExpenses).toEqual([{ name: '狗粮', amount: 420 }])
+    expect(s.settings.fixedExpenses).toEqual([{ name: '宠物粮', amount: 400 }])
   })
 
   it('v3 数据原样通过（records 键），不重复迁移', () => {

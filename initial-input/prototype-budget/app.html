@@ -86,12 +86,12 @@ const DEFAULTS = {
     {name:"娱乐", month:400, weekAllow:100, mSpent:365},
   ],
   commitments: [
-    {name:"阿姨工资", amount:2600, paid:true},
-    {name:"狗粮",     amount:420,  paid:false},
-    {name:"房租",     amount:2600, paid:true},
+    {name:"家政服务", amount:2000, paid:true},
+    {name:"宠物粮",   amount:400,  paid:false},
+    {name:"物业费",   amount:3000, paid:true},
   ],
   events: [],
-  accounts: ["现金", "工资卡", "投资账户"],
+  accounts: ["现金", "储蓄卡", "备用金"],
 };
 let S;
 try { const j = JSON.parse(localStorage.getItem(KEY)); S = (j && j.dayPlans) ? j : JSON.parse(JSON.stringify(DEFAULTS)); }

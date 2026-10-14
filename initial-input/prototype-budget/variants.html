@@ -82,7 +82,7 @@ const cats = [
   {name:"订阅",        budget:120,  spent:118,  today:0,   base:"≈120/月"},
   {name:"服饰",        budget:200,  spent:0,    today:0,   base:"≈150/月"},
 ];
-const fixed = [{name:"房租",amount:2600},{name:"水电网",amount:280}];
+const fixed = [{name:"物业费",amount:3000},{name:"水电网",amount:300}];
 const month = {budget: cats.reduce((s,c)=>s+c.budget,0)+fixed.reduce((s,f)=>s+f.amount,0),
                spent: cats.reduce((s,c)=>s+c.spent,0)+fixed.reduce((s,f)=>s+f.amount,0)};
 const dayBudget = 105; // (月预算 - 固定) / 31
@@ -196,9 +196,9 @@ const pools = [ // 预算池：月预算 → 摊到周；本周为第 2 周
   {name:"娱乐",   month:400, weekAllow:100, weekSpent:120, mSpent:365},
 ];
 const commitments = [ // 义务：月内状态，不占今日额度
-  {name:"阿姨工资", amount:2600, paid:true},
-  {name:"狗粮",     amount:420,  paid:false},
-  {name:"房租",     amount:2600, paid:true},
+  {name:"家政服务", amount:2000, paid:true},
+  {name:"宠物粮",   amount:400,  paid:false},
+  {name:"物业费",   amount:3000, paid:true},
 ];
 function toast(msg){
   let t=document.getElementById("proto-toast");

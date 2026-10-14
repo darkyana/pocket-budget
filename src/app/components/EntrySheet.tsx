@@ -195,7 +195,7 @@ export function EntrySheet({
                 value={to}
                 onChange={setTo}
                 accounts={accounts}
-                placeholder="如：工资卡"
+                placeholder="如：储蓄卡"
               />
             </div>
           </>
