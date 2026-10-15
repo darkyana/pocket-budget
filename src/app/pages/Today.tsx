@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { fixedExpensesThisPeriod, budgetViews, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
+import { fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
@@ -32,6 +32,7 @@ export function Today() {
 
   const now = new Date()
   const routine = routineToday(records, settings, now)
+  const pace = routinePace(records, settings, now)
   const views = budgetViews(records, settings, now)
   const budgets = visibleBudgets(views)
   const fixedExpenses = fixedExpensesThisPeriod(records, settings, now)
@@ -51,6 +52,7 @@ export function Today() {
             <b>日常</b>{' '}
             <span className="small muted">
               今日 {money(routine.totalSpent)}/{money(routine.totalExpect)}
+              {pace.possible > 0 && <> · 当前消费力 {Math.round(pace.ratio * 100)}%</>}
             </span>
           </span>
           <b style={{ fontSize: 15, color: routine.left < 0 ? 'var(--over)' : 'var(--accent)' }}>

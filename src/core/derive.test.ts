@@ -8,6 +8,7 @@ import {
   budgetViews,
   monthQuickCalc,
   renameRecordAnchor,
+  routinePace,
   routineToday,
   visibleBudgets,
   withAccount,
@@ -62,6 +63,63 @@ describe('routineToday', () => {
     expect(view.totalSpent).toBe(55)
     expect(view.totalExpect).toBe(70)
     expect(view.left).toBe(15)
+  })
+})
+
+describe('routinePace 当前消费力', () => {
+  // 2026-10-01～07 国庆休、10-10（周六）调休上班：1～11 号 = 3 个工作日 + 8 个休息日
+  const base: Settings = {
+    dayType: '工作日',
+    dayPlans: {
+      工作日: [{ name: '三餐', expect: 130 }],
+      周末日: [{ name: '三餐', expect: 830 }],
+    },
+    budgets: [],
+    fixedExpenses: [],
+    accounts: [],
+  }
+
+  it('分子 = 本月全部日常流水（含已删类目）；分母 = 1 号至今按日历日型累加期望全额', () => {
+    const records = [
+      routine('已删掉的奶茶', 200, ts(5)), // 类目已不在配置里，照算
+      routine('三餐', 100, ts(8, 9)),
+      routine('三餐', 50, ts(11, 9)),
+      routine('三餐', 30, new Date(2026, 8, 30, 12).getTime()), // 上月，不计
+      budgetOut('购物', 999, ts(11, 10)), // 非日常，不计
+    ]
+    const view = routinePace(records, base, NOW)
+    expect(view.spent).toBe(350)
+    expect(view.possible).toBe(3 * 130 + 8 * 830) // 3 工作日 ×130 + 8 休息日 ×830 = 7030
+    expect(view.ratio).toBeCloseTo(350 / 7030)
+  })
+
+  it('手动指定的日型不计入分母（当天 10-11 被钉成工作日，仍按日历算休息日）', () => {
+    const pinned: Settings = { ...base, dayType: '工作日', dayTypeSetFor: '2026-10-11' }
+    const view = routinePace([], pinned, NOW)
+    // 当天按日历是休息日（830）；若按手动指定的工作日算，分母会少 700
+    expect(view.possible).toBe(3 * 130 + 8 * 830)
+  })
+
+  it('跨月归零：上月流水不计，月初分母只含当天', () => {
+    const nov1 = new Date(2026, 10, 1, 20, 0) // 11 月 1 日（周日）
+    const records = [routine('三餐', 500, ts(11, 9))] // 10 月的流水
+    const view = routinePace(records, base, nov1)
+    expect(view.spent).toBe(0)
+    expect(view.possible).toBe(830)
+    expect(view.ratio).toBe(0)
+  })
+
+  it('分母为 0（未配置日常）：possible = 0，ratio = 0，界面据此隐藏', () => {
+    const empty: Settings = { ...base, dayPlans: {} }
+    const view = routinePace([routine('三餐', 100, ts(11))], empty, NOW)
+    expect(view.possible).toBe(0)
+    expect(view.ratio).toBe(0)
+  })
+
+  it('超 100% 返回原始比率，不截断', () => {
+    const records = [routine('三餐', 8000, ts(11, 9))]
+    const view = routinePace(records, base, NOW)
+    expect(view.ratio).toBeCloseTo(8000 / 7030)
   })
 })
 

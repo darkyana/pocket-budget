@@ -3,7 +3,7 @@
  * 这里算错的数字会毁掉对工具的信任，所以本文件被 time.test / derive.test 盯着。
  */
 import type { DayTypeName, ExpenseCycle, MoneyRecord, Settings } from './types'
-import { dayKeyOf, daysInMonth, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
+import { dayKeyOf, dayOfMonth, daysInMonth, isSameDay, isSameWeek, monthKeyOf, projectMonthEnd, yearKeyOf } from './time'
 import { isRestDay } from './holidays'
 
 /* ---------------- 日型：推断与生效 ---------------- */
@@ -60,6 +60,12 @@ export function syncedDayType(settings: Settings, now: Date): Settings {
 /** 日常预计实际消耗比率的缺省值：期望是上限，不是每天花光 */
 export const DEFAULT_ROUTINE_RATIO = 0.6
 
+/** 某日期望合计：按日历自动推断日型后累加该日型的日常期望（手动指定不计入） */
+function dayExpectSum(dayPlans: Settings['dayPlans'], date: Date): number {
+  const dayTypes = Object.keys(dayPlans)
+  return (dayPlans[autoDayType(date, dayTypes)] ?? []).reduce((s, b) => s + b.expect, 0)
+}
+
 export interface MonthQuickCalc {
   /** 本月按日历推断的工作日 / 休息日天数（调休上班的周末算工作日） */
   workDays: number
@@ -90,7 +96,6 @@ export interface MonthQuickCalc {
  * 日常按「实际消耗比率」折算（期望是上限，缺省 60%）。
  */
 export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
-  const dayTypes = Object.keys(settings.dayPlans)
   const days = daysInMonth(now)
   let workDays = 0
   let restDays = 0
@@ -99,7 +104,7 @@ export function monthQuickCalc(settings: Settings, now: Date): MonthQuickCalc {
   let restExpect = 0
   for (let d = 1; d <= days; d++) {
     const date = new Date(now.getFullYear(), now.getMonth(), d)
-    const expect = (settings.dayPlans[autoDayType(date, dayTypes)] ?? []).reduce((s, b) => s + b.expect, 0)
+    const expect = dayExpectSum(settings.dayPlans, date)
     if (isRestDay(date)) {
       restDays++
       restExpect = expect
@@ -155,6 +160,32 @@ export function routineToday(records: MoneyRecord[], settings: Settings, now: Da
   const totalSpent = buckets.reduce((s, b) => s + b.spent, 0)
   const totalExpect = buckets.reduce((s, b) => s + b.expect, 0)
   return { buckets, totalSpent, totalExpect, left: totalExpect - totalSpent }
+}
+
+/* ---------------- 日常：当前消费力（月至今节奏） ---------------- */
+
+export interface PaceView {
+  /** 本月至今实际日常花费（全部日常流水合计，类目已删的照算） */
+  spent: number
+  /** 至今可发生期望全额（1 号至今逐日按日历日型累加）；为 0 表示未配置，ratio 无意义 */
+  possible: number
+  /** spent / possible，仅 possible > 0 时有效；超支 > 1 不截断 */
+  ratio: number
+}
+
+/**
+ * 当前消费力：本月至今实际日常花费 ÷ 至今按当前日型配置可发生的期望全额。
+ * 分母逐日按日历自动推断（手动指定的日型不计入，与本月速算同口径），不乘消耗比率；
+ * 月中改配置会按当前配置追溯已过的天。>1 表示花得比配置节奏快。
+ */
+export function routinePace(records: MoneyRecord[], settings: Settings, now: Date): PaceView {
+  const key = monthKeyOf(now)
+  const spent = records.reduce((sum, e) => (e.kind === 'routine' && monthKeyOf(e.ts) === key ? sum + e.amount : sum), 0)
+  let possible = 0
+  for (let d = 1; d <= dayOfMonth(now); d++) {
+    possible += dayExpectSum(settings.dayPlans, new Date(now.getFullYear(), now.getMonth(), d))
+  }
+  return { spent, possible, ratio: possible > 0 ? spent / possible : 0 }
 }
 
 /* ---------------- 预算：本周 / 本月 / 推算 ---------------- */
