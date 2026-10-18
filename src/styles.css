@@ -10,7 +10,7 @@
   --accent: #2f6f4f;
   /* 进度条常态填充：accent 的半透明版，避免整条实心绿太抢 */
   --bar-accent: rgba(47, 111, 79, 0.35);
-  --warn: #c25b3a;
+  --warn: #b04f30;
   --over: #b3261e;
   --ok: #2f6f4f;
   --chip: #eee9df;
@@ -239,6 +239,7 @@ button:disabled {
   border-bottom: none;
 }
 
+/* 固定支出条目：padding 撑出 ~48px 行高，满足 44px 触控最小值 */
 .fixed-item {
   display: flex;
   justify-content: space-between;
@@ -247,7 +248,7 @@ button:disabled {
   border: none;
   border-top: 1px dashed var(--line);
   border-radius: 0;
-  padding: 6px 0;
+  padding: 15px 0;
   font: inherit;
   font-weight: 400;
   color: inherit;
