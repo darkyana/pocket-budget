@@ -15,6 +15,8 @@ export function Today() {
   const jumpToRecords = useApp((s) => s.jumpToRecords)
   const toast = useToast((s) => s.show)
   const [entry, setEntry] = useState<EntryTarget | null>(null)
+  // 固定支出：次重要、条目多，默认收起，不持久化（刷新复位）
+  const [fixedOpen, setFixedOpen] = useState(false)
 
   /** 长按预算行 → 跳流水页并筛出该预算的全部条目 */
   const pressBudget = useRef('')
@@ -163,37 +165,54 @@ export function Today() {
         </div>
       </div>
 
-      <div className="fixed-block">
-        <div className="row" style={{ padding: '3px 0' }}>
-          <span>固定支出 · 本期</span>
-          <span>
-            {fixedExpenses.length === 0 ? '无' : fixedExpenses.every((c) => c.paid) ? '已结清' : `未付 ${money(unpaidSum)}`}
-          </span>
-        </div>
-        {fixedExpenses.map((c) => (
-          <button
-            type="button"
-            className="fixed-item"
-            key={c.name}
-            onClick={() => {
-              toggleFixedExpense(c.name)
-              toast(`${c.name}${c.paid ? ' 改回未付' : ' ✓ 已付'}`)
-            }}
-          >
+      {fixedExpenses.length > 0 && (
+        <div className="card">
+          <div className="row" style={{ marginBottom: 6 }}>
             <span>
-              {c.name}
-              {c.cycle === 'yearly' ? ' · 年' : ''}
-              {c.paid ? '（已付）' : ''}
+              <b>固定支出 · 本期</b>{' '}
+              <span className="small muted">
+                {fixedExpenses.every((c) => c.paid) ? '已结清' : `未付 ${money(unpaidSum)}`}
+              </span>
             </span>
-            <span style={c.paid ? { textDecoration: 'line-through' } : { color: 'var(--warn)', fontWeight: 600 }}>
-              {money(c.amount)}
-            </span>
-          </button>
-        ))}
-        <div className="small muted" style={{ marginTop: 6 }}>
-          点一条 = 切换 已付/未付（进流水）
+            <button
+              type="button"
+              className="link"
+              aria-expanded={fixedOpen}
+              aria-controls="fixed-items"
+              onClick={() => setFixedOpen((v) => !v)}
+            >
+              {fixedOpen ? '收起' : `展开 ${fixedExpenses.length} 项`}
+            </button>
+          </div>
+          {fixedOpen && (
+            <div id="fixed-items">
+              {fixedExpenses.map((c) => (
+                <button
+                  type="button"
+                  className="fixed-item"
+                  key={c.name}
+                  onClick={() => {
+                    toggleFixedExpense(c.name)
+                    toast(`${c.name}${c.paid ? ' 改回未付' : ' ✓ 已付'}`)
+                  }}
+                >
+                  <span>
+                    {c.name}
+                    {c.cycle === 'yearly' ? ' · 年' : ''}
+                    {c.paid ? '（已付）' : ''}
+                  </span>
+                  <span style={c.paid ? { textDecoration: 'line-through' } : { color: 'var(--warn)', fontWeight: 600 }}>
+                    {money(c.amount)}
+                  </span>
+                </button>
+              ))}
+              <div className="small muted" style={{ marginTop: 6 }}>
+                点一条 = 切换 已付/未付（进流水）
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div style={{ textAlign: 'center', paddingBottom: 8 }}>
         <button type="button" className="btn2" onClick={() => setEntry({ type: 'transfer' })}>

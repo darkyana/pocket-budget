@@ -239,12 +239,6 @@ button:disabled {
   border-bottom: none;
 }
 
-/* 固定支出小票 */
-.fixed-block {
-  padding: 2px 6px 14px;
-  font-size: 12px;
-  color: var(--ink2);
-}
 .fixed-item {
   display: flex;
   justify-content: space-between;
