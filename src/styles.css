@@ -627,3 +627,193 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* 快速回顾（消费力回顾页） */
+/* 今日页入口 chip：嵌在 muted 小字行内，可点 */
+.pace-chip {
+  display: inline-block;
+  background: var(--chip);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 9px;
+  border-radius: 999px;
+}
+.pace-chip:active {
+  background: #e2dccc;
+}
+
+.retro-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.retro-head h1 {
+  margin-bottom: 0;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  color: var(--ink2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 4px 4px 0;
+}
+
+/* 月历热力 */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.cal-week {
+  font-size: 11px;
+  color: var(--ink2);
+  text-align: center;
+  padding-bottom: 2px;
+}
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 46px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 400;
+  color: inherit;
+  padding: 4px 0;
+}
+.cal-cell:active {
+  filter: brightness(0.94);
+}
+.cal-num {
+  font-size: 12px;
+}
+.cal-amt {
+  font-size: 11px;
+  font-weight: 600;
+}
+.cal-ok {
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+  color: var(--ok);
+}
+.cal-warn {
+  background: color-mix(in srgb, var(--warn) 13%, transparent);
+  color: var(--warn);
+}
+.cal-over {
+  background: color-mix(in srgb, var(--over) 14%, transparent);
+  color: var(--over);
+}
+/* 今天：描边标记 */
+.cal-today {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+/* 未来：置灰占位，不可点 */
+.cal-future {
+  opacity: 0.4;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink2);
+  flex-wrap: wrap;
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+.lg-ok {
+  background: color-mix(in srgb, var(--ok) 35%, transparent);
+}
+.lg-warn {
+  background: color-mix(in srgb, var(--warn) 40%, transparent);
+}
+.lg-over {
+  background: color-mix(in srgb, var(--over) 45%, transparent);
+}
+
+.counts {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.count {
+  flex: 1;
+  text-align: center;
+  border-radius: 10px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.count b {
+  font-size: 16px;
+}
+.count span {
+  font-size: 11px;
+}
+.count-ok {
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  color: var(--ok);
+}
+.count-warn {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn);
+}
+.count-over {
+  background: color-mix(in srgb, var(--over) 10%, transparent);
+  color: var(--over);
+}
+
+/* 近 14 天双柱：深色实际（按状态着色）+ 浅色计划参照 */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.chart-col {
+  flex: 1 0 0;
+  min-width: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 88px;
+}
+.chart-bars i {
+  display: block;
+  width: 8px;
+  border-radius: 3px 3px 0 0;
+}
+.bar-plan {
+  background: var(--chip);
+}
+.chart-day {
+  font-size: 10px;
+  color: var(--ink2);
+}
+.chart-day-today {
+  color: var(--ink);
+  font-weight: 700;
+}

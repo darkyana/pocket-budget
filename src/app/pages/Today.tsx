@@ -13,6 +13,7 @@ export function Today() {
   const records = useApp((s) => s.records)
   const toggleFixedExpense = useApp((s) => s.toggleFixedExpense)
   const jumpToRecords = useApp((s) => s.jumpToRecords)
+  const openQuickRetro = useApp((s) => s.openQuickRetro)
   const toast = useToast((s) => s.show)
   const [entry, setEntry] = useState<EntryTarget | null>(null)
   // 固定支出：次重要、条目多，默认收起，不持久化（刷新复位）
@@ -54,7 +55,14 @@ export function Today() {
             <b>日常</b>{' '}
             <span className="small muted">
               今日 {money(routine.totalSpent)}/{money(routine.totalExpect)}
-              {pace.possible > 0 && <> · 当前消费力 {Math.round(pace.ratio * 100)}%</>}
+              {pace.possible > 0 && (
+                <>
+                  {' · '}
+                  <button type="button" className="pace-chip" onClick={openQuickRetro}>
+                    当前消费力 {Math.round(pace.ratio * 100)}%
+                  </button>
+                </>
+              )}
             </span>
           </span>
           <b style={{ fontSize: 15, color: routine.left < 0 ? 'var(--over)' : 'var(--accent)' }}>
@@ -99,7 +107,7 @@ export function Today() {
           </div>
         )}
         <div className="small muted" style={{ marginTop: 8 }}>
-          {pages > 1 ? `左右滑动翻页（共 ${pages} 页）· ` : ''}点卡片 = 记一笔该类消费
+          {pages > 1 ? `左右滑动翻页（共 ${pages} 页）· ` : ''}点卡片 = 记一笔该类消费 · 点「消费力」= 看本月回顾
         </div>
       </div>
 

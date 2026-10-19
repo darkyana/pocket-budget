@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { MoneyRecord, Settings } from './types'
 import {
+  dayRetroMonth,
   fixedExpensePaid,
   fixedExpensesThisPeriod,
   dayLabel,
@@ -8,6 +9,7 @@ import {
   budgetViews,
   monthQuickCalc,
   renameRecordAnchor,
+  retroStats,
   routinePace,
   routineToday,
   visibleBudgets,
@@ -46,6 +48,19 @@ const commit = (item: string, paid: boolean, periodKey: string, at: number): Mon
 const transfer = (from: string, to: string, amount: number, at: number): MoneyRecord =>
   ({ id: `t${++seq}`, ts: at, kind: 'transfer', from, to, amount, note: '' })
 
+// 消费力 / 快速回顾共用底座：2026-10，工作日 130 / 周末日 830
+// （2026-10-01～07 国庆休、10-10 调休上班：1～11 号 = 3 个工作日 + 8 个休息日）
+const paceSettings: Settings = {
+  dayType: '工作日',
+  dayPlans: {
+    工作日: [{ name: '三餐', expect: 130 }],
+    周末日: [{ name: '三餐', expect: 830 }],
+  },
+  budgets: [],
+  fixedExpenses: [],
+  accounts: [],
+}
+
 describe('routineToday', () => {
   it('只聚合今日流水，昨日与别的类别不计入', () => {
     const records = [
@@ -67,17 +82,7 @@ describe('routineToday', () => {
 })
 
 describe('routinePace 当前消费力', () => {
-  // 2026-10-01～07 国庆休、10-10（周六）调休上班：1～11 号 = 3 个工作日 + 8 个休息日
-  const base: Settings = {
-    dayType: '工作日',
-    dayPlans: {
-      工作日: [{ name: '三餐', expect: 130 }],
-      周末日: [{ name: '三餐', expect: 830 }],
-    },
-    budgets: [],
-    fixedExpenses: [],
-    accounts: [],
-  }
+  const base = paceSettings
 
   it('分子 = 本月全部日常流水（含已删类目）；分母 = 1 号至今按日历日型累加期望全额', () => {
     const records = [
@@ -120,6 +125,124 @@ describe('routinePace 当前消费力', () => {
     const records = [routine('三餐', 8000, ts(11, 9))]
     const view = routinePace(records, base, NOW)
     expect(view.ratio).toBeCloseTo(8000 / 7030)
+  })
+})
+
+describe('dayRetroMonth 快速回顾 · 逐日', () => {
+  const base = paceSettings
+
+  it('日型按日历：国庆休 → 周末日、10-10 调休上班 → 工作日；流水只进当月当天', () => {
+    const records = [
+      routine('三餐', 100, ts(1, 9)), // 10-01 国庆
+      routine('三餐', 50, ts(10, 9)), // 10-10 调休上班
+      routine('三餐', 30, new Date(2026, 8, 30, 12).getTime()), // 上月，不计
+      budgetOut('购物', 999, ts(11, 10)), // 非日常，不计
+    ]
+    const month = dayRetroMonth(records, base, NOW)
+    expect(month).toHaveLength(31)
+    expect(month[0].dayType).toBe('周末日')
+    expect(month[0].expect).toBe(830)
+    expect(month[0].spent).toBe(100)
+    expect(month[9].dayType).toBe('工作日') // 周六调休上班
+    expect(month[9].expect).toBe(130)
+    expect(month[9].spent).toBe(50)
+    expect(month[10].isToday).toBe(true)
+    expect(month[10].entries).toHaveLength(0) // 预算流水不进 entries
+    expect(month[11].passed).toBe(false) // 明天起是占位
+    expect(month[11].spent).toBe(0)
+  })
+
+  it('三色阈值：<80% 绿、恰 80% 橙、恰 100% 橙、>100% 红', () => {
+    const records = [
+      routine('三餐', 100, ts(8, 9)), // 100/130 ≈ 0.769
+      routine('三餐', 104, ts(9, 9)), // 104/130 = 0.8
+      routine('三餐', 130, ts(10, 9)), // 130/130 = 1，未超
+    ]
+    const month = dayRetroMonth(records, base, NOW)
+    expect(month[7].status).toBe('ok')
+    expect(month[8].status).toBe('warn')
+    expect(month[9].status).toBe('warn')
+    const over = dayRetroMonth([routine('三餐', 131, ts(8, 9))], base, NOW)
+    expect(over[7].status).toBe('over')
+  })
+
+  it('当日型未配置期望：有支出 → 红 + Infinity；无支出 → 绿 + 0', () => {
+    const noWork: Settings = { ...base, dayPlans: { 工作日: [], 周末日: [{ name: '三餐', expect: 830 }] } }
+    const month = dayRetroMonth([routine('三餐', 5, ts(8, 9))], noWork, NOW)
+    expect(month[7].expect).toBe(0)
+    expect(month[7].ratio).toBe(Infinity)
+    expect(month[7].status).toBe('over')
+    expect(month[8].expect).toBe(0)
+    expect(month[8].ratio).toBe(0)
+    expect(month[8].status).toBe('ok')
+  })
+
+  it('当日手动指定的日型不计入（10-11 钉成工作日，日历仍按休息日算）', () => {
+    const pinned: Settings = { ...base, dayType: '工作日', dayTypeSetFor: '2026-10-11' }
+    const month = dayRetroMonth([], pinned, NOW)
+    expect(month[10].dayType).toBe('周末日')
+    expect(month[10].expect).toBe(830)
+  })
+
+  it('月初第 1 天：只有一格已过，统计退化单日', () => {
+    const nov1 = new Date(2026, 10, 1, 20, 0) // 11-01 周日（休）
+    const records = [routine('三餐', 100, new Date(2026, 10, 1, 9).getTime())]
+    const month = dayRetroMonth(records, base, nov1)
+    expect(month).toHaveLength(30)
+    expect(month.filter((d) => d.passed)).toHaveLength(1)
+    const stats = retroStats(month)
+    expect(stats.passedDays).toBe(1)
+    expect(stats.restAvg?.days).toBe(1)
+    expect(stats.workAvg).toBeNull()
+  })
+})
+
+describe('retroStats 快速回顾 · 汇总', () => {
+  const base = paceSettings
+
+  it('三色天数、累计省/超、最省最超（只排 expect>0）、按日型分组（调休进工作日组）', () => {
+    const records = [
+      routine('三餐', 100, ts(1, 9)), // 休 100/830 → ok
+      routine('三餐', 104, ts(9, 9)), // 工 104/130 = 0.8 → warn
+      routine('三餐', 131, ts(10, 9)), // 工 131/130 → over
+    ]
+    const stats = retroStats(dayRetroMonth(records, base, NOW))
+    expect(stats.passedDays).toBe(11)
+    expect(stats.okDays).toBe(9)
+    expect(stats.warnDays).toBe(1)
+    expect(stats.overDays).toBe(1)
+    expect(stats.spent).toBe(335)
+    expect(stats.possible).toBe(3 * 130 + 8 * 830)
+    expect(stats.saved).toBe(3 * 130 + 8 * 830 - 335)
+    expect(stats.best?.day).toBe(2) // 没花钱的天 ratio = 0，最省（2 号起）
+    expect(stats.worst?.day).toBe(10) // 131/130 最高
+    expect(stats.workAvg).toMatchObject({ days: 3, spent: 235, expect: 390 })
+    expect(stats.restAvg).toMatchObject({ days: 8, spent: 100, expect: 6640 })
+  })
+
+  it('expect=0 的天不进 best/worst：Infinity 日不得当「最超」', () => {
+    const noWork: Settings = { ...paceSettings, dayPlans: { 工作日: [], 周末日: [{ name: '三餐', expect: 830 }] } }
+    const records = [
+      routine('三餐', 9999, ts(8, 9)), // 工作日 expect=0 → ratio Infinity
+      routine('三餐', 100, ts(1, 9)), // 100/830
+      routine('三餐', 200, ts(2, 9)), // 200/830
+    ]
+    const stats = retroStats(dayRetroMonth(records, noWork, NOW))
+    expect(stats.worst?.day).toBe(2) // 不是 Infinity 的 8 号
+    expect(stats.best?.day).toBe(3) // 没花钱的休息日 ratio=0 最省
+  })
+
+  it('与今日页消费力同源：spent / possible 逐分逐合一致', () => {
+    const records = [
+      routine('已删掉的奶茶', 200, ts(5)),
+      routine('三餐', 100, ts(8, 9)),
+      routine('三餐', 50, ts(11, 9)),
+      routine('三餐', 30, new Date(2026, 8, 30, 12).getTime()), // 上月
+    ]
+    const stats = retroStats(dayRetroMonth(records, base, NOW))
+    const pace = routinePace(records, base, NOW)
+    expect(stats.spent).toBe(pace.spent)
+    expect(stats.possible).toBe(pace.possible)
   })
 })
 

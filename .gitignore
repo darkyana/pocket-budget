@@ -13,3 +13,5 @@ xhs/
 assets/
 vite.config.xhs.ts
 scripts/gen-desktop-icon.mjs
+# 本地 issue（spec-issue-*.md）只留本地，不入库
+spec-issue-*.md

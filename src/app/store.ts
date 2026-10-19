@@ -9,6 +9,9 @@ import { parseVoucher } from '../storage/voucher'
 /** 底部页签 */
 export type Tab = 'today' | 'records' | 'settings'
 
+/** 覆盖页：tab 之上的解释页（目前仅快速回顾）；null = 无，切 tab 自动关闭 */
+export type Overlay = 'quickRetro'
+
 /**
  * 应用状态：settings（可变快照） + records（事实源）。
  * 流水由用户显式追加；编辑/删除同样是用户的显式修正——个人账本无下游对账，不做反向流水抵消。
@@ -41,6 +44,8 @@ interface AppState {
   records: MoneyRecord[]
   /** 当前页签（跨页跳转需要，如今日页长按预算跳流水） */
   tab: Tab
+  /** 覆盖页（快速回顾等解释页）；入口在今日页，切 tab 自动关闭 */
+  overlay: Overlay | null
   /** 跨页跳转预置的分类筛选 tokens（'budget:购物' 等）；Records 挂载时消费并清空 */
   pendingCatTokens: string[]
   init(): Promise<void>
@@ -70,6 +75,10 @@ interface AppState {
   /** 显式修正：锚改名联动，把同名流水的锚字段一并改写（日常/预算/固定支出共用） */
   renameAnchor(kind: 'routine' | 'budget' | 'fixed', from: string, to: string): void
   goTab(tab: Tab): void
+  /** 从今日页消费力标签进入快速回顾 */
+  openQuickRetro(): void
+  /** 关闭覆盖页，回到原页签 */
+  closeOverlay(): void
   /** 跨页跳转：去流水页并预置分类筛选（Records 挂载时消费） */
   jumpToRecords(tokens: string[]): void
   clearPendingCats(): void
@@ -85,6 +94,7 @@ export const useApp = create<AppState>()((set, get) => ({
   settings: freshState().settings,
   records: [],
   tab: 'today',
+  overlay: null,
   pendingCatTokens: [],
 
   async init() {
@@ -214,7 +224,15 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   goTab(tab) {
-    set({ tab })
+    set({ tab, overlay: null })
+  },
+
+  openQuickRetro() {
+    set({ overlay: 'quickRetro' })
+  },
+
+  closeOverlay() {
+    set({ overlay: null })
   },
 
   /** 跨页跳转：去流水页并预置分类筛选（Records 挂载时消费） */
