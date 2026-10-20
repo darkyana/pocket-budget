@@ -187,6 +187,8 @@ export function Records() {
   const pendingCatTokens = useApp((s) => s.pendingCatTokens)
   const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
+  /** 无锚「记一笔」：不预设锚，一步进表单内三选（ADR 0001） */
+  const [adding, setAdding] = useState(false)
 
   /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）+ 分类（大类/细分多选并集）；入口在按钮排，选择走半弹层 */
   const [accountFilter, setAccountFilter] = useState('')
@@ -264,7 +266,13 @@ export function Records() {
 
   return (
     <>
-      <h1>流水</h1>
+      {/* 标题行右侧通用入口（仿 retro-head 先例）：补记不用切回今日页 */}
+      <div className="retro-head">
+        <h1>流水</h1>
+        <button type="button" className="link" style={{ marginLeft: 'auto' }} onClick={() => setAdding(true)}>
+          ＋ 记一笔
+        </button>
+      </div>
       <div className="sub">
         {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
       </div>
@@ -309,7 +317,7 @@ export function Records() {
         <div className="card">
           <div className="small muted" style={{ padding: '10px 0' }}>
             {records.length === 0
-              ? '还没有记录。回「今日」页点卡片 / 预算 / 固定支出即可记。'
+              ? '还没有记录。点右上「记一笔」，或回「今日」页点卡片即可记。'
               : '没有符合条件的记录——试试清除筛选。'}
           </div>
         </div>
@@ -372,6 +380,7 @@ export function Records() {
           onClose={() => setFilterSheet(null)}
         />
       )}
+      {adding && <EntrySheet target={{ type: 'free' }} onClose={() => setAdding(false)} />}
       {editingId &&
         (() => {
           const ev = records.find((x) => x.id === editingId)

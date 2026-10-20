@@ -12,8 +12,12 @@ export type EntryTarget =
   | { type: 'routine'; category: string }
   | { type: 'budget'; budget: string }
   | { type: 'transfer' }
+  | { type: 'free' }
 
-/** 记一笔：入口即分类——从哪发起就记哪种锚（裁定 4）。传 existing 即为编辑模式 */
+/** 表单内可生效的三种锚：无锚三选、编辑互转、锚定入口固定，统一换算到这一个词汇表（'free' 只是入口形态，不是表单锚） */
+type EntryKind = 'routine' | 'budget' | 'transfer'
+
+/** 记一笔：锚定入口「入口即分类」（裁定 4）；无锚入口（如流水页）在表单内选锚（ADR 0001）。传 existing 即为编辑模式 */
 export function EntrySheet({
   target,
   onClose,
@@ -38,6 +42,8 @@ export function EntrySheet({
 
   /** 编辑模式（日常/预算）下可切换锚：批量补录后回头分类的工作流 */
   const kindSwitchable = !!existing && (existing.kind === 'routine' || existing.kind === 'budget')
+  /** 无锚模式当前锚：与编辑互转分开设态，互转仍限日常↔预算、不得转走账 */
+  const [freeSel, setFreeSel] = useState<EntryKind>('routine')
   const routineCategoryOptions = [...new Set([...Object.values(dayPlans).flat().map((b) => b.name), ...(existing?.kind === 'routine' ? [existing.category] : [])])]
   const budgetOptions = [...new Set([...budgets.map((p) => p.name), ...(existing?.kind === 'budget' ? [existing.budget] : [])])]
 
@@ -66,8 +72,18 @@ export function EntrySheet({
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
   const transferOk = amountOk && from.trim() !== '' && to.trim() !== '' && from.trim() !== to.trim()
-  const switchOk = kindSel === 'routine' ? categoryPick !== '' : budgetPick !== ''
-  const canSubmit = kindSwitchable ? amountOk && switchOk : target.type === 'transfer' ? transferOk : amountOk
+  /** 表单当前生效的锚：无锚随三选、编辑随互转、锚定入口固定 */
+  const formKind: EntryKind =
+    target.type === 'free' ? freeSel : kindSwitchable ? kindSel : target.type
+  /** 校验单份按 formKind 分派（替代旧的 switchOk/freeOk/嵌套 canSubmit 三份同形逻辑）：走账验两端账户互异；
+   *  日常/预算验下拉已选——锚定入口的锚来自设置、选项列表必含锚值，该条件恒真，与原先「锚定只验金额」等价；
+   *  无锚/互转路径下列表为空（设置还没定义）时初值为空串即禁提交，与原先 freeOk/switchOk 逐值等价 */
+  const canSubmit =
+    formKind === 'transfer'
+      ? transferOk
+      : amountOk && (formKind === 'routine' ? categoryPick !== '' : budgetPick !== '')
+  /** 锚在表单内可选（三选段与两个下拉的渲染条件）：无锚三选或编辑互转；锚定入口固定不可选 */
+  const kindPickable = kindSwitchable || target.type === 'free'
 
   function submit() {
     if (!canSubmit) return
@@ -89,8 +105,10 @@ export function EntrySheet({
       onClose()
       return
     }
-    if (target.type === 'routine') addRhythm(target.category, amountNum, note.trim(), account, date)
-    else if (target.type === 'budget') addBudgetEntry(target.budget, dir, amountNum, note.trim(), account, date)
+    // 无锚新建按表单内当前锚分发；锚定入口维持「入口即分类」直接用 target
+    if (formKind === 'routine') addRhythm(target.type === 'routine' ? target.category : categoryPick, amountNum, note.trim(), account, date)
+    else if (formKind === 'budget')
+      addBudgetEntry(target.type === 'budget' ? target.budget : budgetPick, dir, amountNum, note.trim(), account, date)
     else addTransfer(from.trim(), to.trim(), amountNum, note.trim(), date)
     if (again) {
       toast(`已记 ${money(amountNum)}`)
@@ -104,7 +122,9 @@ export function EntrySheet({
       ? `日常 · ${target.category}`
       : target.type === 'budget'
         ? `预算 · ${target.budget}`
-        : '走一笔账'
+        : target.type === 'free'
+          ? '记一笔'
+          : '走一笔账'
   const title = !existing
     ? baseTitle
     : kindSwitchable
@@ -112,6 +132,12 @@ export function EntrySheet({
         ? `编辑 · 日常 · ${categoryPick}`
         : `编辑 · 预算 · ${budgetPick}`
       : `编辑 · ${baseTitle}`
+
+  /** 切换段点选：无锚三选自由切；编辑互转仍限日常↔预算（走账按钮只在无锚渲染） */
+  const switchKind = (k: EntryKind) => {
+    if (target.type === 'free') setFreeSel(k)
+    else if (k !== 'transfer') setKindSel(k)
+  }
 
   return (
     <Sheet
@@ -132,20 +158,27 @@ export function EntrySheet({
           submit()
         }}
       >
-        {kindSwitchable && (
+        {kindPickable && (
           <div className="seg" style={{ marginBottom: 12 }}>
-            <button type="button" className={kindSel === 'routine' ? 'on' : ''} onClick={() => setKindSel('routine')}>
+            <button type="button" className={formKind === 'routine' ? 'on' : ''} onClick={() => switchKind('routine')}>
               日常
             </button>
-            <button type="button" className={kindSel === 'budget' ? 'on' : ''} onClick={() => setKindSel('budget')}>
+            <button type="button" className={formKind === 'budget' ? 'on' : ''} onClick={() => switchKind('budget')}>
               预算
             </button>
+            {target.type === 'free' && (
+              <button type="button" className={formKind === 'transfer' ? 'on' : ''} onClick={() => switchKind('transfer')}>
+                走账
+              </button>
+            )}
           </div>
         )}
-        {kindSwitchable && kindSel === 'routine' && (
+        {formKind === 'routine' && kindPickable && (
           <div className="field-row">
             <label htmlFor="ef-cat">日常</label>
             <select id="ef-cat" className="field" value={categoryPick} onChange={(e) => setCategoryPick(e.target.value)}>
+              {/* 列表为空（设置还没建日常）时给占位项：受控值无匹配 option 会触发 React 告警且显示空白；空值同时让校验禁掉提交兜底 */}
+              {routineCategoryOptions.length === 0 && <option value="">（设置里还没有日常）</option>}
               {routineCategoryOptions.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -154,10 +187,12 @@ export function EntrySheet({
             </select>
           </div>
         )}
-        {kindSwitchable && kindSel === 'budget' && (
+        {formKind === 'budget' && kindPickable && (
           <div className="field-row">
             <label htmlFor="ef-budget">预算</label>
             <select id="ef-budget" className="field" value={budgetPick} onChange={(e) => setBudgetPick(e.target.value)}>
+              {/* 列表为空（设置还没建预算）时给占位项：受控值无匹配 option 会触发 React 告警且显示空白；空值同时让校验禁掉提交兜底 */}
+              {budgetOptions.length === 0 && <option value="">（设置里还没有预算）</option>}
               {budgetOptions.map((p) => (
                 <option key={p} value={p}>
                   {p}
@@ -166,7 +201,7 @@ export function EntrySheet({
             </select>
           </div>
         )}
-        {(target.type === 'budget' || (kindSwitchable && kindSel === 'budget')) && (
+        {formKind === 'budget' && (
           <div className="seg" style={{ marginBottom: 12 }}>
             <button type="button" className={dir === 'out' ? 'on' : ''} onClick={() => setDir('out')}>
               支出
@@ -176,7 +211,7 @@ export function EntrySheet({
             </button>
           </div>
         )}
-        {target.type === 'transfer' && (
+        {formKind === 'transfer' && (
           <>
             <div className="field-row">
               <label htmlFor="ef-from">从哪个账户</label>
@@ -200,7 +235,7 @@ export function EntrySheet({
             </div>
           </>
         )}
-        {target.type !== 'transfer' && (
+        {formKind !== 'transfer' && (
           <div className="field-row">
             <label htmlFor="ef-account">用的哪个账户（可空）</label>
             <AccountPicker
