@@ -69,4 +69,4 @@ npm run build      # 产物构建（tsc + vite）
 
 两周个人实验版（会随真实使用持续迭代）。由一个一次性原型演化而来——原型与三方案对比存档在 [`initial-input/`](initial-input/prototype-budget/README.md)，产品裁定与开放问题的原始记录也在那里。按原型纪律：这是验证方向的工具，不是正式产品；若方向验证成立，走正式流程重写。
 
-工程协作约定见 [AGENTS.md](AGENTS.md)：issue 走 GitHub Issues，领域词汇以 [GLOSSARY.md](GLOSSARY.md) 为准，重要决策记 `docs/adr/`。
+工程协作约定见 [AGENTS.md](AGENTS.md)：issue 走本地 spec 文件（`spec-issue-*.md`，只留本地不入库），领域词汇以 [GLOSSARY.md](GLOSSARY.md) 为准，重要决策记 `docs/adr/`。

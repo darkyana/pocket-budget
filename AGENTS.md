@@ -4,7 +4,7 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues (darkyana/pocket-budget) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues are local spec files (`spec-issue-*.md`, repo root, never committed); GitHub Issues is read-only history. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
