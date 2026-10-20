@@ -14,6 +14,9 @@ export type EntryTarget =
   | { type: 'transfer' }
   | { type: 'free' }
 
+/** 表单内可生效的三种锚：无锚三选、编辑互转、锚定入口固定，统一换算到这一个词汇表（'free' 只是入口形态，不是表单锚） */
+type EntryKind = 'routine' | 'budget' | 'transfer'
+
 /** 记一笔：锚定入口「入口即分类」（裁定 4）；无锚入口（如流水页）在表单内选锚（ADR 0001）。传 existing 即为编辑模式 */
 export function EntrySheet({
   target,
@@ -40,7 +43,7 @@ export function EntrySheet({
   /** 编辑模式（日常/预算）下可切换锚：批量补录后回头分类的工作流 */
   const kindSwitchable = !!existing && (existing.kind === 'routine' || existing.kind === 'budget')
   /** 无锚模式当前锚：与编辑互转分开设态，互转仍限日常↔预算、不得转走账 */
-  const [freeSel, setFreeSel] = useState<'routine' | 'budget' | 'transfer'>('routine')
+  const [freeSel, setFreeSel] = useState<EntryKind>('routine')
   const routineCategoryOptions = [...new Set([...Object.values(dayPlans).flat().map((b) => b.name), ...(existing?.kind === 'routine' ? [existing.category] : [])])]
   const budgetOptions = [...new Set([...budgets.map((p) => p.name), ...(existing?.kind === 'budget' ? [existing.budget] : [])])]
 
@@ -69,19 +72,18 @@ export function EntrySheet({
   const amountNum = Number.parseFloat(amount)
   const amountOk = Number.isFinite(amountNum) && amountNum > 0
   const transferOk = amountOk && from.trim() !== '' && to.trim() !== '' && from.trim() !== to.trim()
-  const switchOk = kindSel === 'routine' ? categoryPick !== '' : budgetPick !== ''
   /** 表单当前生效的锚：无锚随三选、编辑随互转、锚定入口固定 */
-  const formKind: 'routine' | 'budget' | 'transfer' =
+  const formKind: EntryKind =
     target.type === 'free' ? freeSel : kindSwitchable ? kindSel : target.type
-  /** 无锚校验沿互转的形状：类目/预算下拉为空（设置还没定义）时禁提交 */
-  const freeOk = amountOk && (formKind === 'routine' ? categoryPick !== '' : budgetPick !== '')
-  const canSubmit = kindSwitchable
-    ? amountOk && switchOk
-    : formKind === 'transfer'
+  /** 校验单份按 formKind 分派（替代旧的 switchOk/freeOk/嵌套 canSubmit 三份同形逻辑）：走账验两端账户互异；
+   *  日常/预算验下拉已选——锚定入口的锚来自设置、选项列表必含锚值，该条件恒真，与原先「锚定只验金额」等价；
+   *  无锚/互转路径下列表为空（设置还没定义）时初值为空串即禁提交，与原先 freeOk/switchOk 逐值等价 */
+  const canSubmit =
+    formKind === 'transfer'
       ? transferOk
-      : target.type === 'free'
-        ? freeOk
-        : amountOk
+      : amountOk && (formKind === 'routine' ? categoryPick !== '' : budgetPick !== '')
+  /** 锚在表单内可选（三选段与两个下拉的渲染条件）：无锚三选或编辑互转；锚定入口固定不可选 */
+  const kindPickable = kindSwitchable || target.type === 'free'
 
   function submit() {
     if (!canSubmit) return
@@ -132,7 +134,7 @@ export function EntrySheet({
       : `编辑 · ${baseTitle}`
 
   /** 切换段点选：无锚三选自由切；编辑互转仍限日常↔预算（走账按钮只在无锚渲染） */
-  const switchKind = (k: 'routine' | 'budget' | 'transfer') => {
+  const switchKind = (k: EntryKind) => {
     if (target.type === 'free') setFreeSel(k)
     else if (k !== 'transfer') setKindSel(k)
   }
@@ -156,7 +158,7 @@ export function EntrySheet({
           submit()
         }}
       >
-        {(kindSwitchable || target.type === 'free') && (
+        {kindPickable && (
           <div className="seg" style={{ marginBottom: 12 }}>
             <button type="button" className={formKind === 'routine' ? 'on' : ''} onClick={() => switchKind('routine')}>
               日常
@@ -171,10 +173,12 @@ export function EntrySheet({
             )}
           </div>
         )}
-        {formKind === 'routine' && (kindSwitchable || target.type === 'free') && (
+        {formKind === 'routine' && kindPickable && (
           <div className="field-row">
             <label htmlFor="ef-cat">日常</label>
             <select id="ef-cat" className="field" value={categoryPick} onChange={(e) => setCategoryPick(e.target.value)}>
+              {/* 列表为空（设置还没建日常）时给占位项：受控值无匹配 option 会触发 React 告警且显示空白；空值同时让校验禁掉提交兜底 */}
+              {routineCategoryOptions.length === 0 && <option value="">（设置里还没有日常）</option>}
               {routineCategoryOptions.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -183,10 +187,12 @@ export function EntrySheet({
             </select>
           </div>
         )}
-        {formKind === 'budget' && (kindSwitchable || target.type === 'free') && (
+        {formKind === 'budget' && kindPickable && (
           <div className="field-row">
             <label htmlFor="ef-budget">预算</label>
             <select id="ef-budget" className="field" value={budgetPick} onChange={(e) => setBudgetPick(e.target.value)}>
+              {/* 列表为空（设置还没建预算）时给占位项：受控值无匹配 option 会触发 React 告警且显示空白；空值同时让校验禁掉提交兜底 */}
+              {budgetOptions.length === 0 && <option value="">（设置里还没有预算）</option>}
               {budgetOptions.map((p) => (
                 <option key={p} value={p}>
                   {p}
