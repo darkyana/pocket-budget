@@ -4,11 +4,11 @@
 
 ### Issue tracker
 
-Issues are local spec files (`spec-issue-*.md`, repo root, never committed); GitHub Issues is read-only history. See `docs/agents/issue-tracker.md`.
+Issues and specs live in the private repo `darkyana/planning` (label `product:pocket-budget`), never in this public repo. Agents only pick up issues labeled `ready-for-agent`; `stage:idea`/`stage:spec` means stop and ask the human. See `docs/agents/issue-tracker.md`.
 
 ### Implementation workflow
 
-Code changes go through an implementation skill, never ad hoc unless the human explicitly asks so. Before building: check for a ticket or spec (`spec-issue-*.md`, repo root), then confirm which skill to run — ask the human when either is unclear.
+Code changes go through an implementation skill, never ad hoc unless the human explicitly asks so. Before building: fetch the ticket from `darkyana/planning` (see `docs/agents/issue-tracker.md`), then confirm which skill to run — ask the human when either is unclear. PRs stay short and product-facing: reference the issue as `darkyana/planning#<n>`, never paste the private spec, and list point-by-point how the issue was met.
 
 ### Triage labels
 
