@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type ExpenseCycle, type MoneyRecord, type PersistedState, type Settings } from '../core/types'
-import { fixedExpensePaid, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
+import { effectiveRecords, fixedExpensePaid, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
 import { timestampOf, validateRecordDate } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
@@ -189,7 +189,10 @@ export const useApp = create<AppState>()((set, get) => ({
       periodKey: expensePeriodKey(now, cycle),
       paid,
     }
-    set((s) => ({ records: [...s.records, e] }))
+    set((s) => {
+      const records = s.records.filter((r) => r.kind !== 'fixed' || r.item !== name || r.periodKey !== e.periodKey)
+      return { records: paid ? [...records, e] : records }
+    })
     persist(get())
   },
 
@@ -240,31 +243,38 @@ export const useApp = create<AppState>()((set, get) => ({
 
   editFixedExpense(id, patch) {
     validateRecordDate(patch.date)
-    set((s) => ({
-      records: s.records.map((e): MoneyRecord => {
-        if (e.id !== id || e.kind !== 'fixed') return e
-        const ts = timestampOf(patch.date, new Date(e.ts)) // 日期变化时保留原时分秒
-        // 周期键跟新日期走：补记到上月的付款归上月，本月回到未付
-        const cycle = s.settings.fixedExpenses.find((c) => c.name === e.item)?.cycle ?? 'monthly'
-        const acct = patch.account.trim()
-        return {
-          ...e,
-          ts,
-          periodKey: expensePeriodKey(new Date(ts), cycle),
-          account: acct || undefined,
-        }
-      }),
-    }))
+    const s = get()
+    const payment = effectiveRecords(s.records).find((e) => e.id === id)
+    if (!payment || payment.kind !== 'fixed') return
+    const ts = timestampOf(patch.date, new Date(payment.ts))
+    const cycle = s.settings.fixedExpenses.find((c) => c.name === payment.item)?.cycle ?? 'monthly'
+    const periodKey = expensePeriodKey(new Date(ts), cycle)
+    if (effectiveRecords(s.records).some((e) => e.kind === 'fixed' && e.id !== id && e.item === payment.item && e.periodKey === periodKey)) {
+      throw new Error('该期间已有付款，请选择其他付款日期')
+    }
+    const records = s.records.filter((e) => e.kind !== 'fixed' || e.item !== payment.item || (e.periodKey !== payment.periodKey && e.periodKey !== periodKey))
+    records.push({ ...payment, ts, periodKey, account: patch.account.trim() || undefined })
+    set({ records })
     persist(get())
   },
 
   deleteRecord(id) {
-    set((s) => ({ records: s.records.filter((e) => e.id !== id) }))
+    set((s) => {
+      const payment = effectiveRecords(s.records).find((e) => e.id === id && e.kind === 'fixed')
+      return { records: s.records.filter((e) => payment?.kind === 'fixed'
+        ? e.kind !== 'fixed' || e.item !== payment.item || e.periodKey !== payment.periodKey
+        : e.id !== id) }
+    })
     persist(get())
   },
 
   renameAnchor(kind, from, to) {
-    set((s) => ({ records: renameRecordAnchor(s.records, kind, from, to) }))
+    set((s) => {
+      const amount = kind === 'fixed' ? s.settings.fixedExpenses.find((e) => e.name === to)?.amount : undefined
+      const records = renameRecordAnchor(s.records, kind, from, to).map((e) =>
+        amount !== undefined && e.kind === 'fixed' && e.item === to && e.paid ? { ...e, amount } : e)
+      return { records }
+    })
     persist(get())
   },
 
@@ -318,7 +328,13 @@ export const useApp = create<AppState>()((set, get) => ({
       const draft = structuredClone(s.settings)
       mutate(draft)
       validateSettings(s.settings, draft)
-      return { settings: draft }
+      const changedAmounts = new Map(draft.fixedExpenses
+        .filter((item) => s.settings.fixedExpenses.some((old) => old.name === item.name && old.amount !== item.amount))
+        .map((item) => [item.name, item.amount]))
+      const records = s.records.map((e) => e.kind === 'fixed' && e.paid && changedAmounts.has(e.item)
+        ? { ...e, amount: changedAmounts.get(e.item)! }
+        : e)
+      return { settings: draft, records }
     })
     persist(get())
   },

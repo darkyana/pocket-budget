@@ -1,5 +1,6 @@
 import type { MoneyRecord, PersistedState, Settings } from '../core/types'
 import { dayKeyOf } from '../core/time'
+import { effectiveRecords } from '../core/derive'
 import { migrate } from './migrate'
 
 /**
@@ -80,7 +81,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100
 export function buildFamilyLedgerVoucher(records: MoneyRecord[]): { voucher: FamilyLedgerVoucher; skipped: number } {
   const rows: FamilyLedgerRow[] = []
   let skipped = 0
-  for (const e of records) {
+  for (const e of effectiveRecords(records)) {
     if (e.kind === 'transfer') continue
     if (e.kind === 'fixed' && !e.paid) continue
     const account = e.account?.trim()

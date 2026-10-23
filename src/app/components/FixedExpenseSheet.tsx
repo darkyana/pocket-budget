@@ -63,7 +63,7 @@ export function FixedExpenseSheet({
         </div>
         <div style={{ marginTop: 12, textAlign: 'center' }}>
           <ConfirmButton
-            label="删除这一条（撤销切换）"
+            label="删除这笔付款"
             confirmLabel="确认删除？"
             onConfirm={() => {
               deleteRecord(event.id)
