@@ -16,7 +16,10 @@
  *   4. src/styles.css 的间距（margin/padding/gap）、字号（font-size）、圆角
  *      （border-radius）、z-index 取值 ∈ 阶梯白名单（calc()/env()/百分比/var()
  *      不拦；登记例外：.phone 底部 padding 130、.toast bottom 92）
- *   5. 占位：内联样式检查（票 18），待后续票填充
+ *   5. src/app/** 的 tsx 内联 style 仅允许数据驱动值：margin、padding 各向、
+ *      fontSize、lineHeight、textAlign、gap、whiteSpace、flex 等静态键命中即报
+ *      （值为模板串、三元或函数调用算动态放行；width/height/background/color/
+ *      textDecoration/opacity/accentColor/transform 等数据驱动键不拦）
  *
  * 有命中退出码 1（阻断），干净退出码 0。
  */
@@ -206,8 +209,93 @@ function checkScale() {
   })
 }
 
+const INLINE_STATIC_KEYS = new Set([
+  'margin',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'padding',
+  'paddingTop',
+  'paddingBottom',
+  'paddingLeft',
+  'paddingRight',
+  'fontSize',
+  'lineHeight',
+  'textAlign',
+  'gap',
+  'whiteSpace',
+  'flex',
+])
+
+function splitTopLevel(text) {
+  const parts = []
+  let depth = 0
+  let quote = null
+  let start = 0
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]
+    if (quote) {
+      if (c === '\\') i++
+      else if (c === quote) quote = null
+      continue
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      quote = c
+      continue
+    }
+    if (c === '{' || c === '(' || c === '[') depth++
+    else if (c === '}' || c === ')' || c === ']') depth--
+    else if (c === ',' && depth === 0) {
+      parts.push(text.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(text.slice(start))
+  return parts
+}
+
+function isDynamicValue(value) {
+  if (value.includes('`')) return true
+  if (value.includes('?')) return true
+  return /\w\s*\(/.test(value)
+}
+
 function checkInlineStyles() {
-  // TODO: 内联样式检查（票 18）——src/app/** 内联 style 的颜色等字面量
+  for (const file of listFiles()) {
+    if (!file.startsWith('src/app/') || !file.endsWith('.tsx')) continue
+    const content = read(file)
+    if (content === null) continue
+    let idx = 0
+    while (true) {
+      const start = content.indexOf('style={{', idx)
+      if (start === -1) break
+      let depth = 0
+      let end = -1
+      for (let i = start + 'style='.length; i < content.length; i++) {
+        if (content[i] === '{') depth++
+        else if (content[i] === '}') {
+          depth--
+          if (depth === 0) {
+            end = i
+            break
+          }
+        }
+      }
+      if (end === -1) break
+      const body = content.slice(start + 'style={{'.length, end - 1)
+      const line = content.slice(0, start).split('\n').length
+      for (const prop of splitTopLevel(body)) {
+        const m = prop.match(/^\s*(\w+)\s*:\s*([\s\S]+)$/)
+        if (!m) continue
+        const [, key, value] = m
+        if (INLINE_STATIC_KEYS.has(key) && !isDynamicValue(value)) {
+          hits.push(`${file}:${line} [静态内联样式] ${key}: ${value.trim()}`)
+        }
+      }
+      idx = end + 1
+    }
+  }
 }
 
 checkAppColors()
