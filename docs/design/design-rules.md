@@ -8,9 +8,20 @@ The law. Each section = **Intent** (why the rules exist) + checkable rules. Tags
 
 At the current stage, only colors are governed centrally; the token set expands gradually — each category (spacing, typography, radii, shadows) joins when a rule demands it, never big-bang.
 
-- [ ] G1 `[machine]` No hard-coded colors in feature code: colors are defined once as design tokens in the centralized token set — `:root` of `src/styles.css` — and feature code references them by name (`var(--*)`). No hex or rgb(a) literals in `src/app/**`. (Spacing, typography, radii, shadows are reserved for future application of this law; they join as their token sets are added.)
+- [ ] G1 `[machine]` No hard-coded colors in feature code: colors are defined once as design tokens in the centralized token set — `:root` of `src/styles.css` — and feature code references them by name (`var(--*)`). No hex or rgb(a) literals in `src/app/**`. (Spacing, typography, radii, shadows are reserved for future application of this law; they join as their token sets are added.) 裸值的唯一合法位置是 `:root` 的 token 定义本身（`styles.css` `:root` 之外同样禁止颜色字面量）。例外：`index.html` 的 `theme-color`（HTML 无法引用 CSS 变量），由 `design-scan` 断言其值与 `--accent` 相等。
 - [ ] G2 `[machine]` Motion, illustration, and icons are exempt from central token governance — they may be defined locally in feature code. The logging duty still applies: every motion (animation, transition, scroll behavior) is registered in `motion.md`, every illustration in `illustration.md`, and every icon in `icons.md`.
 - [ ] G3 `[agent]` Use components instead of feature-level implementation, unless that feature-level implementation is registered in `Unicon.md`.
+
+## 词汇 Vocabulary
+
+**Intent** — One vocabulary so rules, scans, reviews, and registries mean the same thing by the same words. Definitions only; tier values belong to the rules that introduce them, never here.
+
+- **token（令牌）** — 在 `src/styles.css` `:root` 定义一次的命名变量（如 `--accent`、`--shadow-md`）。设计决策只在此处发生，其余代码按名引用（`var(--*)`）。
+- **裸值（bare literal）** — 直接写在样式代码里的颜色字面量（`#2f6f4f`、`rgba(0,0,0,.35)`）。颜色类别受管后，`src/app/**` 与 `styles.css` 的 `:root` 之外一律禁止（见 G1）。
+- **派生色（derived color）** — 在使用处由既有 token 经 `color-mix()` 计算出的颜色（如 `color-mix(in srgb, var(--over) 15%, var(--card))`）。不是裸值，也不必新设 token；允许轻微色相偏移。
+- **阶梯（scale）** — 同一维度（阴影、间距等）按强度排布的固定档位（sm/md/lg…）。收敛到少数几档，不按现状逐处 token 化；具体档位值由引入它的规则定义。
+- **hairline（发丝线）** — 1px 细分隔线，本产品的默认分隔语汇（现由 `--line` 承担）；具体档位待相应规则补充。
+- **豁免（exemption）** — 有登记的例外。经 `unicon.md` 登记后方可游离于 token 体系；未登记的偏离按违规处理。
 
 ## 数字 Numbers (the hero of this app)
 
