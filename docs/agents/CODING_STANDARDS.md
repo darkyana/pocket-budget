@@ -18,3 +18,11 @@ Seed data, fixtures, test data, doc examples, and placeholder copy use the ficti
 Canonical vocabulary (source of truth: `src/core/seed.ts`): 储蓄卡, 备用金, 宠物粮, 物业费, 家政服务, 会员年费, 电子钱包, 示例公司, 示例银行.
 
 **Check**: grep any new sample data for real-world specificity. A name that identifies a real bank, company, or the owner's household fails. The pre-commit scan catches known terms; this rule covers terms nobody has leaked yet.
+
+## 3. No comments in code
+
+Code carries no comments. The "why" lives where it stays true: the commit message, the PR's point-by-point description, ADRs for architectural calls, `GLOSSARY.md` for vocabulary. Comments are a third copy of the truth — they drift from the code (the 锚 vocabulary debt is the cautionary example) and then mislead every reader, human or agent. Naming, types, and tests carry the "what".
+
+A non-obvious trap that genuinely must be recorded goes into the commit message that introduces it, or an ADR if architectural. Never into a comment.
+
+**Check**: any new `//`, `/* */`, or `/** */` block in a diff fails. Test names (strings inside `describe`/`it`) are not comments and stay.
