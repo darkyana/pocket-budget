@@ -91,7 +91,7 @@ function DateFilterSheet({
             <input id="df-to" className="field" type="date" required min={draftFrom || undefined} value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
           </div>
         )}
-        <div className="small muted" style={{ margin: '4px 0 12px' }}>
+        <div className="small muted field-row">
           {mode === 'day' ? '只显示所选日期的流水' : '请选择完整范围，包含开始和结束当天'}
         </div>
         <div className="form-btns">
@@ -178,7 +178,7 @@ function CategoryFilterSheet({
           </div>
         </>
       )}
-      <div className="small muted" style={{ margin: '4px 0 12px' }}>
+      <div className="small muted field-row">
         「全部日常 / 全部预算」一键全选对应细分；多选取并集。数字 = 当前账户/日期筛选范围内的笔数
       </div>
       <div className="form-btns">
@@ -277,14 +277,14 @@ export function Records() {
       {/* 标题行右侧通用入口（仿 retro-head 先例）：补记不用切回今日页 */}
       <div className="retro-head">
         <h1>流水</h1>
-        <button type="button" className="link" style={{ marginLeft: 'auto' }} onClick={() => setAdding(true)}>
+        <button type="button" className="link push-end" onClick={() => setAdding(true)}>
           ＋ 记一笔
         </button>
       </div>
       <div className="sub">
         {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div className="chips">
         <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
           {accountFilter ? `账户 · ${accountFilter}` : '按账户筛选'}
         </button>
@@ -294,7 +294,7 @@ export function Records() {
         <button type="button" className={`btn2 ${catFilter.length ? 'on' : ''}`} onClick={() => setFilterSheet('cat')}>
           {catFilter.length ? `分类 · ${catFilter.length} 项` : '按分类筛选'}
         </button>
-        <button type="button" className="btn2" style={{ marginLeft: 'auto' }} onClick={() => setDataSheet(true)}>
+        <button type="button" className="btn2 push-end" onClick={() => setDataSheet(true)}>
           数据管理
         </button>
       </div>
@@ -313,7 +313,7 @@ export function Records() {
                     {d.label}
                     {'note' in e && e.note ? <span className="muted small"> {e.note}</span> : null}
                   </span>
-                  <span className={amountClass(e)} style={{ whiteSpace: 'nowrap' }}>
+                  <span className={amountClass(e)}>
                     {d.amount}
                   </span>
                 </button>
@@ -323,14 +323,14 @@ export function Records() {
         ))
       ) : (
         <div className="card">
-          <div className="small muted" style={{ padding: '10px 0' }}>
+          <div className="small muted block-gap">
             {records.length === 0
               ? '还没有记录。点右上「记一笔」，或回「今日」页点卡片即可记。'
               : '没有符合条件的记录——试试清除筛选。'}
           </div>
         </div>
       )}
-      <div className="small muted" style={{ textAlign: 'center' }}>
+      <div className="small muted center">
         点一笔可编辑；日常/预算可互转改类（先批量记、回头分类）
       </div>
       {dataSheet && <DataSheet onClose={() => setDataSheet(false)} />}

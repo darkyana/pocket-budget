@@ -13,9 +13,9 @@ import {
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { money } from '../format'
+import { statusColor } from '../statusColor'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
-const statusColor = (s: DayStatus) => (s === 'over' ? 'var(--over)' : s === 'warn' ? 'var(--warn)' : 'var(--ok)')
 const statusText = (s: DayStatus) => (s === 'over' ? '超' : s === 'warn' ? '贴近' : '省')
 const ratioText = (r: number) => (Number.isFinite(r) ? `${Math.round(r * 100)}%` : '超支')
 /** 与计划的差额文案：随符号走，整月皆超/皆省都不出负数 */
@@ -83,23 +83,23 @@ export function QuickRetro() {
           <span>
             <b>当前消费力</b> <span className="small muted">与今日页同口径</span>
           </span>
-          <b style={{ fontSize: 28, color: statusColor(paceSt) }}>{pacePct}%</b>
+          <b className="hero-num" style={{ color: statusColor(paceSt) }}>{pacePct}%</b>
         </div>
         <div className="bar">
           <i style={{ width: `${pct(pace.ratio)}%`, background: statusColor(paceSt) }} />
         </div>
-        <div className="small muted" style={{ marginTop: 8 }}>
+        <div className="small muted block-gap">
           本月日常实际 {money(pace.spent)} ÷ 已过 {stats.passedDays} 天计划 {money(pace.possible)} ·{' '}
           {stats.saved >= 0 ? `比计划省下 ${money(stats.saved)}` : `比计划超 ${money(-stats.saved)}`}
         </div>
-        <div className="small muted" style={{ marginTop: 6 }}>
+        <div className="small muted block-gap">
           每天的计划按当日日型（工作日/周末日）加总；不到 80% 算省，超过计划即超支
         </div>
       </div>
 
       {/* 月历热力：主视图 */}
       <div className="card">
-        <div className="row" style={{ marginBottom: 8 }}>
+        <div className="row-gap">
           <b>{now.getMonth() + 1}月日历</b>
           <span className="small muted">格内数字 = 当日日常支出</span>
         </div>
@@ -160,7 +160,7 @@ export function QuickRetro() {
           </div>
         </div>
         {todayRetro && (
-          <div className="small" style={{ marginTop: 10, color: statusColor(todayRetro.status) }}>
+          <div className="small block-gap" style={{ color: statusColor(todayRetro.status) }}>
             今天 {todayRetro.day} 日：{money(todayRetro.spent)} / 计划 {money(todayRetro.expect)} ·{' '}
             {todayRetro.spent > todayRetro.expect
               ? `超 ${money(todayRetro.spent - todayRetro.expect)}`
@@ -171,7 +171,7 @@ export function QuickRetro() {
 
       {/* 近几天：实际 vs 计划 */}
       <div className="card">
-        <div className="row" style={{ marginBottom: 2 }}>
+        <div className="row-gap">
           <b>近 {chartDays.length} 天 · 实际 vs 计划</b>
           <span className="small muted">深色实际 · 浅色计划</span>
         </div>
@@ -186,18 +186,18 @@ export function QuickRetro() {
             </div>
           ))}
         </div>
-        <div className="small muted" style={{ marginTop: 8 }}>
+        <div className="small muted block-gap">
           实际按当日状态着色（绿省 / 橙贴近 / 红超）· 今天的日期加粗
         </div>
       </div>
 
       {/* 节奏透视 */}
       <div className="card">
-        <div style={{ marginBottom: 6 }}>
+        <div className="row-gap">
           <b>节奏透视</b>
         </div>
         {[stats.workAvg, stats.restAvg].filter((g): g is GroupAvg => !!g).map((g) => (
-          <div key={g.label} style={{ padding: '4px 0 8px' }}>
+          <div key={g.label} className="block-gap">
             <div className="row">
               <span className="small">
                 {g.label}平均 <span className="muted">· {g.days} 天</span>
@@ -212,7 +212,7 @@ export function QuickRetro() {
           </div>
         ))}
         {(stats.best || stats.worst) && (
-          <div className="small muted" style={{ marginTop: 4 }}>
+          <div className="small muted block-gap">
             {stats.best && <>最省 {stats.best.day} 日（{ratioText(stats.best.ratio)} · {diffText(stats.best)}）</>}
             {stats.best && stats.worst && ' · '}
             {stats.worst && <>最超 {stats.worst.day} 日（{ratioText(stats.worst.ratio)} · {diffText(stats.worst)}）</>}
@@ -225,7 +225,7 @@ export function QuickRetro() {
           title={`${now.getMonth() + 1}/${detail.day} ${weekdayOf(detail.date)} · ${detail.dayType}`}
           onClose={() => setDetail(null)}
         >
-          <div className="row" style={{ marginBottom: 4 }}>
+          <div className="row-gap">
             <span className="small muted">
               计划 {money(detail.expect)} · {detail.entries.length} 笔
             </span>
@@ -236,12 +236,12 @@ export function QuickRetro() {
           <div className="bar">
             <i style={{ width: `${pct(detail.ratio)}%`, background: statusColor(detail.status) }} />
           </div>
-          <div className="small" style={{ marginTop: 6, color: statusColor(detail.status) }}>
+          <div className="small block-gap" style={{ color: statusColor(detail.status) }}>
             {detail.spent > detail.expect
               ? `超 ${money(detail.spent - detail.expect)}`
               : `省 ${money(detail.expect - detail.spent)}`}
           </div>
-          <div style={{ marginTop: 10 }}>
+          <div className="block-gap">
             {detail.entries.length > 0 ? (
               detail.entries.map((e) => (
                 <div className="feed-item" key={e.id}>

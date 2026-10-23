@@ -263,7 +263,7 @@ export function SettingsPage() {
 
       {seg === 'routine' && (
         <div className="card">
-          <div className="row" style={{ marginBottom: 4 }}>
+          <div className="row-gap">
             <b>今天算哪种日子？</b>
           </div>
           <div className="chips">
@@ -284,7 +284,7 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
-          <div className="small muted" style={{ marginBottom: 6 }}>
+          <div className="small muted field-row">
             当前：{effDayType} · 按周末与法定节假日自动选，点选只改今天
           </div>
           {buckets.map((b, i) => {
@@ -314,7 +314,7 @@ export function SettingsPage() {
               </div>
             )
           })}
-          <div style={{ marginTop: 10 }}>
+          <div className="block-gap">
             <button type="button" className="btn2" onClick={addBucket}>
               ＋ 新增日常
             </button>
@@ -324,7 +324,7 @@ export function SettingsPage() {
 
       {seg === 'fixed' && (
         <div className="card">
-          <div className="small muted" style={{ marginBottom: 6 }}>
+          <div className="small muted field-row">
             每月 / 每年固定要付的钱（点行改名称、金额、周期）
           </div>
           {settings.fixedExpenses.map((c, i) => {
@@ -357,7 +357,7 @@ export function SettingsPage() {
               </div>
             )
           })}
-          <div style={{ marginTop: 10 }}>
+          <div className="block-gap">
             <button type="button" className="btn2" onClick={addFixedExpense}>
               ＋ 新增固定支出
             </button>
@@ -367,7 +367,7 @@ export function SettingsPage() {
 
       {seg === 'budget' && (
         <div className="card">
-          <div className="small muted" style={{ marginBottom: 6 }}>
+          <div className="small muted field-row">
             预算（点行改月预算 / 周额度）
           </div>
           {settings.budgets.map((p, i) => {
@@ -400,7 +400,7 @@ export function SettingsPage() {
               </div>
             )
           })}
-          <div style={{ marginTop: 10 }}>
+          <div className="block-gap">
             <button type="button" className="btn2" onClick={addBudget}>
               ＋ 新增预算
             </button>
@@ -409,7 +409,7 @@ export function SettingsPage() {
       )}
 
       <div className="card">
-        <div className="row" style={{ marginBottom: 10 }}>
+        <div className="row-gap">
           <b>本月速算</b>
           <span className="small muted">
             按当前设置与日历推算 ·{' '}
@@ -471,12 +471,12 @@ export function SettingsPage() {
             </table>
           )
         })()}
-        <div className="small muted" style={{ marginTop: 8 }}>
+        <div className="small muted block-gap">
           休息日 = 周末与法定节假日（调休上班除外）；自定义日型与当天的手动点选不计入速算
         </div>
       </div>
 
-      <div style={{ marginTop: 14, textAlign: 'center' }}>
+      <div className="block-gap center">
         <ConfirmButton
           label="恢复出厂（清空一切，含记录）"
           confirmLabel="真的全部清空？"
@@ -489,14 +489,15 @@ export function SettingsPage() {
 
       {ratioSheet && (
         <Sheet title="调整日常实际比率" onClose={() => setRatioSheet(false)}>
-          <div className="small muted" style={{ marginBottom: 14, lineHeight: 1.7 }}>
+          <div className="small muted field-row">
             日常的单日期望是「这种日子合理消费的上限」，并不是每天都会把它花光。
             本月速算按这个比率把期望全额折算成预计实际花费——只影响速算的估算，
             不影响今日页的期望与进度条。
           </div>
-          <div className="row" style={{ gap: 10, marginBottom: 8 }}>
+          <div className="row-gap">
             <input
               type="range"
+              className="field"
               min={10}
               max={100}
               step={5}
@@ -507,11 +508,11 @@ export function SettingsPage() {
                   s.routineSpendRatio = pctVal / 100
                 })
               }}
-              style={{ flex: 1, accentColor: 'var(--accent)' }}
+              style={{ accentColor: 'var(--accent)' }}
             />
-            <b style={{ whiteSpace: 'nowrap' }}>{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
+            <b>{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
           </div>
-          <div className="small muted" style={{ marginBottom: 12 }}>
+          <div className="small muted field-row">
             缺省 60%，调整即时保存
           </div>
           <div className="form-btns">
