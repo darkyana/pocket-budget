@@ -5,6 +5,7 @@ import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { money, todayHeadline } from '../format'
+import { statusColor } from '../statusColor'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 
@@ -65,7 +66,7 @@ export function Today() {
               )}
             </span>
           </span>
-          <b style={{ fontSize: 15, color: routine.left < 0 ? 'var(--over)' : 'var(--accent)' }}>
+          <b className="sub-num" style={{ color: statusColor(routine.left < 0 ? 'over' : 'ok') }}>
             {routine.left >= 0 ? `还能花 ${money(routine.left)}` : `超 ${money(-routine.left)}`}
           </b>
         </div>
@@ -81,8 +82,8 @@ export function Today() {
                     onClick={() => setEntry({ type: 'routine', category: b.name })}
                   >
                     <div className="small muted">{b.name}</div>
-                    <div className="row" style={{ marginTop: 2 }}>
-                      <b style={{ fontSize: 17, color: b.left < 0 ? 'var(--over)' : undefined }}>
+                    <div className="row">
+                      <b className="sub-num" style={{ color: b.left < 0 ? statusColor('over') : undefined }}>
                         {b.left >= 0 ? money(b.left) : `超 ${money(-b.left)}`}
                       </b>
                       <span className="small muted">{money(b.spent)}</span>
@@ -92,7 +93,7 @@ export function Today() {
                         style={{
                           width: `${pct(b.left / b.expect)}%`,
                           background:
-                            b.left < 0 ? 'var(--over)' : b.left < b.expect * 0.2 ? 'var(--warn)' : 'var(--bar-accent)',
+                            b.left < 0 ? statusColor('over') : b.left < b.expect * 0.2 ? statusColor('warn') : 'var(--bar-accent)',
                         }}
                       />
                     </div>
@@ -102,17 +103,17 @@ export function Today() {
             ))}
           </div>
         ) : (
-          <div className="small muted" style={{ padding: '10px 0' }}>
+          <div className="small muted block-gap">
             当前日型还没有日常，去设置里加。
           </div>
         )}
-        <div className="small muted" style={{ marginTop: 8 }}>
+        <div className="small muted block-gap">
           {pages > 1 ? `左右滑动翻页（共 ${pages} 页）· ` : ''}点卡片 = 记一笔该类消费 · 点「消费力」= 看本月回顾
         </div>
       </div>
 
       <div className="card">
-        <div style={{ marginBottom: 6 }}>
+        <div className="row-block">
           <b>预算</b>
         </div>
         {budgets.length > 0 ? (
@@ -141,7 +142,7 @@ export function Today() {
                     本周 {money(p.weekSpent)}/{money(p.weekBudget)}
                   </span>
                 </span>
-                <b className="small" style={{ color: p.weekLeft < p.weekBudget * 0.2 ? 'var(--warn)' : 'var(--accent)' }}>
+                <b className="small" style={{ color: statusColor(p.weekLeft < p.weekBudget * 0.2 ? 'warn' : 'ok') }}>
                   还能花 {money(p.weekLeft)}
                 </b>
               </div>
@@ -149,33 +150,33 @@ export function Today() {
                 <i
                   style={{
                     width: `${pct(p.weekLeft / p.weekBudget)}%`,
-                    background: p.weekLeft < 0 ? 'var(--over)' : p.weekLeft < p.weekBudget * 0.2 ? 'var(--warn)' : 'var(--bar-accent)',
+                    background: p.weekLeft < 0 ? statusColor('over') : p.weekLeft < p.weekBudget * 0.2 ? statusColor('warn') : 'var(--bar-accent)',
                   }}
                 />
               </div>
-              <div className="small muted" style={{ marginTop: 4 }}>
+              <div className="small muted block-gap">
                 月 {money(p.monthSpent)}/{money(p.month)} · 按日均推算{' '}
-                <b style={{ color: p.projection > p.month * 1.05 ? 'var(--over)' : 'var(--ok)' }}>
+                <b style={{ color: statusColor(p.projection > p.month * 1.05 ? 'over' : 'ok') }}>
                   {money(p.projection)}
                 </b>
               </div>
             </button>
           ))
         ) : (
-          <div className="small muted" style={{ padding: '8px 0' }}>
+          <div className="small muted block-gap">
             {views.length > 0
               ? '本期所有预算都已花完或超支——去流水页看详情，或设置里调整预算'
               : '还没有预算，去设置里加'}
           </div>
         )}
-        <div className="small muted" style={{ marginTop: 8 }}>
+        <div className="small muted block-gap">
           点预算 = 记一笔该预算收支 · 长按 = 去流水看它的全部条目
         </div>
       </div>
 
       {fixedExpenses.length > 0 && (
         <div className="card">
-          <div className="row" style={{ marginBottom: 6 }}>
+          <div className="row-block">
             <span>
               <b>固定支出 · 本期</b>{' '}
               <span className="small muted">
@@ -209,12 +210,12 @@ export function Today() {
                     {c.cycle === 'yearly' ? ' · 年' : ''}
                     {c.paid ? '（已付）' : ''}
                   </span>
-                  <span style={c.paid ? { textDecoration: 'line-through' } : { color: 'var(--warn)', fontWeight: 600 }}>
+                  <span style={c.paid ? { textDecoration: 'line-through' } : { color: statusColor('warn'), fontWeight: 600 }}>
                     {money(c.amount)}
                   </span>
                 </button>
               ))}
-              <div className="small muted" style={{ marginTop: 6 }}>
+              <div className="small muted block-gap">
                 点一条 = 切换 已付/未付（进流水）
               </div>
             </div>
@@ -222,7 +223,7 @@ export function Today() {
         </div>
       )}
 
-      <div style={{ textAlign: 'center', paddingBottom: 8 }}>
+      <div className="center">
         <button type="button" className="btn2" onClick={() => setEntry({ type: 'transfer' })}>
           ＋ 记一笔走账（现金/转卡/投资划转）
         </button>

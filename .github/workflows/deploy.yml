@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run design:scan
+      - run: npm run privacy:scan
       - run: npm run build
         env:
           BASE_URL: /pocket-budget/

@@ -163,7 +163,7 @@ export function EntrySheet({
         }}
       >
         {kindPickable && (
-          <div className="seg" style={{ marginBottom: 12 }}>
+          <div className="seg">
             <button type="button" className={formKind === 'routine' ? 'on' : ''} onClick={() => switchKind('routine')}>
               日常
             </button>
@@ -206,7 +206,7 @@ export function EntrySheet({
           </div>
         )}
         {formKind === 'budget' && (
-          <div className="seg" style={{ marginBottom: 12 }}>
+          <div className="seg">
             <button type="button" className={dir === 'out' ? 'on' : ''} onClick={() => setDir('out')}>
               支出
             </button>
@@ -291,7 +291,7 @@ export function EntrySheet({
           </button>
         </div>
         {existing && (
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <div className="block-gap center">
             <ConfirmButton
               label="删除这一笔"
               confirmLabel="确认删除？"

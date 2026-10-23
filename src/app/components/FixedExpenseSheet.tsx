@@ -38,7 +38,7 @@ export function FixedExpenseSheet({
           }
         }}
       >
-        <div className="small muted" style={{ marginBottom: 12 }}>
+        <div className="small muted field-row">
           {event.paid ? '标记已付' : '改回未付'} · {money(event.amount)}（金额在设置里改）
         </div>
         <div className="field-row">
@@ -61,7 +61,7 @@ export function FixedExpenseSheet({
           </button>
           <button type="submit">保存</button>
         </div>
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
+        <div className="block-gap center">
           <ConfirmButton
             label="删除这笔付款"
             confirmLabel="确认删除？"
