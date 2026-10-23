@@ -50,6 +50,13 @@ export function timestampOf(dateStr: string, now = new Date()): number {
   return new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds()).getTime()
 }
 
+export function validateRecordDate(date: string, now = new Date()): void {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || dayKeyOf(timestampOf(date, now)) !== date) {
+    throw new Error('请选择有效日期')
+  }
+  if (date > dayKeyOf(now)) throw new Error('日期不能晚于今天')
+}
+
 export function dayOfMonth(d: Date | number): number {
   return new Date(d).getDate()
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type ExpenseCycle, type MoneyRecord, type PersistedState, type Settings } from '../core/types'
 import { fixedExpensePaid, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
-import { timestampOf } from '../core/time'
+import { timestampOf, validateRecordDate } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
 import { parseVoucher } from '../storage/voucher'
@@ -105,6 +105,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   addRhythm(category, amount, note, account, date) {
+    validateRecordDate(date)
     const acct = account.trim()
     const e: MoneyRecord = {
       id: uid(),
@@ -120,6 +121,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   addBudgetEntry(budget, dir, amount, note, account, date) {
+    validateRecordDate(date)
     const acct = account.trim()
     const e: MoneyRecord = {
       id: uid(),
@@ -155,6 +157,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   addTransfer(from, to, amount, note, date) {
+    validateRecordDate(date)
     const e: MoneyRecord = { id: uid(), ts: timestampOf(date), kind: 'transfer', from, to, amount, note }
     set((s) => ({
       records: [...s.records, e],
@@ -164,6 +167,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   editRecord(id, patch) {
+    validateRecordDate(patch.date)
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || e.kind === 'fixed') return e
@@ -181,6 +185,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   saveEntryRecord(id, next) {
+    validateRecordDate(next.date)
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || (e.kind !== 'routine' && e.kind !== 'budget')) return e
@@ -195,6 +200,7 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   editFixedExpense(id, patch) {
+    validateRecordDate(patch.date)
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || e.kind !== 'fixed') return e
