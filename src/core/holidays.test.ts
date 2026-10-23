@@ -27,6 +27,45 @@ describe('isRestDay 2026 法定节假日表（国办发明电〔2025〕7号）',
   })
 })
 
+describe('calendar table coverage', () => {
+  it.each([
+    '2026-01-04', '2026-02-14', '2026-02-28',
+    '2026-05-09', '2026-09-20', '2026-10-10',
+  ])('classifies adjusted working weekend %s as a workday', date => {
+    expect(isRestDay(d(date))).toBe(false)
+  })
+
+  it.each([
+    ['2026-07-06', false],
+    ['2026-07-11', true],
+    ['2026-07-12', true],
+    ['2025-01-01', false],
+    ['2025-01-04', true],
+    ['2025-01-05', true],
+    ['2027-01-01', false],
+    ['2027-01-02', true],
+    ['2027-01-03', true],
+  ] as const)('uses ordinary weekday/weekend rules for %s', (date, expected) => {
+    expect(isRestDay(d(date))).toBe(expected)
+  })
+
+  it.each([
+    ['2025-12-31', '2026-01-01', '2026-01-03', '2026-01-04'],
+    ['2026-02-14', '2026-02-15', '2026-02-23', '2026-02-24'],
+    ['2026-04-03', '2026-04-04', '2026-04-06', '2026-04-07'],
+    ['2026-04-30', '2026-05-01', '2026-05-05', '2026-05-06'],
+    ['2026-06-18', '2026-06-19', '2026-06-21', '2026-06-22'],
+    ['2026-09-24', '2026-09-25', '2026-09-27', '2026-09-28'],
+    ['2026-09-30', '2026-10-01', '2026-10-07', '2026-10-08'],
+  ])('preserves the inclusive holiday between %s and %s through %s before %s', (before, start, end, after) => {
+    expect(isRestDay(d(before))).toBe(false)
+    for (const day = d(start); day <= d(end); day.setDate(day.getDate() + 1)) {
+      expect(isRestDay(day), day.toDateString()).toBe(true)
+    }
+    expect(isRestDay(d(after))).toBe(false)
+  })
+})
+
 const base: Settings = {
   dayType: '工作日',
   dayPlans: { 工作日: [], 周末日: [], 假期日: [] },
