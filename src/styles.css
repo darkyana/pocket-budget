@@ -316,12 +316,15 @@ button:disabled {
 /* 金额配色：支出墨、收入（回血）绿、走账灰 */
 .amt-out {
   color: var(--ink);
+  white-space: nowrap;
 }
 .amt-in {
   color: var(--accent);
+  white-space: nowrap;
 }
 .amt-transfer {
   color: var(--ink2);
+  white-space: nowrap;
 }
 
 .btn2.on {
@@ -637,6 +640,10 @@ button:disabled {
   outline: none;
   border-color: var(--accent);
 }
+.range {
+  flex: 1;
+  accent-color: var(--accent);
+}
 .form-btns {
   display: flex;
   gap: var(--space-2);
@@ -857,12 +864,21 @@ button:disabled {
 .block-gap {
   margin-top: var(--space-2);
 }
-.row-gap {
+.row-block {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
+}
+.nowrap {
+  white-space: nowrap;
+}
+.note {
+  line-height: 1.7;
+}
+.hint {
+  margin-bottom: var(--space-1);
 }
 .center {
   text-align: center;

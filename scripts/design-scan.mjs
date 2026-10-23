@@ -62,6 +62,30 @@ function listFiles() {
   return out.split('\n').filter(Boolean)
 }
 
+function forEachCssLine(content, fn) {
+  let inComment = false
+  content.split('\n').forEach((raw, i) => {
+    let line = raw
+    if (inComment) {
+      const end = line.indexOf('*/')
+      if (end === -1) return
+      line = line.slice(end + 2)
+      inComment = false
+    }
+    const open = line.indexOf('/*')
+    if (open !== -1) {
+      const close = line.indexOf('*/', open)
+      if (close === -1) {
+        line = line.slice(0, open)
+        inComment = true
+      } else {
+        line = line.slice(0, open) + line.slice(close + 2)
+      }
+    }
+    fn(line, i)
+  })
+}
+
 function checkAppColors() {
   for (const file of listFiles()) {
     if (!file.startsWith('src/app/') || !/\.(ts|tsx)$/.test(file)) continue
@@ -86,25 +110,7 @@ function checkStylesColors() {
   if (content === null) return
   let inRoot = false
   let rootDepth = 0
-  let inComment = false
-  content.split('\n').forEach((raw, i) => {
-    let line = raw
-    if (inComment) {
-      const end = line.indexOf('*/')
-      if (end === -1) return
-      line = line.slice(end + 2)
-      inComment = false
-    }
-    const open = line.indexOf('/*')
-    if (open !== -1) {
-      const close = line.indexOf('*/', open)
-      if (close === -1) {
-        line = line.slice(0, open)
-        inComment = true
-      } else {
-        line = line.slice(0, open) + line.slice(close + 2)
-      }
-    }
+  forEachCssLine(content, (line, i) => {
     if (/^\s*:root\s*\{/.test(line)) inRoot = true
     if (inRoot) {
       rootDepth += (line.match(/\{/g) || []).length
@@ -166,26 +172,8 @@ function checkScale() {
   const file = 'src/styles.css'
   const content = read(file)
   if (content === null) return
-  let inComment = false
   let selector = ''
-  content.split('\n').forEach((raw, i) => {
-    let line = raw
-    if (inComment) {
-      const end = line.indexOf('*/')
-      if (end === -1) return
-      line = line.slice(end + 2)
-      inComment = false
-    }
-    const open = line.indexOf('/*')
-    if (open !== -1) {
-      const close = line.indexOf('*/', open)
-      if (close === -1) {
-        line = line.slice(0, open)
-        inComment = true
-      } else {
-        line = line.slice(0, open) + line.slice(close + 2)
-      }
-    }
+  forEachCssLine(content, (line, i) => {
     const sel = line.match(/^\s*([^{}]+)\{\s*$/)
     if (sel) selector = sel[1].trim()
     const decl = line.match(/^\s*([a-zA-Z-]+)\s*:\s*([^;]+);/)

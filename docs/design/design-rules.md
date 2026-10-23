@@ -8,7 +8,7 @@ The law. Each section = **Intent** (why the rules exist) + checkable rules. Tags
 
 At the current stage, colors, spacing, typography, radii, and z-index are governed centrally; the token set expands gradually — each category joins when a rule demands it, never big-bang.
 
-- [ ] G1 `[machine]` No hard-coded colors in feature code: colors are defined once as design tokens in the centralized token set — `:root` of `src/styles.css` — and feature code references them by name (`var(--*)`). No hex or rgb(a) literals in `src/app/**`. (Spacing, typography, radii, shadows are reserved for future application of this law; they join as their token sets are added.) 裸值的唯一合法位置是 `:root` 的 token 定义本身（`styles.css` `:root` 之外同样禁止颜色字面量）。例外：`index.html` 的 `theme-color`（HTML 无法引用 CSS 变量），由 `design-scan` 断言其值与 `--accent` 相等。
+- [ ] G1 `[machine]` No hard-coded colors in feature code: colors are defined once as design tokens in the centralized token set — `:root` of `src/styles.css` — and feature code references them by name (`var(--*)`). No hex or rgb(a) literals in `src/app/**`. (Spacing, typography, radii and z-index are governed by G4.) 裸值的唯一合法位置是 `:root` 的 token 定义本身（`styles.css` `:root` 之外同样禁止颜色字面量）。例外：`index.html` 的 `theme-color`（HTML 无法引用 CSS 变量），由 `design-scan` 断言其值与 `--accent` 相等。
 - [ ] G2 `[machine]` Motion, illustration, and icons are exempt from central token governance — they may be defined locally in feature code. The logging duty still applies: every motion (animation, transition, scroll behavior) is registered in `motion.md`, every illustration in `illustration.md`, and every icon in `icons.md`.
 - [ ] G3 `[agent]` Use components instead of feature-level implementation, unless that feature-level implementation is registered in `Unicon.md`.
 
