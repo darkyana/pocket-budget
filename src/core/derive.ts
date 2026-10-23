@@ -366,13 +366,7 @@ export function expensePeriodKey(now: Date, cycle: ExpenseCycle): string {
 /** 固定支出状态 = 本周期内该固定支出最后一条流水；周期内无流水 = 未付（周期更替自动回到未付） */
 export function fixedExpensePaid(records: MoneyRecord[], name: string, cycle: ExpenseCycle, now: Date): boolean {
   const key = expensePeriodKey(now, cycle)
-  let last: Extract<MoneyRecord, { kind: 'fixed' }> | undefined
-  for (const e of records) {
-    if (e.kind === 'fixed' && e.item === name && e.periodKey === key && (!last || e.ts >= last.ts)) {
-      last = e
-    }
-  }
-  return last ? last.paid : false
+  return effectiveRecords(records).some((e) => e.kind === 'fixed' && e.item === name && e.periodKey === key)
 }
 
 export function effectiveRecords(records: MoneyRecord[]): MoneyRecord[] {
