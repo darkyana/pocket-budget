@@ -13,7 +13,10 @@
  *      豁免登记见 docs/design/unicon.md）
  *   3. index.html 的 <meta name="theme-color"> 与 styles.css :root 的
  *      --accent 值一致（HTML 无法引用 CSS 变量，由本扫描看住这处重复）
- *   4. 占位：阶梯检查（票 17）、内联样式检查（票 18），待后续票填充
+ *   4. src/styles.css 的间距（margin/padding/gap）、字号（font-size）、圆角
+ *      （border-radius）、z-index 取值 ∈ 阶梯白名单（calc()/env()/百分比/var()
+ *      不拦；登记例外：.phone 底部 padding 130、.toast bottom 92）
+ *   5. 占位：内联样式检查（票 18），待后续票填充
  *
  * 有命中退出码 1（阻断），干净退出码 0。
  */
@@ -128,8 +131,79 @@ function checkThemeColor() {
   }
 }
 
+const SCALE_WHITELIST = {
+  spacing: new Set([2, 4, 8, 12, 16, 24, 32]),
+  font: new Set([12, 13, 14, 16, 20, 28]),
+  radius: new Set([4, 8, 12, 16, 999]),
+  z: new Set([5, 10, 30, 40, 50, 60]),
+}
+
+const SCALE_EXEMPT = new Set(['.phone|padding|130', '.toast|bottom|92'])
+
+function scaleKind(prop) {
+  if (/^(?:margin|padding)(?:-(?:top|right|bottom|left))?$/.test(prop)) return 'spacing'
+  if (prop === 'gap' || prop === 'row-gap' || prop === 'column-gap') return 'spacing'
+  if (prop === 'font-size') return 'font'
+  if (prop === 'border-radius') return 'radius'
+  if (prop === 'z-index') return 'z'
+  return null
+}
+
+function stripParens(value) {
+  let v = value
+  let prev
+  do {
+    prev = v
+    v = v.replace(/\([^()]*\)/g, '')
+  } while (v !== prev)
+  return v
+}
+
 function checkScale() {
-  // TODO: 阶梯检查（票 17）——阴影/间距等档位的机器断言
+  const file = 'src/styles.css'
+  const content = read(file)
+  if (content === null) return
+  let inComment = false
+  let selector = ''
+  content.split('\n').forEach((raw, i) => {
+    let line = raw
+    if (inComment) {
+      const end = line.indexOf('*/')
+      if (end === -1) return
+      line = line.slice(end + 2)
+      inComment = false
+    }
+    const open = line.indexOf('/*')
+    if (open !== -1) {
+      const close = line.indexOf('*/', open)
+      if (close === -1) {
+        line = line.slice(0, open)
+        inComment = true
+      } else {
+        line = line.slice(0, open) + line.slice(close + 2)
+      }
+    }
+    const sel = line.match(/^\s*([^{}]+)\{\s*$/)
+    if (sel) selector = sel[1].trim()
+    const decl = line.match(/^\s*([a-zA-Z-]+)\s*:\s*([^;]+);/)
+    if (!decl) return
+    const kind = scaleKind(decl[1])
+    if (!kind) return
+    const value = stripParens(decl[2])
+    if (kind === 'z') {
+      const zm = value.match(/^\s*(-?\d+)\s*$/)
+      if (zm && !SCALE_WHITELIST.z.has(Number(zm[1]))) {
+        hits.push(`${file}:${i + 1} [阶梯越档] ${selector} z-index: ${zm[1]}`)
+      }
+      return
+    }
+    for (const m of value.matchAll(/(\d+(?:\.\d+)?)px/g)) {
+      const n = Number(m[1])
+      if (SCALE_WHITELIST[kind].has(n)) continue
+      if (SCALE_EXEMPT.has(`${selector}|${decl[1]}|${n}`)) continue
+      hits.push(`${file}:${i + 1} [阶梯越档] ${selector} ${decl[1]}: ${m[1]}px`)
+    }
+  })
 }
 
 function checkInlineStyles() {
@@ -145,7 +219,7 @@ checkInlineStyles()
 if (hits.length) {
   console.error(`设计扫描：命中 ${hits.length} 处`)
   for (const h of hits) console.error('  ' + h)
-  console.error('处理：改用 :root token 或 color-mix 派生；例外须登记 docs/design/unicon.md')
+  console.error('处理：颜色改用 :root token 或 color-mix 派生；间距/字号/圆角/z-index 走 var(--space-*/--font-*/--radius-*/--z-*) 阶梯档位；例外须登记（颜色见 docs/design/unicon.md，阶梯见 design-scan 的 SCALE_EXEMPT）')
   process.exit(1)
 }
 console.log(`设计扫描通过（${staged ? '暂存区' : '全部跟踪文件'}）`)

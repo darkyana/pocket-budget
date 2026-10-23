@@ -26,6 +26,30 @@
   --scrim: rgba(0, 0, 0, 0.35);
   --toast-bg: #111;
   --toast-ink: #ffd97a;
+  --space-hairline: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --font-caption: 12px;
+  --font-ui: 13px;
+  --font-body: 14px;
+  --font-title: 16px;
+  --font-page: 20px;
+  --font-hero: 28px;
+  --radius-bar: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --z-tag: 5;
+  --z-drag: 10;
+  --z-float: 30;
+  --z-nav: 40;
+  --z-sheet: 50;
+  --z-toast: 60;
 }
 
 * {
@@ -66,36 +90,36 @@ body {
   overflow-y: scroll;
   background: var(--bg);
   position: relative;
-  padding: calc(env(safe-area-inset-top) + 16px) 16px 130px;
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) 130px; /* 功能性让位（底栏/Toast），不进阶梯 */
 }
 
 .expe-tag {
   position: absolute;
   top: 6px;
   right: 12px;
-  font-size: 10px;
+  font-size: var(--font-caption);
   color: #a05a2c;
   background: #f7ecd9;
-  padding: 2px 8px;
-  border-radius: 8px;
-  z-index: 5;
+  padding: var(--space-hairline) var(--space-2);
+  border-radius: var(--radius-sm);
+  z-index: var(--z-tag);
 }
 
 h1 {
-  font-size: 20px;
-  margin-bottom: 2px;
+  font-size: var(--font-page);
+  margin-bottom: var(--space-hairline);
 }
 .sub {
-  font-size: 12px;
+  font-size: var(--font-caption);
   color: var(--ink2);
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
 }
 
 .card {
   background: var(--card);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
   box-shadow: var(--shadow-sm);
 }
 
@@ -111,27 +135,27 @@ h1 {
 .link {
   background: none;
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--font-caption);
   font-weight: 500;
   padding: 0;
   border-radius: 0;
   text-decoration: underline;
 }
 .small {
-  font-size: 12px;
+  font-size: var(--font-caption);
 }
 
 .bar {
   height: 8px;
   background: var(--chip);
-  border-radius: 4px;
-  margin-top: 8px;
+  border-radius: var(--radius-bar);
+  margin-top: var(--space-2);
   overflow: hidden;
 }
 .bar > i {
   display: block;
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-bar);
   transition: width 0.2s ease-out;
 }
 
@@ -141,8 +165,8 @@ button {
   border: none;
   background: var(--ink);
   color: var(--on-ink);
-  border-radius: 12px;
-  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
   font-weight: 600;
 }
 button:disabled {
@@ -151,17 +175,17 @@ button:disabled {
 .btn2 {
   background: var(--chip);
   color: var(--ink);
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 9px;
+  font-size: var(--font-caption);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   font-weight: 500;
 }
 .btn-danger {
   background: color-mix(in srgb, var(--over) 15%, var(--card));
   color: var(--over);
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 9px;
+  font-size: var(--font-caption);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
 }
 .btn-ghost {
   background: var(--chip);
@@ -179,15 +203,15 @@ button:disabled {
   background: var(--card);
   box-shadow: var(--shadow-md);
   display: flex;
-  z-index: 40;
+  z-index: var(--z-nav);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .tabs button {
   flex: 1;
   background: none;
   color: var(--ink2);
-  font-size: 12px;
-  padding: 12px 0 10px;
+  font-size: var(--font-caption);
+  padding: var(--space-3) 0 var(--space-2);
   border-radius: 0;
   font-weight: 400;
 }
@@ -198,7 +222,7 @@ button:disabled {
 .tabs button .ic {
   display: flex;
   justify-content: center;
-  margin-bottom: 3px;
+  margin-bottom: var(--space-hairline);
 }
 
 /* 日常 2×2 卡片（横向翻页） */
@@ -207,8 +231,8 @@ button:disabled {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  margin-top: 10px;
+  padding-bottom: var(--space-1);
+  margin-top: var(--space-2);
 }
 .hscroll::-webkit-scrollbar {
   display: none;
@@ -218,12 +242,12 @@ button:disabled {
   scroll-snap-align: start;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--space-2);
 }
 .mini {
   background: var(--bg);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
   text-align: left;
   font: inherit;
   font-weight: 400;
@@ -241,7 +265,7 @@ button:disabled {
   background: none;
   border: none;
   border-bottom: 1px solid var(--line);
-  padding: 10px 0 12px;
+  padding: var(--space-2) 0 var(--space-3);
   font: inherit;
   font-weight: 400;
   color: inherit;
@@ -260,7 +284,7 @@ button:disabled {
   border: none;
   border-top: 1px dashed var(--line);
   border-radius: 0;
-  padding: 15px 0;
+  padding: var(--space-4) 0;
   font: inherit;
   font-weight: 400;
   color: inherit;
@@ -270,16 +294,16 @@ button:disabled {
 .feed-item {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
-  padding: 9px 0;
+  padding: var(--space-2) 0;
   border: none;
   border-bottom: 1px dashed var(--line);
   border-radius: 0;
   background: none;
   font: inherit;
   font-weight: 400;
-  font-size: 14px;
+  font-size: var(--font-body);
   color: inherit;
   text-align: left;
 }
@@ -309,17 +333,17 @@ button:disabled {
 .picker-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .picker-list button {
   text-align: left;
   background: none;
   border: none;
-  border-radius: 9px;
-  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
   font: inherit;
   font-weight: 400;
-  font-size: 14px;
+  font-size: var(--font-body);
   color: var(--ink);
 }
 .picker-list button.on {
@@ -330,9 +354,9 @@ button:disabled {
   min-width: 0;
 }
 .day-head {
-  font-size: 12px;
+  font-size: var(--font-caption);
   color: var(--ink2);
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-1);
   display: flex;
   justify-content: space-between;
 }
@@ -341,17 +365,17 @@ button:disabled {
 .seg {
   display: flex;
   background: var(--chip);
-  border-radius: 11px;
-  padding: 3px;
-  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  margin-bottom: var(--space-4);
 }
 .seg button {
   flex: 1;
   background: none;
   color: var(--ink2);
-  font-size: 13px;
-  padding: 7px 0;
-  border-radius: 9px;
+  font-size: var(--font-ui);
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-sm);
   font-weight: 400;
 }
 .seg button.on {
@@ -366,10 +390,10 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 0;
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--line);
-  font-size: 14px;
-  gap: 8px;
+  font-size: var(--font-body);
+  gap: var(--space-2);
 }
 .setrow:last-child {
   border-bottom: none;
@@ -379,7 +403,7 @@ button:disabled {
   text-align: left;
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: var(--space-hairline) 0;
   font: inherit;
   font-weight: 400;
   color: inherit;
@@ -391,14 +415,14 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 12px;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-3);
 }
 .chip {
   background: var(--chip);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 13px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-ui);
   font-weight: 600;
   color: var(--ink);
 }
@@ -419,9 +443,9 @@ button:disabled {
 .setrow.drag-sorting {
   transition: none;
   position: relative;
-  z-index: 10;
+  z-index: var(--z-drag);
   background: var(--card);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
 }
 
@@ -429,18 +453,18 @@ button:disabled {
 .quick-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-ui);
 }
 .quick-table th {
   text-align: left;
-  font-size: 12px;
+  font-size: var(--font-caption);
   color: var(--ink2);
   font-weight: 600;
-  padding: 2px 0 6px;
+  padding: var(--space-hairline) 0 var(--space-1);
   border-bottom: 1px solid var(--line);
 }
 .quick-table td {
-  padding: 8px 0;
+  padding: var(--space-2) 0;
   border-bottom: 1px dashed var(--line);
   vertical-align: top;
 }
@@ -450,7 +474,7 @@ button:disabled {
 }
 .quick-table td:first-child {
   white-space: nowrap;
-  padding-right: 10px;
+  padding-right: var(--space-2);
 }
 .quick-table .sum td {
   font-weight: 700;
@@ -463,7 +487,7 @@ button:disabled {
   position: fixed;
   inset: 0;
   background: var(--scrim);
-  z-index: 50;
+  z-index: var(--z-sheet);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -472,8 +496,8 @@ button:disabled {
   background: var(--card);
   width: 100%;
   max-width: 430px;
-  border-radius: 20px 20px 0 0;
-  padding: 18px 18px calc(env(safe-area-inset-bottom) + 18px);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-4) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-4));
   animation: sheet-in 0.2s ease-out;
 }
 @keyframes sheet-in {
@@ -495,18 +519,18 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 .sheet-title {
-  font-size: 16px;
+  font-size: var(--font-title);
   font-weight: 700;
 }
 .again-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: var(--space-1);
+  font-size: var(--font-caption);
   font-weight: 500;
   color: var(--ink2);
 }
@@ -518,10 +542,10 @@ button:disabled {
 
 /* 数据管理弹层：分组标签 + 整宽按钮 + 按钮下的小字说明 */
 .dm-label {
-  font-size: 12px;
+  font-size: var(--font-caption);
   font-weight: 600;
   color: var(--ink2);
-  margin: 16px 0 8px;
+  margin: var(--space-4) 0 var(--space-2);
 }
 .dm-label:first-child {
   margin-top: 0;
@@ -529,18 +553,18 @@ button:disabled {
 .dm-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 .dm-actions > div {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .dm-actions button {
   width: 100%;
-  font-size: 14px;
-  padding: 10px 18px;
-  border-radius: 12px;
+  font-size: var(--font-body);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
 }
 /* 动作按钮用浅底轻样式（危险按钮保留 .btn-danger 红调） */
 .dm-actions button:not(.btn-danger) {
@@ -551,9 +575,9 @@ button:disabled {
   background: color-mix(in srgb, var(--ink) 8%, var(--card));
 }
 .dm-hint {
-  font-size: 11px;
+  font-size: var(--font-caption);
   color: var(--ink2);
-  padding: 0 2px;
+  padding: 0 var(--space-hairline);
 }
 
 .combo {
@@ -564,14 +588,14 @@ button:disabled {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: var(--z-float);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   max-height: 208px;
   overflow-y: auto;
-  padding: 4px;
+  padding: var(--space-1);
 }
 .combo-option {
   display: block;
@@ -579,11 +603,11 @@ button:disabled {
   text-align: left;
   background: none;
   border: none;
-  border-radius: 8px;
-  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
   font: inherit;
   font-weight: 400;
-  font-size: 14px;
+  font-size: var(--font-body);
   color: var(--ink);
 }
 .combo-option:active {
@@ -592,19 +616,19 @@ button:disabled {
 
 /* 表单 */
 .field-row {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .field-row label {
   display: block;
-  font-size: 12px;
+  font-size: var(--font-caption);
   color: var(--ink2);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .field {
   width: 100%;
-  padding: 11px 12px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font: inherit;
   background: var(--card);
   color: var(--ink);
@@ -615,8 +639,8 @@ button:disabled {
 }
 .form-btns {
   display: flex;
-  gap: 10px;
-  margin-top: 4px;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 .form-btns button {
   flex: 1;
@@ -625,15 +649,15 @@ button:disabled {
 /* toast */
 .toast {
   position: fixed;
-  bottom: 92px;
+  bottom: 92px; /* 功能性让位（底栏/Toast），不进阶梯 */
   left: 50%;
   transform: translateX(-50%);
   background: var(--toast-bg);
   color: var(--toast-ink);
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  z-index: 60;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-ui);
+  z-index: var(--z-toast);
   max-width: 86%;
   white-space: nowrap;
   overflow: hidden;
@@ -646,10 +670,10 @@ button:disabled {
   display: inline-block;
   background: var(--chip);
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--font-caption);
   font-weight: 600;
-  padding: 1px 9px;
-  border-radius: 999px;
+  padding: var(--space-hairline) var(--space-2);
+  border-radius: var(--radius-pill);
 }
 .pace-chip:active {
   background: color-mix(in srgb, var(--ink) 8%, var(--card));
@@ -658,8 +682,8 @@ button:disabled {
 .retro-head {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-bottom: 2px;
+  gap: var(--space-hairline);
+  margin-bottom: var(--space-hairline);
 }
 .retro-head h1 {
   margin-bottom: 0;
@@ -669,44 +693,44 @@ button:disabled {
   align-items: center;
   background: none;
   color: var(--ink2);
-  font-size: 13px;
+  font-size: var(--font-ui);
   font-weight: 500;
-  padding: 4px 4px 4px 0;
+  padding: var(--space-1) var(--space-1) var(--space-1) 0;
 }
 
 /* 月历热力 */
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: var(--space-1);
 }
 .cal-week {
-  font-size: 11px;
+  font-size: var(--font-caption);
   color: var(--ink2);
   text-align: center;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-hairline);
 }
 .cal-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: var(--space-hairline);
   min-height: 46px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font: inherit;
   font-weight: 400;
   color: inherit;
-  padding: 4px 0;
+  padding: var(--space-1) 0;
 }
 .cal-cell:active {
   filter: brightness(0.94);
 }
 .cal-num {
-  font-size: 12px;
+  font-size: var(--font-caption);
 }
 .cal-amt {
-  font-size: 11px;
+  font-size: var(--font-caption);
   font-weight: 600;
 }
 .cal-ok {
@@ -733,9 +757,9 @@ button:disabled {
 
 .legend {
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
-  font-size: 11px;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  font-size: var(--font-caption);
   color: var(--ink2);
   flex-wrap: wrap;
 }
@@ -743,8 +767,8 @@ button:disabled {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 3px;
-  margin-right: 4px;
+  border-radius: var(--radius-bar);
+  margin-right: var(--space-1);
   vertical-align: -1px;
 }
 .lg-ok {
@@ -759,23 +783,23 @@ button:disabled {
 
 .counts {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .count {
   flex: 1;
   text-align: center;
-  border-radius: 10px;
-  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-hairline);
 }
 .count b {
-  font-size: 16px;
+  font-size: var(--font-title);
 }
 .count span {
-  font-size: 11px;
+  font-size: var(--font-caption);
 }
 .count-ok {
   background: color-mix(in srgb, var(--ok) 10%, transparent);
@@ -794,10 +818,10 @@ button:disabled {
 .chart {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  margin-top: 10px;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-hairline);
 }
 .chart-col {
   flex: 1 0 0;
@@ -805,24 +829,24 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .chart-bars {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
+  gap: var(--space-hairline);
   height: 88px;
 }
 .chart-bars i {
   display: block;
   width: 8px;
-  border-radius: 3px 3px 0 0;
+  border-radius: var(--radius-bar) var(--radius-bar) 0 0;
 }
 .bar-plan {
   background: var(--chip);
 }
 .chart-day {
-  font-size: 10px;
+  font-size: var(--font-caption);
   color: var(--ink2);
 }
 .chart-day-today {
