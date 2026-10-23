@@ -54,7 +54,7 @@ interface AppState {
   toggleFixedExpense(name: string): void
   addTransfer(from: string, to: string, amount: number, note: string, date: string): void
   /** 编辑一笔：金额/备注/账户/日期覆盖原流水；日期变化时保留原时分秒。固定支出流水用 editFixedExpense */
-  editRecord(id: string, patch: { amount: number; note: string; account: string; date: string }): void
+  editRecord(id: string, patch: { amount: number; note: string; account: string; date: string; from?: string; to?: string }): void
   /** 保存日常/预算流水的编辑（含日常↔预算互转与同锚改目标）：整条替换，保留 id */
   saveEntryRecord(
     id: string,
@@ -173,7 +173,9 @@ export const useApp = create<AppState>()((set, get) => ({
           amount: patch.amount,
           note: patch.note,
           ts: timestampOf(patch.date, new Date(e.ts)), // 日期变化时保留原时分秒
-          ...(e.kind === 'transfer' ? {} : { account: acct || undefined }),
+          ...(e.kind === 'transfer'
+            ? { from: patch.from?.trim() ?? e.from, to: patch.to?.trim() ?? e.to }
+            : { account: acct || undefined }),
         }
       }),
     }))

@@ -99,7 +99,7 @@ export function EntrySheet({
           date,
         })
       } else {
-        editRecord(existing.id, { amount: amountNum, note: note.trim(), account, date })
+        editRecord(existing.id, { amount: amountNum, note: note.trim(), account, date, from, to })
       }
       toast('已更新')
       onClose()
