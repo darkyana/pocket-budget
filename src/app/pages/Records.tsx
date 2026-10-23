@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { type MoneyRecord } from '../../core/types'
 import { dayKeyOf } from '../../core/time'
-import { dayLabel, groupByDay } from '../../core/derive'
+import { dayLabel, effectiveRecords, groupByDay } from '../../core/derive'
 import { useApp } from '../store'
 import { DataSheet } from '../components/DataSheet'
 import { FixedExpenseSheet } from '../components/FixedExpenseSheet'
@@ -183,7 +183,8 @@ function CategoryFilterSheet({
 
 export function Records() {
   const settings = useApp((s) => s.settings)
-  const records = useApp((s) => s.records)
+  const storedRecords = useApp((s) => s.records)
+  const records = effectiveRecords(storedRecords)
   const pendingCatTokens = useApp((s) => s.pendingCatTokens)
   const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
