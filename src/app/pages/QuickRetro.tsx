@@ -99,7 +99,7 @@ export function QuickRetro() {
 
       {/* 月历热力：主视图 */}
       <div className="card">
-        <div className="row-gap">
+        <div className="row-block">
           <b>{now.getMonth() + 1}月日历</b>
           <span className="small muted">格内数字 = 当日日常支出</span>
         </div>
@@ -171,7 +171,7 @@ export function QuickRetro() {
 
       {/* 近几天：实际 vs 计划 */}
       <div className="card">
-        <div className="row-gap">
+        <div className="row-block">
           <b>近 {chartDays.length} 天 · 实际 vs 计划</b>
           <span className="small muted">深色实际 · 浅色计划</span>
         </div>
@@ -193,7 +193,7 @@ export function QuickRetro() {
 
       {/* 节奏透视 */}
       <div className="card">
-        <div className="row-gap">
+        <div className="row-block">
           <b>节奏透视</b>
         </div>
         {[stats.workAvg, stats.restAvg].filter((g): g is GroupAvg => !!g).map((g) => (
@@ -225,7 +225,7 @@ export function QuickRetro() {
           title={`${now.getMonth() + 1}/${detail.day} ${weekdayOf(detail.date)} · ${detail.dayType}`}
           onClose={() => setDetail(null)}
         >
-          <div className="row-gap">
+          <div className="row-block">
             <span className="small muted">
               计划 {money(detail.expect)} · {detail.entries.length} 笔
             </span>

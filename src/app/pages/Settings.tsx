@@ -263,7 +263,7 @@ export function SettingsPage() {
 
       {seg === 'routine' && (
         <div className="card">
-          <div className="row-gap">
+          <div className="row-block">
             <b>今天算哪种日子？</b>
           </div>
           <div className="chips">
@@ -284,7 +284,7 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
-          <div className="small muted field-row">
+          <div className="small muted hint">
             当前：{effDayType} · 按周末与法定节假日自动选，点选只改今天
           </div>
           {buckets.map((b, i) => {
@@ -324,7 +324,7 @@ export function SettingsPage() {
 
       {seg === 'fixed' && (
         <div className="card">
-          <div className="small muted field-row">
+          <div className="small muted hint">
             每月 / 每年固定要付的钱（点行改名称、金额、周期）
           </div>
           {settings.fixedExpenses.map((c, i) => {
@@ -367,7 +367,7 @@ export function SettingsPage() {
 
       {seg === 'budget' && (
         <div className="card">
-          <div className="small muted field-row">
+          <div className="small muted hint">
             预算（点行改月预算 / 周额度）
           </div>
           {settings.budgets.map((p, i) => {
@@ -409,7 +409,7 @@ export function SettingsPage() {
       )}
 
       <div className="card">
-        <div className="row-gap">
+        <div className="row-block">
           <b>本月速算</b>
           <span className="small muted">
             按当前设置与日历推算 ·{' '}
@@ -489,15 +489,15 @@ export function SettingsPage() {
 
       {ratioSheet && (
         <Sheet title="调整日常实际比率" onClose={() => setRatioSheet(false)}>
-          <div className="small muted field-row">
+          <div className="small muted field-row note">
             日常的单日期望是「这种日子合理消费的上限」，并不是每天都会把它花光。
             本月速算按这个比率把期望全额折算成预计实际花费——只影响速算的估算，
             不影响今日页的期望与进度条。
           </div>
-          <div className="row-gap">
+          <div className="row-block">
             <input
               type="range"
-              className="field"
+              className="range"
               min={10}
               max={100}
               step={5}
@@ -508,9 +508,8 @@ export function SettingsPage() {
                   s.routineSpendRatio = pctVal / 100
                 })
               }}
-              style={{ accentColor: 'var(--accent)' }}
             />
-            <b>{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
+            <b className="nowrap">{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
           </div>
           <div className="small muted field-row">
             缺省 60%，调整即时保存

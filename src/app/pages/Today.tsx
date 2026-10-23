@@ -113,7 +113,7 @@ export function Today() {
       </div>
 
       <div className="card">
-        <div className="row-gap">
+        <div className="row-block">
           <b>预算</b>
         </div>
         {budgets.length > 0 ? (
@@ -176,7 +176,7 @@ export function Today() {
 
       {fixedExpenses.length > 0 && (
         <div className="card">
-          <div className="row-gap">
+          <div className="row-block">
             <span>
               <b>固定支出 · 本期</b>{' '}
               <span className="small muted">
