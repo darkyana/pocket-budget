@@ -155,7 +155,11 @@ export function EntrySheet({
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          submit()
+          try {
+            submit()
+          } catch (error) {
+            toast(error instanceof Error ? error.message : '保存失败')
+          }
         }}
       >
         {kindPickable && (
@@ -272,6 +276,8 @@ export function EntrySheet({
             id="ef-date"
             className="field"
             type="date"
+            required
+            max={dayKeyOf(new Date())}
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />

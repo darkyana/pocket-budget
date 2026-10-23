@@ -53,7 +53,7 @@ export function FixedExpenseSheet({
         </div>
         <div className="field-row">
           <label htmlFor="cs-date">付款日期</label>
-          <input id="cs-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="cs-date" className="field" type="date" required max={dayKeyOf(new Date())} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={onClose}>
