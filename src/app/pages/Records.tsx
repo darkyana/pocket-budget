@@ -7,6 +7,7 @@ import { DataSheet } from '../components/DataSheet'
 import { FixedExpenseSheet } from '../components/FixedExpenseSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { Sheet } from '../components/Sheet'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { moneyExact } from '../format'
 
 function describe(e: MoneyRecord): { label: string; amount: string } {
@@ -67,10 +68,11 @@ function DateFilterSheet({
           if (complete) onApply(draftFrom, mode === 'day' ? draftFrom : draftTo)
         }}
       >
-        <div className="seg">
-          <button type="button" className={mode === 'day' ? 'on' : ''} onClick={() => setMode('day')}>单日</button>
-          <button type="button" className={mode === 'range' ? 'on' : ''} onClick={() => setMode('range')}>日期范围</button>
-        </div>
+        <SegmentedControl<'day' | 'range'>
+          value={mode}
+          options={[{ value: 'day', label: '单日' }, { value: 'range', label: '日期范围' }]}
+          onChange={setMode}
+        />
         <div className="field-row">
           <label htmlFor="df-from">{mode === 'day' ? '日期' : '开始日期'}</label>
           <input

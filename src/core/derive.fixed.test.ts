@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupByDay, routineToday, routinePace, fixedExpensePaid } from './derive'
+import { effectiveRecords, groupByDay, routineToday, routinePace, fixedExpensePaid } from './derive'
 import { freshState } from '../storage/migrate'
 import { buildFamilyLedgerVoucher } from '../storage/voucher'
 import type { MoneyRecord } from './types'
@@ -25,6 +25,17 @@ describe('effective fixed payments and signed daily spending', () => {
     expect(routineToday(records, settings, now).totalSpent).toBe(20)
     expect(routinePace(records, settings, now).spent).toBe(20)
     expect(groupByDay([records[0], { ...records[3], amount: 100 }])[0].outflow).toBe(-80)
+  })
+
+  it('keeps payment status and effective records aligned when the last timestamp tie is unpaid or paid', () => {
+    const records = [fixed('paid', true), fixed('unpaid', false), fixed('older', true, -1)]
+    expect(fixedExpensePaid(records, '宠物粮', 'monthly', now)).toBe(false)
+    expect(effectiveRecords(records)).toEqual([])
+
+    const fresh = fixed('fresh', true)
+    records.push(fresh, fixed('older-unpaid', false, -1))
+    expect(fixedExpensePaid(records, '宠物粮', 'monthly', now)).toBe(true)
+    expect(effectiveRecords(records)).toEqual([fresh])
   })
 
   it('projects legacy toggles once before grouping by payment date or exporting', () => {
