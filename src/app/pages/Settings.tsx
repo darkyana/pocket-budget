@@ -28,6 +28,8 @@ export function SettingsPage() {
   const settings = useApp((s) => s.settings)
   const updateSettings = useApp((s) => s.updateSettings)
   const renameAnchor = useApp((s) => s.renameAnchor)
+  const saveRoutine = useApp((s) => s.saveRoutine)
+  const saveBudget = useApp((s) => s.saveBudget)
   const factoryReset = useApp((s) => s.factoryReset)
   const toast = useToast((s) => s.show)
   const [seg, setSeg] = useState<Seg>('routine')
@@ -82,37 +84,9 @@ export function SettingsPage() {
           toast('类别名和期望金额都要填')
           return
         }
-        if (name === b.name) {
-          updateSettings((s) => {
-            s.dayPlans[effDayType][index] = { name, expect }
-          })
-          setForm(null)
-          toast('已保存')
-          return
-        }
-        // 撞名 = 合并：第一次只提示，第二次确认才执行；历史流水同步改名
-        const dup = buckets.some((x, i) => i !== index && x.name === name)
-        if (dup && mergeArmed.current?.name !== name) {
-          mergeArmed.current = { name }
-          toast(`「${name}」在当前日型里已存在——再点一次「保存」合并（历史流水归入它，期望沿用对方）`)
-          return
-        }
-        mergeArmed.current = null
-        if (dup) {
-          updateSettings((s) => {
-            s.dayPlans[effDayType].splice(index, 1)
-          })
-          renameAnchor('routine', b.name, name)
-          setForm(null)
-          toast(`已合并到「${name}」，历史流水同步改名`)
-        } else {
-          updateSettings((s) => {
-            s.dayPlans[effDayType][index] = { name, expect }
-          })
-          renameAnchor('routine', b.name, name)
-          setForm(null)
-          toast('已保存，历史流水已同步改名')
-        }
+        saveRoutine(effDayType, index, { name, expect })
+        setForm(null)
+        toast(name === b.name ? '已保存' : '已保存，历史流水已同步改名')
       },
     })
   }
@@ -131,30 +105,10 @@ export function SettingsPage() {
           return
         }
         updateSettings((s) => {
-          s.dayPlans[s.dayType].push({ name: values.name.trim(), expect })
+          s.dayPlans[effDayType].push({ name: values.name.trim(), expect })
         })
         setForm(null)
         toast('已新增')
-      },
-    })
-  }
-
-  function addDayType() {
-    setForm({
-      title: '新增日型',
-      fields: [{ key: 'name', label: '日型名', type: 'text', placeholder: '如：假期日、出差日' }],
-      onSubmit: (values) => {
-        const name = values.name.trim()
-        if (!name) {
-          toast('日型名不能为空')
-          return
-        }
-        updateSettings((s) => {
-          if (!s.dayPlans[name]) s.dayPlans[name] = []
-          s.dayType = name
-        })
-        setForm(null)
-        toast(`日型「${name}」已建并切换`)
       },
     })
   }
@@ -260,36 +214,9 @@ export function SettingsPage() {
           toast('名称和月预算都要填')
           return
         }
-        if (name === p.name) {
-          updateSettings((s) => {
-            s.budgets[index] = { name, month }
-          })
-          setForm(null)
-          toast('已保存')
-          return
-        }
-        const dup = settings.budgets.some((x, i) => i !== index && x.name === name)
-        if (dup && mergeArmed.current?.name !== name) {
-          mergeArmed.current = { name }
-          toast(`「${name}」已存在——再点一次「保存」合并（历史流水归入它，月额度沿用对方）`)
-          return
-        }
-        mergeArmed.current = null
-        if (dup) {
-          updateSettings((s) => {
-            s.budgets.splice(index, 1)
-          })
-          renameAnchor('budget', p.name, name)
-          setForm(null)
-          toast(`已合并到「${name}」，历史流水同步改名`)
-        } else {
-          updateSettings((s) => {
-            s.budgets[index] = { name, month }
-          })
-          renameAnchor('budget', p.name, name)
-          setForm(null)
-          toast('已保存，历史流水已同步改名')
-        }
+        saveBudget(index, { name, month })
+        setForm(null)
+        toast(name === p.name ? '已保存' : '已保存，历史流水已同步改名')
       },
     })
   }
@@ -356,9 +283,6 @@ export function SettingsPage() {
                 {name}
               </button>
             ))}
-            <button type="button" className="btn2" onClick={addDayType}>
-              ＋ 日型
-            </button>
           </div>
           <div className="small muted" style={{ marginBottom: 6 }}>
             当前：{effDayType} · 按周末与法定节假日自动选，点选只改今天
@@ -382,7 +306,7 @@ export function SettingsPage() {
                   confirmLabel="确认删？"
                   onConfirm={() => {
                     updateSettings((s) => {
-                      s.dayPlans[s.dayType].splice(i, 1)
+                      s.dayPlans[effDayType].splice(i, 1)
                     })
                     toast('已删')
                   }}
@@ -598,7 +522,13 @@ export function SettingsPage() {
         </Sheet>
       )}
 
-      {form && <FormSheet {...form} onClose={() => setForm(null)} />}
+      {form && <FormSheet {...form} onClose={() => setForm(null)} onSubmit={(values) => {
+        try {
+          form.onSubmit(values)
+        } catch (error) {
+          toast(error instanceof Error ? error.message : '保存失败，请重试')
+        }
+      }} />}
     </>
   )
 }

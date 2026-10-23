@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { type MoneyRecord } from '../../core/types'
-import { dayKeyOf } from '../../core/time'
-import { dayLabel, groupByDay } from '../../core/derive'
+import { filterRecords } from '../../core/recordsFilter'
+import { dayLabel, effectiveRecords, groupByDay } from '../../core/derive'
 import { useApp } from '../store'
 import { DataSheet } from '../components/DataSheet'
 import { FixedExpenseSheet } from '../components/FixedExpenseSheet'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { Sheet } from '../components/Sheet'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { moneyExact } from '../format'
 
 function describe(e: MoneyRecord): { label: string; amount: string } {
@@ -57,36 +58,47 @@ function DateFilterSheet({
 }) {
   const [draftFrom, setDraftFrom] = useState(fromDate)
   const [draftTo, setDraftTo] = useState(toDate)
+  const [mode, setMode] = useState<'day' | 'range'>(fromDate && fromDate !== toDate ? 'range' : 'day')
+  const complete = !!draftFrom && (mode === 'day' || (!!draftTo && draftFrom <= draftTo))
   return (
     <Sheet title="按日期筛选" onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          onApply(draftFrom, draftTo)
+          if (complete) onApply(draftFrom, mode === 'day' ? draftFrom : draftTo)
         }}
       >
+        <SegmentedControl<'day' | 'range'>
+          value={mode}
+          options={[{ value: 'day', label: '单日' }, { value: 'range', label: '日期范围' }]}
+          onChange={setMode}
+        />
         <div className="field-row">
-          <label htmlFor="df-from">开始日期（可空）</label>
+          <label htmlFor="df-from">{mode === 'day' ? '日期' : '开始日期'}</label>
           <input
             id="df-from"
             className="field"
             type="date"
+            required
+            max={mode === 'range' ? draftTo || undefined : undefined}
             value={draftFrom}
             onChange={(e) => setDraftFrom(e.target.value)}
           />
         </div>
-        <div className="field-row">
-          <label htmlFor="df-to">结束日期（可空）</label>
-          <input id="df-to" className="field" type="date" value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
-        </div>
+        {mode === 'range' && (
+          <div className="field-row">
+            <label htmlFor="df-to">结束日期</label>
+            <input id="df-to" className="field" type="date" required min={draftFrom || undefined} value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
+          </div>
+        )}
         <div className="small muted" style={{ margin: '4px 0 12px' }}>
-          只填开始 = 从那天到现在；只填结束 = 截至那天
+          {mode === 'day' ? '只显示所选日期的流水' : '请选择完整范围，包含开始和结束当天'}
         </div>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={() => onApply('', '')}>
-            清除
+            全部日期
           </button>
-          <button type="submit">完成</button>
+          <button type="submit" disabled={!complete}>完成</button>
         </div>
       </form>
     </Sheet>
@@ -183,14 +195,14 @@ function CategoryFilterSheet({
 
 export function Records() {
   const settings = useApp((s) => s.settings)
-  const records = useApp((s) => s.records)
+  const storedRecords = useApp((s) => s.records)
+  const records = effectiveRecords(storedRecords)
   const pendingCatTokens = useApp((s) => s.pendingCatTokens)
   const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
   /** 无锚「记一笔」：不预设锚，一步进表单内三选（ADR 0001） */
   const [adding, setAdding] = useState(false)
 
-  /** 对账筛选：账户（走账匹配转出/转入任一侧）+ 日期区间（可只填一端）+ 分类（大类/细分多选并集）；入口在按钮排，选择走半弹层 */
   const [accountFilter, setAccountFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -229,15 +241,11 @@ export function Records() {
         return false // 无账户信息的条目在筛选具体账户时排除
       }
     }
-    if (fromDate || toDate) {
-      const k = dayKeyOf(e.ts)
-      if (fromDate && k < fromDate) return false
-      if (toDate && k > toDate) return false
-    }
     return true
   }
 
-  const filtered = records.filter((e) => matchScope(e) && (catFilter.length === 0 || catHit(e, catFilter)))
+  const dateFiltered = filterRecords(records, { from: fromDate, to: toDate })
+  const filtered = dateFiltered.filter((e) => matchScope(e) && (catFilter.length === 0 || catHit(e, catFilter)))
 
   const groups = groupByDay(filtered)
   const now = new Date()
@@ -254,7 +262,7 @@ export function Records() {
   ]
 
   /** 分类弹层的计数：按账户/日期范围（不含分类条件） */
-  const scoped = records.filter(matchScope)
+  const scoped = dateFiltered.filter(matchScope)
   const catCounts = {
     routine: scoped.filter((e) => e.kind === 'routine').length,
     budget: scoped.filter((e) => e.kind === 'budget').length,

@@ -366,13 +366,18 @@ export function expensePeriodKey(now: Date, cycle: ExpenseCycle): string {
 /** 固定支出状态 = 本周期内该固定支出最后一条流水；周期内无流水 = 未付（周期更替自动回到未付） */
 export function fixedExpensePaid(records: MoneyRecord[], name: string, cycle: ExpenseCycle, now: Date): boolean {
   const key = expensePeriodKey(now, cycle)
-  let last: Extract<MoneyRecord, { kind: 'fixed' }> | undefined
+  return effectiveRecords(records).some((e) => e.kind === 'fixed' && e.item === name && e.periodKey === key)
+}
+
+export function effectiveRecords(records: MoneyRecord[]): MoneyRecord[] {
+  const latest = new Map<string, Extract<MoneyRecord, { kind: 'fixed' }>>()
   for (const e of records) {
-    if (e.kind === 'fixed' && e.item === name && e.periodKey === key && (!last || e.ts >= last.ts)) {
-      last = e
-    }
+    if (e.kind !== 'fixed') continue
+    const key = JSON.stringify([e.item, e.periodKey])
+    const previous = latest.get(key)
+    if (!previous || e.ts >= previous.ts) latest.set(key, e)
   }
-  return last ? last.paid : false
+  return records.filter((e) => e.kind !== 'fixed' || (e.paid && latest.get(JSON.stringify([e.item, e.periodKey])) === e))
 }
 
 export interface FixedExpenseView {
@@ -394,13 +399,12 @@ export function fixedExpensesThisPeriod(records: MoneyRecord[], settings: Settin
 export interface DayGroup {
   dayKey: string
   records: MoneyRecord[]
-  /** 当日消费性支出（日常 + 预算支出）；走账不是消费、固定支出不占当日额度，都不计 */
   outflow: number
 }
 
 export function groupByDay(records: MoneyRecord[]): DayGroup[] {
   const map = new Map<string, MoneyRecord[]>()
-  for (const e of records) {
+  for (const e of effectiveRecords(records)) {
     const k = dayKeyOf(e.ts)
     const list = map.get(k)
     if (list) list.push(e)
@@ -412,7 +416,8 @@ export function groupByDay(records: MoneyRecord[]): DayGroup[] {
       const sorted = [...list].sort((a, b) => b.ts - a.ts)
       const outflow = sorted.reduce((s, e) => {
         if (e.kind === 'routine') return s + e.amount
-        if (e.kind === 'budget' && e.dir === 'out') return s + e.amount
+        if (e.kind === 'budget') return s + (e.dir === 'out' ? e.amount : -e.amount)
+        if (e.kind === 'fixed') return s + e.amount
         return s
       }, 0)
       return { dayKey, records: sorted, outflow }

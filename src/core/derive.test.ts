@@ -312,7 +312,7 @@ describe('fixedExpensePaid 固定支出状态（按周期）', () => {
 })
 
 describe('groupByDay 流水分组', () => {
-  it('按天倒序、天内按时间倒序；outflow 只计日常与预算支出', () => {
+  it('按天倒序、天内按时间倒序；outflow 汇总资金净流出', () => {
     const records = [
       routine('三餐', 30, ts(10, 9)),
       routine('咖啡', 25, ts(11, 15)),
@@ -325,7 +325,7 @@ describe('groupByDay 流水分组', () => {
     expect(groups.map((g) => g.dayKey)).toEqual(['2026-10-11', '2026-10-10'])
     const today = groups[0]
     expect(today.records[0].kind).toBe('routine') // 15:00 的咖啡最晚
-    expect(today.outflow).toBe(125) // 25 + 100；回血、走账、固定支出不计
+    expect(today.outflow).toBe(515)
     expect(groups[1].outflow).toBe(30)
   })
 

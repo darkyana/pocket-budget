@@ -29,9 +29,13 @@ export function FixedExpenseSheet({
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          editFixedExpense(event.id, { account, date })
-          toast('已更新')
-          onClose()
+          try {
+            editFixedExpense(event.id, { account, date })
+            toast('已更新')
+            onClose()
+          } catch (error) {
+            toast(error instanceof Error ? error.message : '保存失败')
+          }
         }}
       >
         <div className="small muted" style={{ marginBottom: 12 }}>
@@ -49,7 +53,7 @@ export function FixedExpenseSheet({
         </div>
         <div className="field-row">
           <label htmlFor="cs-date">付款日期</label>
-          <input id="cs-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="cs-date" className="field" type="date" required max={dayKeyOf(new Date())} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className="form-btns">
           <button type="button" className="btn-ghost" onClick={onClose}>
@@ -59,7 +63,7 @@ export function FixedExpenseSheet({
         </div>
         <div style={{ marginTop: 12, textAlign: 'center' }}>
           <ConfirmButton
-            label="删除这一条（撤销切换）"
+            label="删除这笔付款"
             confirmLabel="确认删除？"
             onConfirm={() => {
               deleteRecord(event.id)
