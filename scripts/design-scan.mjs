@@ -203,7 +203,7 @@ function checkThemeColor() {
 const SCALE_WHITELIST = {
   spacing: new Set([2, 4, 8, 12, 16, 24, 32]),
   font: new Set([12, 13, 14, 16, 20, 28]),
-  radius: new Set([4, 8, 12, 16, 999]),
+  radius: new Set([6, 12, 18, 24, 999]),
   z: new Set([5, 10, 30, 40, 50, 60]),
 }
 

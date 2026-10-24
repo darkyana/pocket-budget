@@ -12,7 +12,6 @@ const LABELS: Record<string, string> = {
   'harbor-dusk': '港暮（演示：冷调 + 胶囊按钮 + 浮坞导航）',
   'night-ledger': '夜账（深色模式：墨蓝底 + 薄荷绿）',
   'ink-checkbook': '墨水账本（蓝黑墨水 + 直角细线 + 纸感扁平）',
-  'cream-mint': '薄荷（现代 fintech：中性灰面，绿只作主色/选中态，浮坞胶囊导航）',
 }
 
 export function useVariants(): Variant[] {

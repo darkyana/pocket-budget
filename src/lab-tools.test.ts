@@ -51,6 +51,11 @@ function writeBaseline(root: string, files: string[] = ['src/app/format.ts', 'sr
 
 const lib = () => import('../scripts/lab-pair.mjs')
 
+const accentOf = (css: string) => css.match(/--accent: [^;]+;/)![0]
+const swapAccent = (css: string, to: string) => css.replace(accentOf(css), `--accent: ${to};`)
+const inkOf = (css: string) => css.match(/--ink: [^;]+;/)![0]
+const swapInk = (css: string, to: string) => css.replace(inkOf(css), `--ink: ${to};`)
+
 afterEach(() => {
   for (const root of pairs) rmSync(root, { recursive: true, force: true })
 })
@@ -74,8 +79,8 @@ describe('sync：目录对重新对齐', () => {
   it('src 演进、lab 未动：报告逐规则变更，确认后 lab 与 src 逐字一致且基线更新', async () => {
     const pair = makePair()
     const src = pair.read('src/styles.css')
-    const evolved = src
-      .replace('--accent: #2f6f4f;', '--accent: #31567a;')
+    const accentBefore = accentOf(src)
+    const evolved = swapAccent(src, '#31567a')
       .replace('body {\n  background: var(--bg-outside);', 'body {\n  background: var(--bg-outside);\n  min-height: 100dvh;')
     pair.write('src/styles.css', evolved)
     pair.write('src/app/format.ts', pair.read('src/app/format.ts').replace('¥', '￥'))
@@ -86,7 +91,7 @@ describe('sync：目录对重新对齐', () => {
     const keys = cssEntry.changes.map((c: any) => c.key)
     expect(keys).toContain('--accent')
     expect(keys).toContain('body')
-    expect(cssEntry.changes.find((c: any) => c.key === '--accent')!.from).toContain('#2f6f4f')
+    expect(cssEntry.changes.find((c: any) => c.key === '--accent')!.from).toContain(accentBefore)
     const tsEntry = plan.entries.find((e: any) => e.src === 'src/app/format.ts')!
     expect(tsEntry.status).toBe('update')
     const result = applySync(pair.root, plan)
@@ -102,24 +107,25 @@ describe('sync：目录对重新对齐', () => {
   it('两侧同改同一 token：显式冲突，不静默覆盖 lab', async () => {
     const pair = makePair()
     const base = pair.read('lab/styles.css')
-    pair.write('src/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #111111;'))
-    pair.write('lab/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #222222;'))
+    const accentBefore = accentOf(base)
+    pair.write('src/styles.css', swapAccent(base, '#111111'))
+    pair.write('lab/styles.css', swapAccent(base, '#222222'))
     const { syncPlan, applySync } = await lib()
     const plan = syncPlan(pair.root)
     const cssEntry = plan.entries.find((e: any) => e.src === 'src/styles.css')!
     expect(cssEntry.status).toBe('conflict')
     const conflict = cssEntry.changes.find((c: any) => c.key === '--accent')!
     expect(conflict.kind).toBe('conflict')
-    expect(conflict.from).toContain('#2f6f4f')
+    expect(conflict.from).toContain(accentBefore)
     expect(conflict.to).toContain('#222222')
     applySync(pair.root, plan)
-    expect(pair.read('lab/styles.css')).toBe(base.replace('--accent: #2f6f4f;', '--accent: #222222;'))
+    expect(pair.read('lab/styles.css')).toBe(swapAccent(base, '#222222'))
   })
 
   it('css 混合演进：src 改 token、lab 改另一规则 → 合并两侧，无冲突', async () => {
     const pair = makePair()
     const base = pair.read('lab/styles.css')
-    pair.write('src/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #31567a;'))
+    pair.write('src/styles.css', swapAccent(base, '#31567a'))
     const drifted = base.replace(
       'body {\n  background: var(--bg-outside);',
       'body {\n  background: var(--bg-outside);\n  min-height: 100dvh;',
@@ -134,7 +140,7 @@ describe('sync：目录对重新对齐', () => {
     const merged = pair.read('lab/styles.css')
     expect(merged).toContain('--accent: #31567a;')
     expect(merged).toContain('min-height: 100dvh;')
-    expect(merged).toBe(drifted.replace('--accent: #2f6f4f;', '--accent: #31567a;'))
+    expect(merged).toBe(swapAccent(drifted, '#31567a'))
   })
 
   it('lab 新增规则、src 未动 → 漂移保留；src 演进 + lab 新增规则 → 新增规则并入', async () => {
@@ -142,7 +148,7 @@ describe('sync：目录对重新对齐', () => {
     const base = pair.read('lab/styles.css')
     const withNewRule = `${base}\n.lab-demo-flag {\n  border: 2px solid var(--accent);\n}\n`
     pair.write('lab/styles.css', withNewRule)
-    pair.write('src/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #31567a;'))
+    pair.write('src/styles.css', swapAccent(base, '#31567a'))
     const { syncPlan, applySync } = await lib()
     const plan = syncPlan(pair.root)
     const cssEntry = plan.entries.find((e: any) => e.src === 'src/styles.css')!
@@ -174,8 +180,7 @@ describe('pushback：lab→src 补丁与落地清单', () => {
   it('lab 漂移、src 未动：补丁应用到 src 后与目标一致，清单触发对应提示', async () => {
     const pair = makePair()
     const base = pair.read('src/styles.css')
-    const drifted = base
-      .replace('--accent: #2f6f4f;', '--accent: #31567a;')
+    const drifted = swapAccent(base, '#31567a')
       .replace('--space-3: 12px;', '--space-3: 14px;')
     pair.write('lab/styles.css', drifted)
     pair.write('lab/app/format.ts', pair.read('src/app/format.ts').replace('¥', '￥'))
@@ -196,8 +201,9 @@ describe('pushback：lab→src 补丁与落地清单', () => {
   it('两侧都动过：补丁基于当前 src 计算，src 独有更新被吸收而非回退', async () => {
     const pair = makePair()
     const base = pair.read('src/styles.css')
-    pair.write('src/styles.css', base.replace('--ink: #1d1a16;', '--ink: #241f18;'))
-    pair.write('lab/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #31567a;'))
+    const accentBefore = accentOf(base)
+    pair.write('src/styles.css', swapInk(base, '#241f18'))
+    pair.write('lab/styles.css', swapAccent(base, '#31567a'))
     const { pushbackPlan, writePushback } = await lib()
     const plan = pushbackPlan(pair.root)
     writePushback(pair.root, plan)
@@ -206,7 +212,7 @@ describe('pushback：lab→src 补丁与落地清单', () => {
     const src = pair.read('src/styles.css')
     expect(src).toContain('--ink: #241f18;')
     expect(src).toContain('--accent: #31567a;')
-    expect(src).not.toContain('--accent: #2f6f4f;')
+    expect(src).not.toContain(accentBefore)
   })
 
   it('无漂移时不产补丁', async () => {
@@ -222,7 +228,7 @@ describe('pushback：lab→src 补丁与落地清单', () => {
 describe('CLI 入口', () => {
   it('lab-sync 无 --yes 时只报告不写入；--yes 后写入', async () => {
     const pair = makePair()
-    const evolved = pair.read('src/styles.css').replace('--accent: #2f6f4f;', '--accent: #31567a;')
+    const evolved = swapAccent(pair.read('src/styles.css'), '#31567a')
     pair.write('src/styles.css', evolved)
     const script = join(ROOT, 'scripts', 'lab-sync.mjs')
     const dry = execSync(`node ${JSON.stringify(script)} --root ${JSON.stringify(pair.root)}`).toString()
@@ -236,8 +242,8 @@ describe('CLI 入口', () => {
   it('lab-sync 有冲突时退出码非 0；lab-pushback 产出补丁与清单文件', async () => {
     const pair = makePair()
     const base = pair.read('lab/styles.css')
-    pair.write('src/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #111111;'))
-    pair.write('lab/styles.css', base.replace('--accent: #2f6f4f;', '--accent: #222222;'))
+    pair.write('src/styles.css', swapAccent(base, '#111111'))
+    pair.write('lab/styles.css', swapAccent(base, '#222222'))
     const syncScript = join(ROOT, 'scripts', 'lab-sync.mjs')
     let conflictExit = 0
     try {
