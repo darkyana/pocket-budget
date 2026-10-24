@@ -10,7 +10,7 @@ At the current stage, colors, spacing, typography, radii, and z-index are govern
 
 - [ ] G1 `[machine]` No hard-coded colors in feature code: colors are defined once as design tokens in the centralized token set — `:root` of `src/styles.css` — and feature code references them by name (`var(--*)`). No hex or rgb(a) literals in `src/app/**`. (Spacing, typography, radii and z-index are governed by G4.) 裸值的唯一合法位置是 `:root` 的 token 定义本身（`styles.css` `:root` 之外同样禁止颜色字面量）。例外：`index.html` 的 `theme-color`（HTML 无法引用 CSS 变量），由 `design-scan` 断言其值与 `--accent` 相等。
 - [ ] G2 `[machine]` Motion, illustration, and icons are exempt from central token governance — they may be defined locally in feature code. The logging duty still applies: every motion (animation, transition, scroll behavior) is registered in `motion.md`, every illustration in `illustration.md`, and every icon in `icons.md`.
-- [ ] G3 `[agent]` Use components instead of feature-level implementation, unless that feature-level implementation is registered in `Unicon.md`.
+- [ ] G3 `[agent]` Use components instead of feature-level implementation, unless that feature-level implementation is registered in `Unicon.md`. 手写 `seg` / `form-btns` 类名由 design-scan 拦截，组件内部白名单（SegmentedControl / FormFooter）。
 
 ## 词汇 Vocabulary
 
@@ -24,6 +24,8 @@ At the current stage, colors, spacing, typography, radii, and z-index are govern
 - **豁免（exemption）** — 有登记的例外。经 `unicon.md` 登记后方可游离于 token 体系；未登记的偏离按违规处理。
 - **基线按钮（baseline button）** — 全局 `button` 元素选择器提供的默认文本样式（无底/无边框/继承字体字色字重/无圆角/无 padding；`:disabled` 半透明）。新位置的按钮忘记加类也只是无害的文本按钮，不再是级联陷阱。
 - **主按钮（primary button）** — 显式 `.btn-primary` 类的深色提交按钮（--ink 底 / --on-ink 字 / --radius-md / 600 字重）。一个弹层至多一个，全库可 grep 计数。
+- **原子组件（atomic component）** — components/ 目录里只管结构/样式复用、不含业务语义的最小组件（SegmentedControl、FormFooter、Sheet）。业务限制留在调用方。
+- **复合组件（composite component）** — 由原子组件组装、携带一个完整业务语义的组件（EntrySheet、DateFilterSheet 等）。
 
 ## 数字 Numbers (the hero of this app)
 

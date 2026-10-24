@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
+import { FormFooter } from './FormFooter'
 
 export interface FieldDef {
   key: string
@@ -69,12 +70,7 @@ export function FormSheet({
             )}
           </div>
         ))}
-        <div className="form-btns">
-          <button type="button" className="btn-ghost" onClick={onClose}>
-            取消
-          </button>
-          <button type="submit" className="btn-primary">{submitLabel}</button>
-        </div>
+        <FormFooter secondary={{ label: '取消', onClick: onClose }} submitLabel={submitLabel} />
       </form>
     </Sheet>
   )

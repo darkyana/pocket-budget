@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
+import { FormFooter } from './FormFooter'
 import { ConfirmButton } from './ConfirmButton'
 import { AccountPicker } from './AccountPicker'
 import { useApp } from '../store'
@@ -55,12 +56,7 @@ export function FixedExpenseSheet({
           <label htmlFor="cs-date">付款日期</label>
           <input id="cs-date" className="field" type="date" required max={dayKeyOf(new Date())} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <div className="form-btns">
-          <button type="button" className="btn-ghost" onClick={onClose}>
-            取消
-          </button>
-          <button type="submit" className="btn-primary">保存</button>
-        </div>
+        <FormFooter secondary={{ label: '取消', onClick: onClose }} submitLabel="保存" />
         <div className="block-gap center">
           <ConfirmButton
             label="删除这笔付款"
