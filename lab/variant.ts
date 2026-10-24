@@ -21,7 +21,7 @@ export function searchWithVariant(search: string, variant: string): string {
 export function variantIdsFromFiles(files: string[]): string[] {
   return files
     .filter((f) => f.endsWith('.css'))
-    .map((f) => f.slice(0, -'.css'.length))
+    .map((f) => f.slice(f.lastIndexOf('/') + 1, -'.css'.length))
     .filter((id) => id !== BASELINE_VARIANT)
     .sort()
 }
