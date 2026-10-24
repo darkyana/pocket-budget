@@ -5,7 +5,7 @@ import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { money, todayHeadline } from '../format'
-import { statusColor } from '../statusColor'
+import { barColor, leftStatus, statusColor } from '../statusColor'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 
@@ -44,24 +44,18 @@ export function Today() {
     <>
       <h1>今日</h1>
       <div className="sub">
-        {todayHeadline(now)} · 日型：{todayDayType(settings, now)}（按日历自动，设置里可改）
+        {todayHeadline(now)} · 日型：{todayDayType(settings, now)}
       </div>
 
       <div className="card">
         <div className="row">
           <span>
             <b>日常</b>{' '}
-            <span className="small muted">
-              今日 {money(routine.totalSpent)}/{money(routine.totalExpect)}
-              {pace.possible > 0 && (
-                <>
-                  {' · '}
-                  <button type="button" className="pace-chip" onClick={openQuickRetro}>
-                    当前消费力 {Math.round(pace.ratio * 100)}%
-                  </button>
-                </>
-              )}
-            </span>
+            {pace.possible > 0 && (
+              <button type="button" className="pace-chip" onClick={openQuickRetro}>
+                当前消费力 {Math.round(pace.ratio * 100)}%
+              </button>
+            )}
           </span>
           <b className="sub-num" style={{ color: statusColor(routine.left < 0 ? 'over' : 'ok') }}>
             {routine.left >= 0 ? `还能花 ${money(routine.left)}` : `超 ${money(-routine.left)}`}
@@ -71,31 +65,34 @@ export function Today() {
           <div className="hscroll">
             {Array.from({ length: pages }, (_, p) => (
               <div className="pg" key={p}>
-                {routine.buckets.slice(p * 4, p * 4 + 4).map((b) => (
-                  <button
-                    type="button"
-                    className="mini"
-                    key={b.name}
-                    onClick={() => setEntry({ type: 'routine', category: b.name })}
-                  >
-                    <div className="small muted">{b.name}</div>
-                    <div className="row">
-                      <b className="sub-num" style={{ color: b.left < 0 ? statusColor('over') : undefined }}>
-                        {b.left >= 0 ? money(b.left) : `超 ${money(-b.left)}`}
-                      </b>
-                      <span className="small muted">{money(b.spent)}</span>
-                    </div>
-                    <div className="bar">
-                      <i
-                        style={{
-                          width: `${pct(b.left / b.expect)}%`,
-                          background:
-                            b.left < 0 ? statusColor('over') : b.left < b.expect * 0.2 ? statusColor('warn') : 'var(--bar-accent)',
-                        }}
-                      />
-                    </div>
-                  </button>
-                ))}
+                {Array.from({ length: 4 }, (_, i) => {
+                  const b = routine.buckets[p * 4 + i]
+                  if (!b) return <div className="mini-fill" key={`fill-${i}`} />
+                  return (
+                    <button
+                      type="button"
+                      className="mini"
+                      key={b.name}
+                      onClick={() => setEntry({ type: 'routine', category: b.name })}
+                    >
+                      <div className="small muted">{b.name}</div>
+                      <div className="row">
+                        <b className="sub-num" style={{ color: b.left < 0 ? statusColor('over') : undefined }}>
+                          {b.left >= 0 ? money(b.left) : `超 ${money(-b.left)}`}
+                        </b>
+                        <span className="small muted">{money(b.spent)}</span>
+                      </div>
+                      <div className="bar">
+                        <i
+                          style={{
+                            width: `${pct(b.left / b.expect)}%`,
+                            background: barColor(leftStatus(b.left, b.expect)),
+                          }}
+                        />
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             ))}
           </div>
@@ -104,9 +101,6 @@ export function Today() {
             当前日型还没有日常，去设置里加。
           </div>
         )}
-        <div className="small muted block-gap">
-          {pages > 1 ? `左右滑动翻页（共 ${pages} 页）· ` : ''}点卡片 = 记一笔该类消费 · 点「消费力」= 看本月回顾
-        </div>
       </div>
 
       <div className="card">
@@ -133,13 +127,8 @@ export function Today() {
               onContextMenu={budgetPress.onContextMenu}
             >
               <div className="row">
-                <span>
-                  {p.name}{' '}
-                  <span className="small muted">
-                    本周 {money(p.weekSpent)}/{money(p.weekBudget)}
-                  </span>
-                </span>
-                <b className="small" style={{ color: statusColor(p.weekLeft < p.weekBudget * 0.2 ? 'warn' : 'ok') }}>
+                <span>{p.name}</span>
+                <b className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
                   还能花 {money(p.weekLeft)}
                 </b>
               </div>
@@ -147,15 +136,9 @@ export function Today() {
                 <i
                   style={{
                     width: `${pct(p.weekLeft / p.weekBudget)}%`,
-                    background: p.weekLeft < 0 ? statusColor('over') : p.weekLeft < p.weekBudget * 0.2 ? statusColor('warn') : 'var(--bar-accent)',
+                    background: barColor(leftStatus(p.weekLeft, p.weekBudget)),
                   }}
                 />
-              </div>
-              <div className="small muted block-gap">
-                月 {money(p.monthSpent)}/{money(p.month)} · 按日均推算{' '}
-                <b style={{ color: statusColor(p.projection > p.month * 1.05 ? 'over' : 'ok') }}>
-                  {money(p.projection)}
-                </b>
               </div>
             </button>
           ))
@@ -166,9 +149,6 @@ export function Today() {
               : '还没有预算，去设置里加'}
           </div>
         )}
-        <div className="small muted block-gap">
-          点预算 = 记一笔该预算收支 · 长按 = 去流水看它的全部条目
-        </div>
       </div>
 
       {fixedExpenses.length > 0 && (
@@ -207,14 +187,9 @@ export function Today() {
                     {c.cycle === 'yearly' ? ' · 年' : ''}
                     {c.paid ? '（已付）' : ''}
                   </span>
-                  <span style={c.paid ? { textDecoration: 'line-through' } : { color: statusColor('warn'), fontWeight: 600 }}>
-                    {money(c.amount)}
-                  </span>
+                  <span className={c.paid ? 'fixed-amt-paid' : 'fixed-amt-due'}>{money(c.amount)}</span>
                 </button>
               ))}
-              <div className="small muted block-gap">
-                点一条 = 切换 已付/未付（进流水）
-              </div>
             </div>
           )}
         </div>

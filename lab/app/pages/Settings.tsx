@@ -237,7 +237,7 @@ export function SettingsPage() {
   return (
     <>
       <h1>设置</h1>
-      <div className="sub">日型日常 · 预算 · 固定支出（随时可调）</div>
+      <div className="sub">日常 · 预算 · 固定支出</div>
       <SegmentedControl<Seg>
         value={seg}
         options={[
@@ -395,22 +395,9 @@ export function SettingsPage() {
         </div>
       )}
 
-      <div className="card">
+      <div className="section-gap">
         <div className="row-block">
           <b>本月速算</b>
-          <span className="small muted">
-            按当前设置与日历推算 ·{' '}
-            <button
-              type="button"
-              className="link"
-              onClick={() => {
-                mergeArmed.current = null
-                setRatioSheet(true)
-              }}
-            >
-              调整比率
-            </button>
-          </span>
         </div>
         {(() => {
           const qc = monthQuickCalc(settings, new Date())
@@ -428,7 +415,17 @@ export function SettingsPage() {
                   <td>日常</td>
                   <td className="muted">
                     工作日 {qc.workDays} 天 × {money(qc.workExpect)} + 休息日 {qc.restDays} 天 × {money(qc.restExpect)}
-                    （全额 {money(qc.routineBase)} × 实际 {Math.round(qc.ratio * 100)}%）
+                    （全额 {money(qc.routineBase)} × 实际 {Math.round(qc.ratio * 100)}%）{' · '}
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => {
+                        mergeArmed.current = null
+                        setRatioSheet(true)
+                      }}
+                    >
+                      调整比率
+                    </button>
                   </td>
                   <td className="num">{money(qc.routineTotal)}</td>
                 </tr>
@@ -458,9 +455,6 @@ export function SettingsPage() {
             </table>
           )
         })()}
-        <div className="small muted block-gap">
-          休息日 = 周末与法定节假日（调休上班除外）；自定义日型与当天的手动点选不计入速算
-        </div>
       </div>
 
       <div className="block-gap center">

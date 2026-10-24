@@ -123,14 +123,13 @@ export function Records() {
 
   return (
     <>
-      <div className="retro-head">
-        <h1>流水</h1>
-        <button type="button" className="link push-end" onClick={() => setAdding(true)}>
-          ＋ 记一笔
-        </button>
-      </div>
+      <h1>流水</h1>
       <div className="sub">
         {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
+        {' · '}
+        <button type="button" className="link" onClick={() => setAdding(true)}>
+          ＋ 记一笔
+        </button>
       </div>
       <div className="chips">
         <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
@@ -171,16 +170,11 @@ export function Records() {
         ))
       ) : (
         <div className="card">
-          <div className="small muted block-gap">
-            {records.length === 0
-              ? '还没有记录。点右上「记一笔」，或回「今日」页点卡片即可记。'
-              : '没有符合条件的记录——试试清除筛选。'}
+          <div className="small muted center">
+            {records.length === 0 ? '还没有记录' : '没有符合条件的记录——试试清除筛选。'}
           </div>
         </div>
       )}
-      <div className="small muted center">
-        点一笔可编辑；日常/预算可互转改类（先批量记、回头分类）
-      </div>
       {dataSheet && <DataSheet onClose={() => setDataSheet(false)} />}
       {filterSheet === 'account' && (
         <Sheet title="按账户筛选" onClose={() => setFilterSheet(null)}>

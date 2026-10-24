@@ -196,7 +196,7 @@ button:disabled {
 
 .tabs {
   position: fixed;
-  bottom: var(--space-5);
+  bottom: calc(env(safe-area-inset-bottom) + var(--space-5));
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - var(--space-6));
@@ -208,7 +208,6 @@ button:disabled {
   display: flex;
   z-index: var(--z-nav);
   padding: var(--space-1);
-  padding-bottom: calc(env(safe-area-inset-bottom) + var(--space-1));
 }
 .tabs button {
   flex: 1;
@@ -234,7 +233,7 @@ button:disabled {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--space-1);
-  margin-top: var(--space-2);
+  margin-top: var(--space-4);
 }
 .hscroll::-webkit-scrollbar {
   display: none;
@@ -244,28 +243,35 @@ button:disabled {
   scroll-snap-align: start;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
 }
 .mini {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
+  background: var(--card);
+  padding: var(--space-3) 0;
   text-align: left;
 }
 .mini:active {
   background: var(--chip);
+}
+.mini-fill {
+  background: var(--card);
+}
+.hscroll > .pg > *:nth-child(odd) {
+  border-right: 1px dashed var(--line);
+  padding-right: var(--space-2);
+}
+.hscroll > .pg > *:nth-child(even) {
+  padding-left: var(--space-2);
+}
+.hscroll > .pg > *:nth-child(-n+2) {
+  border-bottom: 1px dashed var(--line);
+  padding-top: 0;
 }
 
 .budget-row {
   display: block;
   width: 100%;
   text-align: left;
-  border-bottom: 1px solid var(--line);
-  padding: var(--space-2) 0 var(--space-3);
-}
-.budget-row:last-of-type {
-  border-bottom: none;
+  padding: var(--space-3) 0 var(--space-4);
 }
 
 .fixed-item {
@@ -274,6 +280,17 @@ button:disabled {
   width: 100%;
   border-top: 1px dashed var(--line);
   padding: var(--space-4) 0;
+}
+.fixed-item:first-of-type {
+  border-top: none;
+  padding-top: var(--space-2);
+}
+.fixed-amt-paid {
+  text-decoration: line-through;
+}
+.fixed-amt-due {
+  color: var(--warn);
+  font-weight: 600;
 }
 
 .feed-item {
@@ -811,6 +828,9 @@ button:disabled {
 .block-gap {
   margin-top: var(--space-2);
 }
+.section-gap {
+  margin-top: var(--space-5);
+}
 .row-block {
   display: flex;
   justify-content: space-between;
@@ -842,4 +862,5 @@ button:disabled {
 .sub-num {
   font-size: var(--font-title);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

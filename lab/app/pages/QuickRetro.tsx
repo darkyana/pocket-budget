@@ -13,7 +13,7 @@ import {
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { money } from '../format'
-import { statusColor } from '../statusColor'
+import { barColor, statusColor } from '../statusColor'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 const statusText = (s: DayStatus) => (s === 'over' ? '超' : s === 'warn' ? '贴近' : '省')
@@ -50,7 +50,6 @@ export function QuickRetro() {
   const stats = retroStats(month)
   const pacePct = Math.round(pace.ratio * 100)
   const paceSt = statusOfRatio(pace.ratio)
-  const todayRetro = month.find((d) => d.isToday) ?? null
   const chartDays = month.filter((d) => d.passed).slice(-14)
   const chartMax = Math.max(1, ...chartDays.map((d) => Math.max(d.spent, d.expect)))
   const barH = (v: number) => `${Math.max(3, Math.round((v / chartMax) * 84))}px`
@@ -65,7 +64,7 @@ export function QuickRetro() {
         <h1>消费力回顾</h1>
       </div>
       <div className="sub">
-        {now.getFullYear()}年{now.getMonth() + 1}月 · 日常实际 vs 日型计划 · 点日期看当天明细
+        {now.getFullYear()}年{now.getMonth() + 1}月 · 日常实际 vs 日型计划
       </div>
 
       <div className="card">
@@ -82,15 +81,11 @@ export function QuickRetro() {
           本月日常实际 {money(pace.spent)} ÷ 已过 {stats.passedDays} 天计划 {money(pace.possible)} ·{' '}
           {stats.saved >= 0 ? `比计划省下 ${money(stats.saved)}` : `比计划超 ${money(-stats.saved)}`}
         </div>
-        <div className="small muted block-gap">
-          每天的计划按当日日型（工作日/周末日）加总；不到 80% 算省，超过计划即超支
-        </div>
       </div>
 
       <div className="card">
         <div className="row-block">
           <b>{now.getMonth() + 1}月日历</b>
-          <span className="small muted">格内数字 = 当日日常支出</span>
         </div>
         <div className="cal-grid">
           {CAL_WEEK.map((w) => (
@@ -148,14 +143,6 @@ export function QuickRetro() {
             <span>超</span>
           </div>
         </div>
-        {todayRetro && (
-          <div className="small block-gap" style={{ color: statusColor(todayRetro.status) }}>
-            今天 {todayRetro.day} 日：{money(todayRetro.spent)} / 计划 {money(todayRetro.expect)} ·{' '}
-            {todayRetro.spent > todayRetro.expect
-              ? `超 ${money(todayRetro.spent - todayRetro.expect)}`
-              : `省 ${money(todayRetro.expect - todayRetro.spent)}`}
-          </div>
-        )}
       </div>
 
       <div className="card">
@@ -167,15 +154,12 @@ export function QuickRetro() {
           {chartDays.map((d) => (
             <div className="chart-col" key={d.day}>
               <div className="chart-bars">
-                <i style={{ height: barH(d.spent), background: statusColor(d.status) }} />
+                <i style={{ height: barH(d.spent), background: barColor(d.status) }} />
                 <i className="bar-plan" style={{ height: barH(d.expect) }} />
               </div>
               <span className={`chart-day${d.isToday ? ' chart-day-today' : ''}`}>{d.day}</span>
             </div>
           ))}
-        </div>
-        <div className="small muted block-gap">
-          实际按当日状态着色（绿省 / 橙贴近 / 红超）· 今天的日期加粗
         </div>
       </div>
 
