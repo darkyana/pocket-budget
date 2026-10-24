@@ -21,11 +21,18 @@ Canonical vocabulary (source of truth: `src/core/seed.ts`): 储蓄卡, 备用金
 
 ## 3. No comments in code
 
-Code carries no comments. The "why" lives where it stays true: the commit message, the PR's point-by-point description, ADRs for architectural calls, `GLOSSARY.md` for vocabulary. Comments are a third copy of the truth — they drift from the code (the 锚 vocabulary debt is the cautionary example) and then mislead every reader, human or agent. Naming, types, and tests carry the "what".
+Default: no comments. No JSDoc/TSDoc that restates types, no TODOs, no section banners, no change-history notes. Clear names, types, and tests carry the "what". The "why" lives where it stays true: the commit message, the PR's point-by-point description, ADRs for architectural calls, `GLOSSARY.md` for vocabulary. Comments are a third copy of the truth — they drift from the code and then mislead every reader.
 
-A non-obvious trap that genuinely must be recorded goes into the commit message that introduces it, or an ADR if architectural. Never into a comment.
+Allowed only when code cannot express it:
 
-**Check**: any new `//`, `/* */`, or `/** */` block in a diff fails. Test names (strings inside `describe`/`it`) are not comments and stay.
+1. License / legal headers.
+2. Public API contract docs.
+3. A one-line why for a proven external/platform constraint or domain invariant.
+4. An issue/ADR link.
+
+Never narrate what the next line does, mark a change ("added for X"), or explain confusing code with a comment — rename, extract, or add a type instead.
+
+**Check**: any new `//`, `/* */`, or `/** */` block in a diff fails unless it fits an allowed case. Test names (strings inside `describe`/`it`) are not comments and stay.
 
 ## 4. Migrations never delete records
 

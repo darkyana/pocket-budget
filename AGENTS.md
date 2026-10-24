@@ -22,4 +22,4 @@ Single-context layout: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain
 
 ### Coding standards
 
-Enforced when reviewing changes: neutral messages for privacy/security fixes, fictional vocabulary for sample data. See `docs/agents/CODING_STANDARDS.md`.
+Enforced when reviewing changes: neutral messages for privacy/security fixes, fictional vocabulary for sample data, no-comment defaults for code. See `docs/agents/CODING_STANDARDS.md`.
