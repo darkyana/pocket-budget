@@ -1,0 +1,3 @@
+import type { DayStatus } from '../core/derive'
+
+export const statusColor = (s: DayStatus) => (s === 'over' ? 'var(--over)' : s === 'warn' ? 'var(--warn)' : 'var(--ok)')
