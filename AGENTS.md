@@ -10,6 +10,14 @@ Issues and specs live in the private repo `darkyana/planning` (label `product:po
 
 Code changes go through an implementation skill, never ad hoc unless the human explicitly asks so. Before building: fetch the ticket from `darkyana/planning` (see `docs/agents/issue-tracker.md`), then confirm which skill to run — ask the human when either is unclear. PRs stay short and product-facing: reference the issue as `darkyana/planning#<n>`, never paste the private spec, and list point-by-point how the issue was met.
 
+### Lab
+
+`lab/` is a standalone design-exploration app, isolated from the product: parts of it are verbatim mirrors of `src/` files, used for design-variant experiments. It is never part of a product change.
+
+Product changes stay in `src/` alone — including UI/design changes to files that `lab/` mirrors. Do not edit `lab/` or `lab/BASELINE.json`, and do not run lab commands: the mirror reset is the human's call, and the main test suite never checks src↔lab consistency. After a change that touched files mirrored under `lab/`, close with a one-line reminder that the human can reset mirrors with `npm run lab:sync -- --yes`.
+
+Enter `lab/` only when the task itself is lab work (variants, gallery, sync tooling); start from `lab/README.md`.
+
 ### Triage labels
 
 Five canonical triage labels, used as-is: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
