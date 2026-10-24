@@ -829,7 +829,7 @@ button:disabled {
   margin-top: var(--space-2);
 }
 .section-gap {
-  margin-top: var(--space-5);
+  margin: var(--space-5) var(--space-4) 0;
 }
 .row-block {
   display: flex;
