@@ -18,6 +18,8 @@ Five canonical triage labels, used as-is: `needs-triage`, `needs-info`, `ready-f
 
 Single-context layout: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
 
+`docs/audits/` holds dated, baseline-pinned snapshot audits. They are evidence of how the code behaved at the recorded commit — never current behavior, never spec. Before citing one, check applicability against its baseline (diff command is in each audit's header).
+
 ### Coding standards
 
 Enforced when reviewing changes: neutral messages for privacy/security fixes, fictional vocabulary for sample data. See `docs/agents/CODING_STANDARDS.md`.
