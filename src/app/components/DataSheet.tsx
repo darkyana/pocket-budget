@@ -6,7 +6,6 @@ import { useToast } from '../toast'
 import { ConfirmButton } from './ConfirmButton'
 import { Sheet } from './Sheet'
 
-/** 数据管理弹层：收拢流水页原先分散的导出/导入/清空三个按钮 */
 export function DataSheet({ onClose }: { onClose(): void }) {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)

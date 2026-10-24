@@ -2,14 +2,8 @@ import { useRef, useState } from 'react'
 
 const PRESS_MS = 450
 const CANCEL_SLOP = 10
+const GHOST_CLICK_MS = 400
 
-/**
- * 长按拖拽排序（设置页三张列表共用）：
- * - 短按不受影响，click 正常触发（编辑弹层等）
- * - 按住 ~450ms 拎起该行：跟手浮动（阴影+微放大），其余行实时腾位
- * - 按住期间先移动 >10px 视为滚动意图，取消拎起；拎起后 touchmove 被拦，页面不滚
- * - 松手落位提交 onCommit(from, to)；拎起过的这次 click 会被吞掉（guardClick）
- */
 export function useDragSort(count: number, onCommit: (from: number, to: number) => void) {
   const [drag, setDrag] = useState<{ from: number; hover: number; dy: number } | null>(null)
   const dragRef = useRef<{ from: number; hover: number; dy: number } | null>(null)
@@ -19,7 +13,7 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
   const press = useRef<{ id: number; y: number; index: number; el: HTMLDivElement } | null>(null)
   const active = useRef<{ from: number; startY: number; centers: number[]; height: number } | null>(null)
   const timer = useRef<number | undefined>(undefined)
-  const suppressClick = useRef(false)
+  const suppressGhostClick = useRef(false)
 
   function activate(index: number, startY: number) {
     const p = press.current
@@ -37,10 +31,8 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
     }
     active.current = { from: index, startY, centers, height }
     try {
-      p.el.setPointerCapture(p.id) // 拎起后手指移出行也能持续收到事件
-    } catch {
-      /* 指针已释放等场景忽略 */
-    }
+      p.el.setPointerCapture(p.id)
+    } catch {}
     document.addEventListener('touchmove', preventTouchMove, { passive: false })
     setDrag({ from: index, hover: index, dy: 0 })
   }
@@ -52,12 +44,17 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
     if (a) {
       const d = dragRef.current
       if (commit && d && d.hover !== d.from) onCommit(d.from, d.hover)
-      suppressClick.current = true // 拎起过的手指抬起还会派发一次 click，吞掉
-      window.setTimeout(() => (suppressClick.current = false), 400)
+      suppressGhostClick.current = true
+      window.setTimeout(() => (suppressGhostClick.current = false), GHOST_CLICK_MS)
     }
     active.current = null
     press.current = null
     setDrag(null)
+  }
+
+  function cancelPickupForScroll() {
+    window.clearTimeout(timer.current)
+    press.current = null
   }
 
   function shiftOf(i: number): number {
@@ -69,7 +66,6 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
     return 0
   }
 
-  /** 铺到每行 .setrow 上：几何测量、跟手位移与腾位都在这里 */
   function rowProps(i: number) {
     const dragging = drag?.from === i
     const shift = shiftOf(i)
@@ -89,10 +85,7 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
         const p = press.current
         if (!p) return
         if (!active.current) {
-          if (Math.abs(e.clientY - p.y) > CANCEL_SLOP) {
-            window.clearTimeout(timer.current) // 滚动意图：取消拎起
-            press.current = null
-          }
+          if (Math.abs(e.clientY - p.y) > CANCEL_SLOP) cancelPickupForScroll()
           return
         }
         const pointerY = e.clientY
@@ -111,15 +104,14 @@ export function useDragSort(count: number, onCommit: (from: number, to: number) 
       onPointerUp: () => finish(true),
       onPointerCancel: () => finish(false),
       onContextMenu: (e: React.MouseEvent) => {
-        if (press.current || active.current) e.preventDefault() // 长按不弹系统菜单
+        if (press.current || active.current) e.preventDefault()
       },
     }
   }
 
-  /** 行内按钮的 click 先过这道闸：刚结束拖拽的那次点击作废 */
   function guardClick(): boolean {
-    if (suppressClick.current) {
-      suppressClick.current = false
+    if (suppressGhostClick.current) {
+      suppressGhostClick.current = false
       return true
     }
     return false
@@ -132,14 +124,9 @@ function preventTouchMove(e: TouchEvent) {
   e.preventDefault()
 }
 
-/**
- * 长按触发动作（不拖拽，如今日页长按预算行跳流水）：
- * 按住 ~450ms 触发一次；先移动 >10px 视为滚动取消；触发后的那次 click 被吞掉。
- * 用法：铺到目标元素上，click 处理器先过 guardClick()。
- */
 export function useLongPress(action: () => void) {
   const press = useRef<{ y: number; timer: number } | null>(null)
-  const suppressClick = useRef(false)
+  const suppressGhostClick = useRef(false)
 
   function clear() {
     if (press.current) window.clearTimeout(press.current.timer)
@@ -151,8 +138,8 @@ export function useLongPress(action: () => void) {
       if (e.button !== 0) return
       const y = e.clientY
       const timer = window.setTimeout(() => {
-        suppressClick.current = true
-        window.setTimeout(() => (suppressClick.current = false), 400)
+        suppressGhostClick.current = true
+        window.setTimeout(() => (suppressGhostClick.current = false), GHOST_CLICK_MS)
         action()
       }, PRESS_MS)
       press.current = { y, timer }
@@ -166,8 +153,8 @@ export function useLongPress(action: () => void) {
       if (press.current) e.preventDefault()
     },
     guardClick: () => {
-      if (suppressClick.current) {
-        suppressClick.current = false
+      if (suppressGhostClick.current) {
+        suppressGhostClick.current = false
         return true
       }
       return false

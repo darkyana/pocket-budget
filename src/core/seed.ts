@@ -1,6 +1,5 @@
 import type { Settings } from './types'
 
-/** 首次启动的样例设置：全部使用虚构示例数据；流水从空开始，绝不预埋假数据 */
 export function defaultSettings(now: Date): Settings {
   const weekend = now.getDay() === 0 || now.getDay() === 6
   return {

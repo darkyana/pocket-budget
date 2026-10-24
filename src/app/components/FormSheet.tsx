@@ -8,11 +8,9 @@ export interface FieldDef {
   type: 'text' | 'number' | 'select'
   initial?: string
   placeholder?: string
-  /** type 为 select 时的选项 */
   options?: Array<{ value: string; label: string }>
 }
 
-/** 通用小表单弹层：设置项的新增/编辑共用。提交后由父组件校验并决定是否关闭 */
 export function FormSheet({
   title,
   fields,

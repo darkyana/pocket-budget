@@ -1,28 +1,21 @@
-/* 口袋账房 —— 视觉语言继承自一次性原型（initial-input/prototype-budget）：
-   奶油底、墨色文字、绿主色、卡片、细进度条。 */
 
 :root {
   --bg: #f4f2ee;
-  /* 手机框外的页面外围底色 */
   --bg-outside: #dcd8d0;
   --card: #fff;
   --ink: #1d1a16;
-  /* 深色底（--ink/--accent）上的前景字色 */
   --on-ink: #fff;
   --ink2: #6f675c;
   --line: #e6e1d8;
   --accent: #2f6f4f;
-  /* 进度条常态填充：accent 的半透明版，避免整条实心绿太抢 */
   --bar-accent: rgba(47, 111, 79, 0.35);
   --warn: #b04f30;
   --over: #b3261e;
   --ok: #2f6f4f;
   --chip: #eee9df;
-  /* 阴影三档：sm 贴面（卡片）/ md 浮起（底栏、分段、下拉）/ lg 拎起（拖拽） */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 22px rgba(0, 0, 0, 0.16);
-  /* 弹层遮罩 */
   --scrim: rgba(0, 0, 0, 0.35);
   --toast-bg: #111;
   --toast-ink: #ffd97a;
@@ -72,8 +65,6 @@ body {
   justify-content: center;
 }
 
-/* React 挂载根节点：body 是 flex 容器，#root 作为直接子元素必须显式定宽，
-   否则按内容收缩（shrink-to-fit），.phone 的 width:100% 会跟着内容变窄 */
 #root {
   width: 100%;
   height: 100%;
@@ -85,12 +76,10 @@ body {
   width: 100%;
   max-width: 430px;
   height: 100%;
-  /* 滚动收进手机框内部并常驻（scroll 而非 auto），内容宽度在三个页面间完全一致；
-     移动端 overlay 滚动条不占位，无感 */
   overflow-y: scroll;
   background: var(--bg);
   position: relative;
-  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) 130px; /* 功能性让位（底栏/Toast），不进阶梯 */
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) 130px;
 }
 
 .expe-tag {
@@ -131,7 +120,6 @@ h1 {
 .muted {
   color: var(--ink2);
 }
-/* 行内文字超链接（如「调整比率」） */
 .link {
   background: none;
   color: var(--accent);
@@ -201,7 +189,6 @@ button:disabled {
   font-weight: 600;
 }
 
-/* 底部 tab */
 .tabs {
   position: fixed;
   bottom: 0;
@@ -231,7 +218,6 @@ button:disabled {
   margin-bottom: var(--space-hairline);
 }
 
-/* 日常 2×2 卡片（横向翻页） */
 .hscroll {
   display: flex;
   overflow-x: auto;
@@ -260,7 +246,6 @@ button:disabled {
   background: var(--chip);
 }
 
-/* 预算行 */
 .budget-row {
   display: block;
   width: 100%;
@@ -272,7 +257,6 @@ button:disabled {
   border-bottom: none;
 }
 
-/* 固定支出条目：padding 撑出 ~48px 行高，满足 44px 触控最小值 */
 .fixed-item {
   display: flex;
   justify-content: space-between;
@@ -281,7 +265,6 @@ button:disabled {
   padding: var(--space-4) 0;
 }
 
-/* 流水（行本身可点开编辑） */
 .feed-item {
   display: flex;
   justify-content: space-between;
@@ -298,7 +281,6 @@ button:disabled {
 .feed-item:last-child {
   border-bottom: none;
 }
-/* 金额配色：支出墨、收入（回血）绿、走账灰 */
 .amt-out {
   color: var(--ink);
   white-space: nowrap;
@@ -317,7 +299,6 @@ button:disabled {
   color: var(--accent);
 }
 
-/* 弹层内的选项列表（筛选等） */
 .picker-list {
   display: flex;
   flex-direction: column;
@@ -345,7 +326,6 @@ button:disabled {
   justify-content: space-between;
 }
 
-/* 分段器（设置页 / 支出回血） */
 .seg {
   display: flex;
   background: var(--chip);
@@ -367,7 +347,6 @@ button:disabled {
   box-shadow: var(--shadow-md);
 }
 
-/* 设置行 */
 .setrow {
   display: flex;
   justify-content: space-between;
@@ -386,7 +365,6 @@ button:disabled {
   padding: var(--space-hairline) 0;
 }
 
-/* 日型 chips */
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -407,7 +385,6 @@ button:disabled {
   color: var(--on-ink);
 }
 
-/* 设置行：长按拖拽排序（useDragSort） */
 .setrow {
   transition: transform 0.15s ease;
   touch-action: pan-y;
@@ -415,7 +392,6 @@ button:disabled {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-/* 被拎起的行：跟手浮动，不参与 transition */
 .setrow.drag-sorting {
   transition: none;
   position: relative;
@@ -425,7 +401,6 @@ button:disabled {
   box-shadow: var(--shadow-lg);
 }
 
-/* 本月速算表 */
 .quick-table {
   width: 100%;
   border-collapse: collapse;
@@ -458,7 +433,6 @@ button:disabled {
   border-bottom: none;
 }
 
-/* 底部弹层 */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
@@ -516,7 +490,6 @@ button:disabled {
   accent-color: var(--accent);
 }
 
-/* 数据管理弹层：分组标签 + 整宽按钮 + 按钮下的小字说明 */
 .dm-label {
   font-size: var(--font-caption);
   font-weight: 600;
@@ -543,7 +516,6 @@ button:disabled {
   border-radius: var(--radius-md);
   font-weight: 600;
 }
-/* 动作按钮用浅底轻样式（危险按钮保留 .btn-danger 红调） */
 .dm-actions button:not(.btn-danger) {
   background: var(--chip);
   color: var(--ink);
@@ -587,7 +559,6 @@ button:disabled {
   background: var(--chip);
 }
 
-/* 表单 */
 .field-row {
   margin-bottom: var(--space-3);
 }
@@ -623,10 +594,9 @@ button:disabled {
   flex: 1;
 }
 
-/* toast */
 .toast {
   position: fixed;
-  bottom: 92px; /* 功能性让位（底栏/Toast），不进阶梯 */
+  bottom: 92px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--toast-bg);
@@ -641,8 +611,6 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-/* 快速回顾（消费力回顾页） */
-/* 今日页入口 chip：嵌在 muted 小字行内，可点 */
 .pace-chip {
   display: inline-block;
   background: var(--chip);
@@ -674,7 +642,6 @@ button:disabled {
   padding: var(--space-1) var(--space-1) var(--space-1) 0;
 }
 
-/* 月历热力 */
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -718,12 +685,10 @@ button:disabled {
   background: color-mix(in srgb, var(--over) 14%, transparent);
   color: var(--over);
 }
-/* 今天：描边标记 */
 .cal-today {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
-/* 未来：置灰占位，不可点 */
 .cal-future {
   opacity: 0.4;
 }
@@ -787,7 +752,6 @@ button:disabled {
   color: var(--over);
 }
 
-/* 近 14 天双柱：深色实际（按状态着色）+ 浅色计划参照 */
 .chart {
   display: flex;
   align-items: flex-end;

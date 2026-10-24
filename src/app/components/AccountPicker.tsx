@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-/** 账户输入：点击即展开全量候选，打字实时过滤；同时允许自由输入新账户名（datalist 做不到点击即展开） */
 export function AccountPicker({
   id,
   value,
@@ -15,7 +14,6 @@ export function AccountPicker({
   placeholder?: string
 }) {
   const [open, setOpen] = useState(false)
-  /** 只有用户实际打字才过滤；仅聚焦（哪怕预填了默认值）一律展示全量 */
   const [typed, setTyped] = useState(false)
   const kw = value.trim()
   const list = typed && kw ? accounts.filter((a) => a.includes(kw)) : accounts

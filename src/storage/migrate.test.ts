@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { freshState, migrate } from './migrate'
 
-/** 构造一份 v1 老数据：固定支出流水还叫 monthKey（类型按 unknown 传，模拟磁盘上的旧结构） */
 const v1 = {
   schemaVersion: 1,
   settings: {

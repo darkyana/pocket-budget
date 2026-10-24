@@ -7,23 +7,23 @@ const d = (s: string) => new Date(`${s}T12:00:00`)
 
 describe('isRestDay 2026 法定节假日表（国办发明电〔2025〕7号）', () => {
   it('普通工作日与周末', () => {
-    expect(isRestDay(d('2026-10-13'))).toBe(false) // 周二
-    expect(isRestDay(d('2026-10-17'))).toBe(true) // 周六
+    expect(isRestDay(d('2026-10-13'))).toBe(false)
+    expect(isRestDay(d('2026-10-17'))).toBe(true)
   })
 
   it('法定节假日整体放假（含其间的工作日）', () => {
-    expect(isRestDay(d('2026-10-01'))).toBe(true) // 国庆 周四
-    expect(isRestDay(d('2026-02-17'))).toBe(true) // 春节 周二
+    expect(isRestDay(d('2026-10-01'))).toBe(true)
+    expect(isRestDay(d('2026-02-17'))).toBe(true)
   })
 
   it('调休上班的周末不算休', () => {
-    expect(isRestDay(d('2026-10-10'))).toBe(false) // 周六 国庆调休
-    expect(isRestDay(d('2026-01-04'))).toBe(false) // 周日 元旦调休
+    expect(isRestDay(d('2026-10-10'))).toBe(false)
+    expect(isRestDay(d('2026-01-04'))).toBe(false)
   })
 
   it('表外日期退回朴素周末规则', () => {
-    expect(isRestDay(d('2027-01-02'))).toBe(true) // 周六
-    expect(isRestDay(d('2027-01-04'))).toBe(false) // 周一
+    expect(isRestDay(d('2027-01-02'))).toBe(true)
+    expect(isRestDay(d('2027-01-04'))).toBe(false)
   })
 })
 

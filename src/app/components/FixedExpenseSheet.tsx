@@ -9,7 +9,6 @@ import { dayKeyOf } from '../../core/time'
 import { money } from '../format'
 import type { MoneyRecord } from '../../core/types'
 
-/** 编辑固定支出流水：只开放付款日期与账户（金额随设置走，固定支出无备注） */
 export function FixedExpenseSheet({
   event,
   onClose,
