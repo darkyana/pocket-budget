@@ -59,7 +59,7 @@ export function FixedExpenseSheet({
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消
           </button>
-          <button type="submit">保存</button>
+          <button type="submit" className="btn-primary">保存</button>
         </div>
         <div className="block-gap center">
           <ConfirmButton

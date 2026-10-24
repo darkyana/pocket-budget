@@ -286,7 +286,7 @@ export function EntrySheet({
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消
           </button>
-          <button type="submit" disabled={!canSubmit}>
+          <button type="submit" className="btn-primary" disabled={!canSubmit}>
             {existing ? '保存' : '记下'}
           </button>
         </div>

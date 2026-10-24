@@ -73,7 +73,7 @@ export function FormSheet({
           <button type="button" className="btn-ghost" onClick={onClose}>
             取消
           </button>
-          <button type="submit">{submitLabel}</button>
+          <button type="submit" className="btn-primary">{submitLabel}</button>
         </div>
       </form>
     </Sheet>

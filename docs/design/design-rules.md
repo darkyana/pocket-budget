@@ -22,6 +22,8 @@ At the current stage, colors, spacing, typography, radii, and z-index are govern
 - **阶梯（scale）** — 同一维度按强度排布的固定档位。收敛到少数几档，不按现状逐处 token 化；新档位入阶须先改本词条。现行档位：间距 `2（hairline）/4/8/12/16/24/32`、字号 `12/13/14/16/20/28`、圆角 `4/8/12/16/999`、z-index `5/10/30/40/50/60`；阴影沿用 `--shadow-sm/md/lg` 三档。
 - **hairline（发丝线）** — 1px 细分隔线，本产品的默认分隔语汇（现由 `--line` 承担）；作为间距档位时为 2px（`--space-hairline`），是阶梯中唯一的亚栅格档，仅用于图标与文字的咬合间隙及行内微调（见 D1）。
 - **豁免（exemption）** — 有登记的例外。经 `unicon.md` 登记后方可游离于 token 体系；未登记的偏离按违规处理。
+- **基线按钮（baseline button）** — 全局 `button` 元素选择器提供的默认文本样式（无底/无边框/继承字体字色字重/无圆角/无 padding；`:disabled` 半透明）。新位置的按钮忘记加类也只是无害的文本按钮，不再是级联陷阱。
+- **主按钮（primary button）** — 显式 `.btn-primary` 类的深色提交按钮（--ink 底 / --on-ink 字 / --radius-md / 600 字重）。一个弹层至多一个，全库可 grep 计数。
 
 ## 数字 Numbers (the hero of this app)
 

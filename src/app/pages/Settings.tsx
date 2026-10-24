@@ -515,7 +515,7 @@ export function SettingsPage() {
             缺省 60%，调整即时保存
           </div>
           <div className="form-btns">
-            <button type="button" className="btn-ghost" onClick={() => setRatioSheet(false)}>
+            <button type="button" className="btn-primary" onClick={() => setRatioSheet(false)}>
               完成
             </button>
           </div>

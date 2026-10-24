@@ -98,7 +98,7 @@ function DateFilterSheet({
           <button type="button" className="btn-ghost" onClick={() => onApply('', '')}>
             全部日期
           </button>
-          <button type="submit" disabled={!complete}>完成</button>
+          <button type="submit" className="btn-primary" disabled={!complete}>完成</button>
         </div>
       </form>
     </Sheet>
@@ -185,7 +185,7 @@ function CategoryFilterSheet({
         <button type="button" className="btn-ghost" onClick={() => onApply([])}>
           清除
         </button>
-        <button type="button" onClick={() => onApply(draft)}>
+        <button type="button" className="btn-primary" onClick={() => onApply(draft)}>
           完成
         </button>
       </div>
