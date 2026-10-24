@@ -29,3 +29,10 @@
 - 重新生成：`node lab/generate-baseline.mjs`
 
 守卫测试：`src/lab.guard.test.ts`（主 tsconfig/build 不含 lab、src 不 import lab、基线哈希与镜像一致）。
+
+## 主题变体（#27）
+
+- `variants/*.css` — 候选设计方向的**完整样式表**变体（token 覆盖 + 类规则改动均可）；`harbor-dusk.css` 为预置演示（冷调配色、胶囊按钮、浮坞导航、描边卡片）。`baseline` 不是文件：它就是镜像 `styles.css` 本身（`?raw` 引入），保证基线永不漂移。
+- 变体切换：右下角浮动切换器（`gallery/Variants.tsx`）热切换，画廊与四屏同时换肤；当前变体写入 URL `?variant=<id>`，带参打开直接进入该变体。
+- 变体发现：运行时 `import.meta.glob('../variants/*.css', { query: '?raw', eager: true })`，新增 css 文件即自动出现在切换器（id = 文件名去扩展名，按字典序）。
+- 纯逻辑（URL 参数、id 发现）在 `lab/variant.ts`，测试 `lab/variant.test.ts` / `lab/variants.test.ts`，跑法：`pnpm test:lab`（独立于主 `pnpm test`）。
