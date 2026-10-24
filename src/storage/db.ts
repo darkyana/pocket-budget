@@ -1,5 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import type { PersistedState } from '../core/types'
+import { sampleRecords } from '../core/sample'
 import { freshState, migrate } from './migrate'
 
 const DB_NAME = 'pocket-budget'
@@ -19,6 +20,11 @@ function db(): Promise<IDBPDatabase> {
 
 export async function loadState(): Promise<PersistedState> {
   const raw = await (await db()).get(STORE, KEY)
+  if (raw === undefined) {
+    const seeded: PersistedState = { ...freshState(), records: sampleRecords(new Date()) }
+    await saveState(seeded)
+    return seeded
+  }
   const state = migrate(raw)
   if (state !== raw) await saveState(state)
   return state
