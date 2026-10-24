@@ -1,5 +1,5 @@
 {
-  "commit": "18b7215fa54604bddbfbc46178cb45e92374f831",
+  "commit": "4399b3331c9daa232a5db5bc034fcc76e34991ed",
   "files": [
     {
       "src": "src/app/components/AccountPicker.tsx",
@@ -119,7 +119,7 @@
     },
     {
       "src": "src/styles.css",
-      "hash": "sha256:f084f0007c0c77d11a11331cb3e48b31d97aa968ec3cfba10f487adb49192927"
+      "hash": "sha256:8ae6cc420a6a8eba53a7590842ff4cd585b0a4ef7e2bfe809d66e55d31337169"
     }
   ]
 }
