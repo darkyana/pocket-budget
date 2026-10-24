@@ -11,7 +11,9 @@
     "icons": "node scripts/gen-icons.mjs",
     "privacy:scan": "node scripts/privacy-scan.mjs",
     "design:scan": "node scripts/design-scan.mjs",
-    "lab": "vite --config lab/vite.config.ts"
+    "lab": "vite --config lab/vite.config.ts",
+    "lab:sync": "node scripts/lab-sync.mjs",
+    "lab:pushback": "node scripts/lab-pushback.mjs"
   },
   "dependencies": {
     "idb": "^8.0.4",
