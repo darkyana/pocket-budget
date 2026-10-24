@@ -17,17 +17,14 @@ export function Today() {
   const openQuickRetro = useApp((s) => s.openQuickRetro)
   const toast = useToast((s) => s.show)
   const [entry, setEntry] = useState<EntryTarget | null>(null)
-  // 固定支出：次重要、条目多，默认收起，不持久化（刷新复位）
   const [fixedOpen, setFixedOpen] = useState(false)
 
-  /** 长按预算行 → 跳流水页并筛出该预算的全部条目 */
   const pressBudget = useRef('')
   const budgetPress = useLongPress(() => {
     jumpToRecords([`budget:${pressBudget.current}`])
     toast(`流水已筛选：${pressBudget.current}`)
   })
 
-  // 每分钟醒一次：跨零点后「今天」自动翻页，数字不至于停在昨天
   const [, setTick] = useState(0)
   useEffect(() => {
     const t = setInterval(() => setTick((x) => x + 1), 60_000)

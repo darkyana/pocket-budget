@@ -18,30 +18,22 @@ import { statusColor } from '../statusColor'
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 const statusText = (s: DayStatus) => (s === 'over' ? '超' : s === 'warn' ? '贴近' : '省')
 const ratioText = (r: number) => (Number.isFinite(r) ? `${Math.round(r * 100)}%` : '超支')
-/** 与计划的差额文案：随符号走，整月皆超/皆省都不出负数 */
 const diffText = (d: DayRetro) => (d.spent > d.expect ? `超 ${money(d.spent - d.expect)}` : `省 ${money(d.expect - d.spent)}`)
 
-/** 周一为一周之始（与 startOfWeek 一致） */
 const CAL_WEEK = ['一', '二', '三', '四', '五', '六', '日']
 
-/**
- * 消费力回顾页：解释今日页「当前消费力 XX%」怎么来的。
- * 主视图 = 本月日历三色热力（实际÷计划：省/贴近/超），纯解释、无任何写操作。
- */
 export function QuickRetro() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
   const closeOverlay = useApp((s) => s.closeOverlay)
   const [detail, setDetail] = useState<DayRetro | null>(null)
 
-  // 每分钟醒一次：跨零点后日历自动推进（与今日页同款）
   const [, setTick] = useState(0)
   useEffect(() => {
     const t = setInterval(() => setTick((x) => x + 1), 60_000)
     return () => clearInterval(t)
   }, [])
 
-  // 覆盖页出现时回到顶部；关闭时还原今日页的滚动位置
   useEffect(() => {
     const scroller = document.querySelector('.phone')
     if (!scroller) return
@@ -62,7 +54,6 @@ export function QuickRetro() {
   const chartDays = month.filter((d) => d.passed).slice(-14)
   const chartMax = Math.max(1, ...chartDays.map((d) => Math.max(d.spent, d.expect)))
   const barH = (v: number) => `${Math.max(3, Math.round((v / chartMax) * 84))}px`
-  /** 月初补位：第一格对齐周几（周一起算） */
   const leadPad = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7
 
   return (
@@ -77,7 +68,6 @@ export function QuickRetro() {
         {now.getFullYear()}年{now.getMonth() + 1}月 · 日常实际 vs 日型计划 · 点日期看当天明细
       </div>
 
-      {/* 口径解释：进来先看到与今日页同一个数字 */}
       <div className="card">
         <div className="row">
           <span>
@@ -97,7 +87,6 @@ export function QuickRetro() {
         </div>
       </div>
 
-      {/* 月历热力：主视图 */}
       <div className="card">
         <div className="row-block">
           <b>{now.getMonth() + 1}月日历</b>
@@ -169,7 +158,6 @@ export function QuickRetro() {
         )}
       </div>
 
-      {/* 近几天：实际 vs 计划 */}
       <div className="card">
         <div className="row-block">
           <b>近 {chartDays.length} 天 · 实际 vs 计划</b>
@@ -191,7 +179,6 @@ export function QuickRetro() {
         </div>
       </div>
 
-      {/* 节奏透视 */}
       <div className="card">
         <div className="row-block">
           <b>节奏透视</b>

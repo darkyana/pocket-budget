@@ -30,14 +30,12 @@ function describe(e: MoneyRecord): { label: string; amount: string } {
   }
 }
 
-/** 金额配色：支出墨色、收入（回血）绿、走账灰（非收支） */
 function amountClass(e: MoneyRecord): string {
   if (e.kind === 'budget' && e.dir === 'in') return 'amt-in'
   if (e.kind === 'transfer') return 'amt-transfer'
   return 'amt-out'
 }
 
-/** 消费/走账用通用记账弹层编辑；固定支出用专用弹层（日期+账户） */
 function targetOf(e: MoneyRecord): EntryTarget | null {
   if (e.kind === 'routine') return { type: 'routine', category: e.category }
   if (e.kind === 'budget') return { type: 'budget', budget: e.budget }
@@ -45,7 +43,6 @@ function targetOf(e: MoneyRecord): EntryTarget | null {
   return null
 }
 
-/** 分类筛选 token：细分 = routine:分类名 / budget:预算名；固定支出/走账只有大类 token */
 function catHit(e: MoneyRecord, tokens: string[]): boolean {
   if (e.kind === 'routine') return tokens.includes(`routine:${e.category}`)
   if (e.kind === 'budget') return tokens.includes(`budget:${e.budget}`)
@@ -59,7 +56,6 @@ export function Records() {
   const pendingCatTokens = useApp((s) => s.pendingCatTokens)
   const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
-  /** 无锚「记一笔」：不预设锚，一步进表单内三选（ADR 0001） */
   const [adding, setAdding] = useState(false)
 
   const [accountFilter, setAccountFilter] = useState('')
@@ -69,15 +65,12 @@ export function Records() {
   const hasFilter = !!accountFilter || !!fromDate || !!toDate || catFilter.length > 0
   const [filterSheet, setFilterSheet] = useState<'account' | 'date' | 'cat' | null>(null)
 
-  // 跨页跳转预置的分类筛选（今日页长按预算行）：挂载时消费一次
   useEffect(() => {
     if (pendingCatTokens.length > 0) {
       setCatFilter(pendingCatTokens)
       clearPendingCats()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  /** 导出/导入/清空收拢进数据管理弹层 */
   const [dataSheet, setDataSheet] = useState(false)
 
   const dateLabel = (() => {
@@ -89,7 +82,6 @@ export function Records() {
     return ''
   })()
 
-  /** 账户 + 日期范围（分类计数的口径：分类条件不参与，数字在切换分类时保持稳定） */
   const matchScope = (e: MoneyRecord) => {
     if (accountFilter) {
       if ('account' in e && e.account) {
@@ -97,7 +89,7 @@ export function Records() {
       } else if (e.kind === 'transfer') {
         if (e.from !== accountFilter && e.to !== accountFilter) return false
       } else {
-        return false // 无账户信息的条目在筛选具体账户时排除
+        return false
       }
     }
     return true
@@ -109,7 +101,6 @@ export function Records() {
   const groups = groupByDay(filtered)
   const now = new Date()
 
-  /** 细分选项来源：设置里定义的 + 流水里实际出现过（但设置已删）的名字，去重 */
   const routineCategories = [
     ...new Set([
       ...Object.values(settings.dayPlans).flat().map((b) => b.name),
@@ -120,7 +111,6 @@ export function Records() {
     ...new Set([...settings.budgets.map((b) => b.name), ...records.flatMap((e) => (e.kind === 'budget' ? [e.budget] : []))]),
   ]
 
-  /** 分类弹层的计数：按账户/日期范围（不含分类条件） */
   const scoped = dateFiltered.filter(matchScope)
   const catCounts = {
     routine: scoped.filter((e) => e.kind === 'routine').length,
@@ -133,7 +123,6 @@ export function Records() {
 
   return (
     <>
-      {/* 标题行右侧通用入口（仿 retro-head 先例）：补记不用切回今日页 */}
       <div className="retro-head">
         <h1>流水</h1>
         <button type="button" className="link push-end" onClick={() => setAdding(true)}>

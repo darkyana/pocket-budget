@@ -13,7 +13,6 @@ import { money } from '../format'
 
 type Seg = 'routine' | 'fixed' | 'budget'
 
-/** 数组内挪一项到新位置（updateSettings 的可变 draft 上就地用） */
 function arrayMove<T>(arr: T[], from: number, to: number) {
   const [x] = arr.splice(from, 1)
   arr.splice(to, 0, x)
@@ -36,17 +35,13 @@ export function SettingsPage() {
   const toast = useToast((s) => s.show)
   const [seg, setSeg] = useState<Seg>('routine')
   const [form, setForm] = useState<FormSpec | null>(null)
-  /** 日常实际比率调整弹层（本月速算用） */
   const [ratioSheet, setRatioSheet] = useState(false)
-  /** 合并确认的武装态：改名撞到已有名字时，第一次「保存」只提示，第二次才真的合并 */
   const mergeArmed = useRef<{ name: string } | null>(null)
 
   const dayTypes = Object.keys(settings.dayPlans)
-  /** 今日生效的日型：默认按日历自动（周末/法定节假日），点选可覆盖当天 */
   const effDayType = todayDayType(settings, new Date())
   const buckets = settings.dayPlans[effDayType] ?? []
 
-  /** 三张列表各自的长按拖拽排序（日常按当前日型的列表） */
   const dragRoutine = useDragSort(buckets.length, (from, to) =>
     updateSettings((s) => {
       arrayMove(s.dayPlans[effDayType], from, to)
@@ -67,8 +62,6 @@ export function SettingsPage() {
     const n = Number.parseFloat(v ?? '')
     return Number.isFinite(n) && n > 0 ? n : null
   }
-
-  /* ---------------- 日常 ---------------- */
 
   function editBucket(index: number) {
     const b = buckets[index]
@@ -114,8 +107,6 @@ export function SettingsPage() {
       },
     })
   }
-
-  /* ---------------- 固定支出 ---------------- */
 
   const cycleOptions = [
     { value: 'monthly', label: '每月' },
@@ -198,8 +189,6 @@ export function SettingsPage() {
     })
   }
 
-  /* ---------------- 预算 ---------------- */
-
   function editBudget(index: number) {
     const p = settings.budgets[index]
     mergeArmed.current = null
@@ -273,7 +262,7 @@ export function SettingsPage() {
                 onClick={() => {
                   updateSettings((s) => {
                     s.dayType = name
-                    s.dayTypeSetFor = dayKeyOf(new Date()) // 点选只覆盖今天，明天回到自动
+                    s.dayTypeSetFor = dayKeyOf(new Date())
                   })
                   toast(`日型切到：${name}（今天）`)
                 }}

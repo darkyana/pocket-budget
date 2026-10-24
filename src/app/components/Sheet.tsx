@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
 
-/** 底部弹层：点击背景或按 Escape 关闭。替代 iOS PWA 里不可靠的 prompt()/confirm() */
 export function Sheet({
   title,
   onClose,
@@ -10,7 +9,6 @@ export function Sheet({
   title: string
   onClose(): void
   children: ReactNode
-  /** 标题行右侧的附加控件（如「再记一笔」开关） */
   headerExtra?: ReactNode
 }) {
   useEffect(() => {

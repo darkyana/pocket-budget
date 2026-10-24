@@ -13,7 +13,6 @@ const TABS: Array<{ key: Tab; Icon: LucideIcon; label: string }> = [
   { key: 'settings', Icon: Settings, label: '设置' },
 ]
 
-/** 构建时注入的代码最近更新时间（vite define，见 vite.config.ts） */
 declare const __CODE_UPDATED_AT__: number
 
 const pad = (n: number) => String(n).padStart(2, '0')

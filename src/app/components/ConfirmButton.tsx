@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-/** 两段式确认：先点进入待确认，3 秒内再点才执行（PWA 里原生 confirm() 不可靠） */
 export function ConfirmButton({
   label,
   confirmLabel = '确认？',
