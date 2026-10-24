@@ -10,6 +10,8 @@ type Variant = { id: string; label: string; css: string }
 const LABELS: Record<string, string> = {
   [BASELINE_VARIANT]: '基线（现行样式）',
   'harbor-dusk': '港暮（演示：冷调 + 胶囊按钮 + 浮坞导航）',
+  'night-ledger': '夜账（深色模式：墨蓝底 + 薄荷绿）',
+  'ink-checkbook': '墨水账本（蓝黑墨水 + 直角细线 + 纸感扁平）',
 }
 
 export function useVariants(): Variant[] {

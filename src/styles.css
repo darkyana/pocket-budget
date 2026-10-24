@@ -1,24 +1,25 @@
 
 :root {
-  --bg: #f4f2ee;
-  --bg-outside: #dcd8d0;
+  --bg: #f6f7f9;
+  --bg-outside: #e8e9ec;
   --card: #fff;
-  --ink: #1d1a16;
+  --ink: #15181d;
   --on-ink: #fff;
-  --ink2: #6f675c;
-  --line: #e6e1d8;
-  --accent: #2f6f4f;
-  --bar-accent: rgba(47, 111, 79, 0.35);
-  --warn: #b04f30;
-  --over: #b3261e;
-  --ok: #2f6f4f;
-  --chip: #eee9df;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 22px rgba(0, 0, 0, 0.16);
-  --scrim: rgba(0, 0, 0, 0.35);
-  --toast-bg: #111;
-  --toast-ink: #ffd97a;
+  --ink2: #6e7480;
+  --line: #e5e7eb;
+  --accent: #0e9f6e;
+  --bar-accent: #3d4540;
+  --warn: #d97706;
+  --over: #e5484d;
+  --ok: #0e9f6e;
+  --calm: #414d47;
+  --chip: #eef0f3;
+  --shadow-sm: 0 1px 2px rgba(16, 18, 21, 0.05);
+  --shadow-md: 0 4px 12px rgba(16, 18, 21, 0.07);
+  --shadow-lg: 0 12px 32px rgba(16, 18, 21, 0.14);
+  --scrim: rgba(16, 18, 21, 0.42);
+  --toast-bg: #15181d;
+  --toast-ink: #e6e8eb;
   --space-hairline: 2px;
   --space-1: 4px;
   --space-2: 8px;
@@ -32,10 +33,10 @@
   --font-title: 16px;
   --font-page: 20px;
   --font-hero: 28px;
-  --radius-bar: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-bar: 6px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
   --radius-pill: 999px;
   --z-tag: 5;
   --z-drag: 10;
@@ -87,8 +88,8 @@ body {
   top: 6px;
   right: 12px;
   font-size: var(--font-caption);
-  color: #a05a2c;
-  background: #f7ecd9;
+  color: var(--ink2);
+  background: var(--chip);
   padding: var(--space-hairline) var(--space-2);
   border-radius: var(--radius-sm);
   z-index: var(--z-tag);
@@ -101,13 +102,17 @@ h1 {
 .sub {
   font-size: var(--font-caption);
   color: var(--ink2);
+  background: var(--chip);
+  border-radius: var(--radius-pill);
+  padding: var(--space-hairline) var(--space-3);
+  display: inline-block;
   margin-bottom: var(--space-4);
 }
 
 .card {
   background: var(--card);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
+  padding: var(--space-5);
   margin-bottom: var(--space-3);
   box-shadow: var(--shadow-sm);
 }
@@ -134,16 +139,16 @@ h1 {
 }
 
 .bar {
-  height: 8px;
+  height: 4px;
   background: var(--chip);
-  border-radius: var(--radius-bar);
+  border-radius: var(--radius-pill);
   margin-top: var(--space-2);
   overflow: hidden;
 }
 .bar > i {
   display: block;
   height: 100%;
-  border-radius: var(--radius-bar);
+  border-radius: var(--radius-pill);
   transition: width 0.2s ease-out;
 }
 
@@ -159,10 +164,10 @@ button:disabled {
   opacity: 0.45;
 }
 .btn-primary {
-  background: var(--ink);
+  background: var(--accent);
   color: var(--on-ink);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-5);
   font-weight: 600;
 }
 .btn2 {
@@ -191,25 +196,30 @@ button:disabled {
 
 .tabs {
   position: fixed;
-  bottom: 0;
+  bottom: var(--space-5);
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
-  max-width: 430px;
+  width: calc(100% - var(--space-6));
+  max-width: 398px;
   background: var(--card);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
   display: flex;
   z-index: var(--z-nav);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding: var(--space-1);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--space-1));
 }
 .tabs button {
   flex: 1;
   color: var(--ink2);
   font-size: var(--font-caption);
-  padding: var(--space-3) 0 var(--space-2);
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-pill);
 }
 .tabs button.on {
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--on-ink);
   font-weight: 700;
 }
 .tabs button .ic {
@@ -238,8 +248,9 @@ button:disabled {
 }
 .mini {
   background: var(--bg);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   text-align: left;
 }
 .mini:active {
@@ -332,7 +343,7 @@ button:disabled {
 .seg {
   display: flex;
   background: var(--chip);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   padding: var(--space-1);
   margin-bottom: var(--space-4);
 }
@@ -341,13 +352,13 @@ button:disabled {
   color: var(--ink2);
   font-size: var(--font-ui);
   padding: var(--space-2) 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
 }
 .seg button.on {
-  background: var(--card);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--on-ink);
   font-weight: 700;
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 
 .setrow {
@@ -355,7 +366,7 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px dashed var(--line);
   font-size: var(--font-body);
   gap: var(--space-2);
 }
@@ -618,7 +629,7 @@ button:disabled {
 .pace-chip {
   display: inline-block;
   background: var(--chip);
-  color: var(--accent);
+  color: var(--ink2);
   font-size: var(--font-caption);
   font-weight: 600;
   padding: var(--space-hairline) var(--space-2);
@@ -679,8 +690,8 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 .cal-ok {
-  background: color-mix(in srgb, var(--ok) 13%, transparent);
-  color: var(--ok);
+  background: color-mix(in srgb, var(--calm) 13%, transparent);
+  color: var(--calm);
 }
 .cal-warn {
   background: color-mix(in srgb, var(--warn) 13%, transparent);
@@ -715,7 +726,7 @@ button:disabled {
   vertical-align: -1px;
 }
 .lg-ok {
-  background: color-mix(in srgb, var(--ok) 35%, transparent);
+  background: color-mix(in srgb, var(--calm) 35%, transparent);
 }
 .lg-warn {
   background: color-mix(in srgb, var(--warn) 40%, transparent);
@@ -746,8 +757,8 @@ button:disabled {
   font-size: var(--font-caption);
 }
 .count-ok {
-  background: color-mix(in srgb, var(--ok) 10%, transparent);
-  color: var(--ok);
+  background: color-mix(in srgb, var(--calm) 10%, transparent);
+  color: var(--calm);
 }
 .count-warn {
   background: color-mix(in srgb, var(--warn) 10%, transparent);
@@ -824,6 +835,8 @@ button:disabled {
 }
 .hero-num {
   font-size: var(--font-hero);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 .sub-num {

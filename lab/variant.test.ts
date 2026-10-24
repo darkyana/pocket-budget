@@ -38,4 +38,11 @@ describe('variantIdsFromFiles', () => {
   it('忽略非 css 文件与保留名 baseline', () => {
     expect(variantIdsFromFiles(['README.md', 'baseline.css', 'demo.css'])).toEqual(['demo'])
   })
+
+  it('接受 import.meta.glob 的相对路径 key', () => {
+    expect(variantIdsFromFiles(['../variants/harbor-dusk.css', '../variants/noon-tide.css'])).toEqual([
+      'harbor-dusk',
+      'noon-tide',
+    ])
+  })
 })

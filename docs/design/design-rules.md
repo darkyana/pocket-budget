@@ -19,7 +19,7 @@ At the current stage, colors, spacing, typography, radii, and z-index are govern
 - **token（令牌）** — 在 `src/styles.css` `:root` 定义一次的命名变量（如 `--accent`、`--shadow-md`）。设计决策只在此处发生，其余代码按名引用（`var(--*)`）。
 - **裸值（bare literal）** — 直接写在样式代码里的颜色字面量（`#2f6f4f`、`rgba(0,0,0,.35)`）。颜色类别受管后，`src/app/**` 与 `styles.css` 的 `:root` 之外一律禁止（见 G1）。
 - **派生色（derived color）** — 在使用处由既有 token 经 `color-mix()` 计算出的颜色（如 `color-mix(in srgb, var(--over) 15%, var(--card))`）。不是裸值，也不必新设 token；允许轻微色相偏移。
-- **阶梯（scale）** — 同一维度按强度排布的固定档位。收敛到少数几档，不按现状逐处 token 化；新档位入阶须先改本词条。现行档位：间距 `2（hairline）/4/8/12/16/24/32`、字号 `12/13/14/16/20/28`、圆角 `4/8/12/16/999`、z-index `5/10/30/40/50/60`；阴影沿用 `--shadow-sm/md/lg` 三档。
+- **阶梯（scale）** — 同一维度按强度排布的固定档位。收敛到少数几档，不按现状逐处 token 化；新档位入阶须先改本词条。现行档位：间距 `2（hairline）/4/8/12/16/24/32`、字号 `12/13/14/16/20/28`、圆角 `6/12/18/24/999`、z-index `5/10/30/40/50/60`；阴影沿用 `--shadow-sm/md/lg` 三档。
 - **hairline（发丝线）** — 1px 细分隔线，本产品的默认分隔语汇（现由 `--line` 承担）；作为间距档位时为 2px（`--space-hairline`），是阶梯中唯一的亚栅格档，仅用于图标与文字的咬合间隙及行内微调（见 D1）。
 - **豁免（exemption）** — 有登记的例外。经 `unicon.md` 登记后方可游离于 token 体系；未登记的偏离按违规处理。
 - **基线按钮（baseline button）** — 全局 `button` 元素选择器提供的默认文本样式（无底/无边框/继承字体字色字重/无圆角/无 padding；`:disabled` 半透明）。新位置的按钮忘记加类也只是无害的文本按钮，不再是级联陷阱。
@@ -40,7 +40,7 @@ At the current stage, colors, spacing, typography, radii, and z-index are govern
 **Intent** — Color is information, not decoration. The product answers「还能花多少」; red, green, and orange must each mean exactly one thing so the answer is readable at a glance and never cries wolf.
 
 - C1 `[agent]` Red (`--over`) = overspent/over budget ONLY, plus destructive actions (delete). Never decorative.
-- C2 `[agent]` Green (`--ok` / `--accent`) = positive/available: still-can-spend, `省`, refund (回血), on-track projection. Green also serves as brand accent (links, active states).
+- C2 `[agent]` Green (`--ok` / `--accent`) = positive/available: still-can-spend, `省`, refund (回血), on-track projection. Green also serves as brand accent (links, active states). 环境性/聚合的正常态展示（日历 ok 格、统计块、图例）走中性灰 `--calm`，绿色保留给决策数字与品牌位。
 - C3 `[agent]` Orange (`--warn`) = near planned or unpaid/needs attention. Triggers: ratio ≥ 80%, week left < 20% of week budget, unpaid fixed-expense items.
 
 ## 密度与节奏 Density & rhythm
