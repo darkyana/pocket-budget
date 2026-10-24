@@ -26,3 +26,9 @@ Code carries no comments. The "why" lives where it stays true: the commit messag
 A non-obvious trap that genuinely must be recorded goes into the commit message that introduces it, or an ADR if architectural. Never into a comment.
 
 **Check**: any new `//`, `/* */`, or `/** */` block in a diff fails. Test names (strings inside `describe`/`it`) are not comments and stay.
+
+## 4. Migrations never delete records
+
+流水是唯一事实源。Schema migration 只做字段级搬迁和设置结构调整，就地升级。任何删除、过滤或破坏性重建流水的迁移路径都不过 review。
+
+**Check**: touched migration code drops/filters records → fail. Mechanical guard: the 「迁移不丢流水」 test in `src/storage/migrate.test.ts`.
