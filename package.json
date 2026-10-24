@@ -10,7 +10,11 @@
     "test": "vitest run",
     "icons": "node scripts/gen-icons.mjs",
     "privacy:scan": "node scripts/privacy-scan.mjs",
-    "design:scan": "node scripts/design-scan.mjs"
+    "design:scan": "node scripts/design-scan.mjs",
+    "lab": "vite --config lab/vite.config.ts",
+    "lab:sync": "node scripts/lab-sync.mjs",
+    "lab:pushback": "node scripts/lab-pushback.mjs",
+    "test:lab": "vitest run --config lab/vite.config.ts"
   },
   "dependencies": {
     "idb": "^8.0.4",
