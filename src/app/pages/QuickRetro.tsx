@@ -111,7 +111,7 @@ export function QuickRetro() {
                 aria-label={`${d.day}日 ${weekdayOf(d.date)} ${d.dayType} · ${statusText(d.status)}，实际 ${money(d.spent)}，计划 ${money(d.expect)}`}
               >
                 <span className="cal-num">{d.day}</span>
-                <span className="cal-amt">{Math.round(d.spent)}</span>
+                <span className="cal-amt">{money(d.spent)}</span>
               </button>
             ) : (
               <div className="cal-cell cal-future" key={d.day}>
@@ -167,7 +167,7 @@ export function QuickRetro() {
           {chartDays.map((d) => (
             <div className="chart-col" key={d.day}>
               <div className="chart-bars">
-                <i className="bar-act" style={{ height: barH(d.spent), background: statusColor(d.status) }} />
+                <i style={{ height: barH(d.spent), background: statusColor(d.status) }} />
                 <i className="bar-plan" style={{ height: barH(d.expect) }} />
               </div>
               <span className={`chart-day${d.isToday ? ' chart-day-today' : ''}`}>{d.day}</span>
