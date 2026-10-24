@@ -20,6 +20,9 @@
  *      fontSize、lineHeight、textAlign、gap、whiteSpace、flex 等静态键命中即报
  *      （值为模板串、三元或函数调用算动态放行；width/height/background/color/
  *      textDecoration/opacity/accentColor/transform 等数据驱动键不拦）
+ *   6. src/app/** 的 tsx 禁止在 className 属性手写 seg / form-btns 组件类名
+ *      token（含模板串/三元里的同 token），组件内部白名单：SegmentedControl.tsx、
+ *      FormFooter.tsx（G3 的机器检查）
  *
  * 有命中退出码 1（阻断），干净退出码 0。
  */
@@ -84,6 +87,63 @@ function forEachCssLine(content, fn) {
     }
     fn(line, i)
   })
+}
+
+const G3_WHITELIST = new Set(['src/app/components/SegmentedControl.tsx', 'src/app/components/FormFooter.tsx'])
+
+const G3_CLASS_TOKEN_RE = /(?:^|[^\w-])(seg|form-btns)(?![\w-])/g
+
+function classNameValueRange(content, valueStart) {
+  let i = valueStart
+  while (i < content.length && /\s/.test(content[i])) i++
+  const q = content[i]
+  if (q !== '"' && q !== "'" && q !== '{') return null
+  if (q === '"' || q === "'") {
+    const end = content.indexOf(q, i + 1)
+    if (end === -1) return null
+    return [i, end + 1]
+  }
+  let depth = 0
+  for (let j = i; j < content.length; j++) {
+    if (content[j] === '{') depth++
+    else if (content[j] === '}') {
+      depth--
+      if (depth === 0) return [i, j + 1]
+    }
+  }
+  return null
+}
+
+function checkComponentClasses() {
+  for (const file of listFiles()) {
+    if (!file.startsWith('src/app/') || !file.endsWith('.tsx')) continue
+    if (G3_WHITELIST.has(file)) continue
+    const content = read(file)
+    if (content === null) continue
+    let idx = 0
+    while (true) {
+      const at = content.indexOf('className', idx)
+      if (at === -1) break
+      const eq = at + 'className'.length
+      if (content[eq] !== '=') {
+        idx = eq
+        continue
+      }
+      const range = classNameValueRange(content, eq + 1)
+      if (!range) {
+        idx = eq + 1
+        continue
+      }
+      const value = content.slice(range[0], range[1])
+      const tokens = [...new Set(value.match(G3_CLASS_TOKEN_RE))]
+      if (tokens.length) {
+        const line = content.slice(0, at).split('\n').length
+        const names = [...new Set(tokens.map((t) => t.replace(/^[^\w-]+/, '')))]
+        hits.push(`${file}:${line} [G3 手写组件类] ${names.join(', ')} 请用 SegmentedControl / FormFooter`)
+      }
+      idx = range[1]
+    }
+  }
 }
 
 function checkAppColors() {
@@ -291,6 +351,7 @@ checkStylesColors()
 checkThemeColor()
 checkScale()
 checkInlineStyles()
+checkComponentClasses()
 
 if (hits.length) {
   console.error(`设计扫描：命中 ${hits.length} 处`)

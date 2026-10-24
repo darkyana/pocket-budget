@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
+import { SegmentedControl } from './SegmentedControl'
+import { FormFooter } from './FormFooter'
 import { ConfirmButton } from './ConfirmButton'
 import { AccountPicker } from './AccountPicker'
 import { useApp } from '../store'
@@ -163,19 +165,15 @@ export function EntrySheet({
         }}
       >
         {kindPickable && (
-          <div className="seg">
-            <button type="button" className={formKind === 'routine' ? 'on' : ''} onClick={() => switchKind('routine')}>
-              日常
-            </button>
-            <button type="button" className={formKind === 'budget' ? 'on' : ''} onClick={() => switchKind('budget')}>
-              预算
-            </button>
-            {target.type === 'free' && (
-              <button type="button" className={formKind === 'transfer' ? 'on' : ''} onClick={() => switchKind('transfer')}>
-                走账
-              </button>
-            )}
-          </div>
+          <SegmentedControl<EntryKind>
+            value={formKind}
+            options={[
+              { value: 'routine', label: '日常' },
+              { value: 'budget', label: '预算' },
+              ...(target.type === 'free' ? [{ value: 'transfer' as const, label: '走账' }] : []),
+            ]}
+            onChange={switchKind}
+          />
         )}
         {formKind === 'routine' && kindPickable && (
           <div className="field-row">
@@ -206,14 +204,11 @@ export function EntrySheet({
           </div>
         )}
         {formKind === 'budget' && (
-          <div className="seg">
-            <button type="button" className={dir === 'out' ? 'on' : ''} onClick={() => setDir('out')}>
-              支出
-            </button>
-            <button type="button" className={dir === 'in' ? 'on' : ''} onClick={() => setDir('in')}>
-              回血
-            </button>
-          </div>
+          <SegmentedControl<'out' | 'in'>
+            value={dir}
+            options={[{ value: 'out', label: '支出' }, { value: 'in', label: '回血' }]}
+            onChange={setDir}
+          />
         )}
         {formKind === 'transfer' && (
           <>
@@ -282,14 +277,11 @@ export function EntrySheet({
             onChange={(e) => setDate(e.target.value)}
           />
         </div>
-        <div className="form-btns">
-          <button type="button" className="btn-ghost" onClick={onClose}>
-            取消
-          </button>
-          <button type="submit" disabled={!canSubmit}>
-            {existing ? '保存' : '记下'}
-          </button>
-        </div>
+        <FormFooter
+          secondary={{ label: '取消', onClick: onClose }}
+          submitLabel={existing ? '保存' : '记下'}
+          submitDisabled={!canSubmit}
+        />
         {existing && (
           <div className="block-gap center">
             <ConfirmButton

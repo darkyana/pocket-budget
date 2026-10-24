@@ -7,6 +7,8 @@ import { useApp } from '../store'
 import { useToast } from '../toast'
 import { ConfirmButton } from '../components/ConfirmButton'
 import { FormSheet, type FieldDef } from '../components/FormSheet'
+import { SegmentedControl } from '../components/SegmentedControl'
+import { FormFooter } from '../components/FormFooter'
 import { money } from '../format'
 
 type Seg = 'routine' | 'fixed' | 'budget'
@@ -247,19 +249,15 @@ export function SettingsPage() {
     <>
       <h1>设置</h1>
       <div className="sub">日型日常 · 预算 · 固定支出（随时可调）</div>
-      <div className="seg">
-        {(
-          [
-            ['routine', '日常'],
-            ['budget', '预算'],
-            ['fixed', '固定支出'],
-          ] as Array<[Seg, string]>
-        ).map(([k, t]) => (
-          <button type="button" key={k} className={seg === k ? 'on' : ''} onClick={() => setSeg(k)}>
-            {t}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl<Seg>
+        value={seg}
+        options={[
+          { value: 'routine', label: '日常' },
+          { value: 'budget', label: '预算' },
+          { value: 'fixed', label: '固定支出' },
+        ]}
+        onChange={setSeg}
+      />
 
       {seg === 'routine' && (
         <div className="card">
@@ -489,36 +487,39 @@ export function SettingsPage() {
 
       {ratioSheet && (
         <Sheet title="调整日常实际比率" onClose={() => setRatioSheet(false)}>
-          <div className="small muted field-row note">
-            日常的单日期望是「这种日子合理消费的上限」，并不是每天都会把它花光。
-            本月速算按这个比率把期望全额折算成预计实际花费——只影响速算的估算，
-            不影响今日页的期望与进度条。
-          </div>
-          <div className="row-block">
-            <input
-              type="range"
-              className="range"
-              min={10}
-              max={100}
-              step={5}
-              value={Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}
-              onChange={(e) => {
-                const pctVal = Number(e.target.value)
-                updateSettings((s) => {
-                  s.routineSpendRatio = pctVal / 100
-                })
-              }}
-            />
-            <b className="nowrap">{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
-          </div>
-          <div className="small muted field-row">
-            缺省 60%，调整即时保存
-          </div>
-          <div className="form-btns">
-            <button type="button" className="btn-ghost" onClick={() => setRatioSheet(false)}>
-              完成
-            </button>
-          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              setRatioSheet(false)
+            }}
+          >
+            <div className="small muted field-row note">
+              日常的单日期望是「这种日子合理消费的上限」，并不是每天都会把它花光。
+              本月速算按这个比率把期望全额折算成预计实际花费——只影响速算的估算，
+              不影响今日页的期望与进度条。
+            </div>
+            <div className="row-block">
+              <input
+                type="range"
+                className="range"
+                min={10}
+                max={100}
+                step={5}
+                value={Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}
+                onChange={(e) => {
+                  const pctVal = Number(e.target.value)
+                  updateSettings((s) => {
+                    s.routineSpendRatio = pctVal / 100
+                  })
+                }}
+              />
+              <b className="nowrap">{Math.round((settings.routineSpendRatio ?? DEFAULT_ROUTINE_RATIO) * 100)}%</b>
+            </div>
+            <div className="small muted field-row">
+              缺省 60%，调整即时保存
+            </div>
+            <FormFooter submitLabel="完成" />
+          </form>
         </Sheet>
       )}
 

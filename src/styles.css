@@ -159,18 +159,23 @@ h1 {
   transition: width 0.2s ease-out;
 }
 
-/* 按钮：默认为主按钮（深色） */
 button {
   font: inherit;
+  color: inherit;
+  background: none;
   border: none;
+  border-radius: 0;
+  padding: 0;
+}
+button:disabled {
+  opacity: 0.45;
+}
+.btn-primary {
   background: var(--ink);
   color: var(--on-ink);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   font-weight: 600;
-}
-button:disabled {
-  opacity: 0.45;
 }
 .btn2 {
   background: var(--chip);
@@ -186,10 +191,14 @@ button:disabled {
   font-size: var(--font-caption);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
+  font-weight: 600;
 }
 .btn-ghost {
   background: var(--chip);
   color: var(--ink);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
 }
 
 /* 底部 tab */
@@ -208,12 +217,9 @@ button:disabled {
 }
 .tabs button {
   flex: 1;
-  background: none;
   color: var(--ink2);
   font-size: var(--font-caption);
   padding: var(--space-3) 0 var(--space-2);
-  border-radius: 0;
-  font-weight: 400;
 }
 .tabs button.on {
   color: var(--accent);
@@ -249,9 +255,6 @@ button:disabled {
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   text-align: left;
-  font: inherit;
-  font-weight: 400;
-  color: inherit;
 }
 .mini:active {
   background: var(--chip);
@@ -262,14 +265,8 @@ button:disabled {
   display: block;
   width: 100%;
   text-align: left;
-  background: none;
-  border: none;
   border-bottom: 1px solid var(--line);
   padding: var(--space-2) 0 var(--space-3);
-  font: inherit;
-  font-weight: 400;
-  color: inherit;
-  border-radius: 0;
 }
 .budget-row:last-of-type {
   border-bottom: none;
@@ -280,14 +277,8 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  background: none;
-  border: none;
   border-top: 1px dashed var(--line);
-  border-radius: 0;
   padding: var(--space-4) 0;
-  font: inherit;
-  font-weight: 400;
-  color: inherit;
 }
 
 /* 流水（行本身可点开编辑） */
@@ -297,14 +288,8 @@ button:disabled {
   gap: var(--space-2);
   width: 100%;
   padding: var(--space-2) 0;
-  border: none;
   border-bottom: 1px dashed var(--line);
-  border-radius: 0;
-  background: none;
-  font: inherit;
-  font-weight: 400;
   font-size: var(--font-body);
-  color: inherit;
   text-align: left;
 }
 .feed-item:active {
@@ -340,12 +325,8 @@ button:disabled {
 }
 .picker-list button {
   text-align: left;
-  background: none;
-  border: none;
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
-  font: inherit;
-  font-weight: 400;
   font-size: var(--font-body);
   color: var(--ink);
 }
@@ -374,12 +355,10 @@ button:disabled {
 }
 .seg button {
   flex: 1;
-  background: none;
   color: var(--ink2);
   font-size: var(--font-ui);
   padding: var(--space-2) 0;
   border-radius: var(--radius-sm);
-  font-weight: 400;
 }
 .seg button.on {
   background: var(--card);
@@ -404,13 +383,7 @@ button:disabled {
 .setrow-main {
   flex: 1;
   text-align: left;
-  background: none;
-  border: none;
   padding: var(--space-hairline) 0;
-  font: inherit;
-  font-weight: 400;
-  color: inherit;
-  border-radius: 0;
 }
 
 /* 日型 chips */
@@ -568,6 +541,7 @@ button:disabled {
   font-size: var(--font-body);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
+  font-weight: 600;
 }
 /* 动作按钮用浅底轻样式（危险按钮保留 .btn-danger 红调） */
 .dm-actions button:not(.btn-danger) {
@@ -604,12 +578,8 @@ button:disabled {
   display: block;
   width: 100%;
   text-align: left;
-  background: none;
-  border: none;
   border-radius: var(--radius-sm);
   padding: var(--space-2);
-  font: inherit;
-  font-weight: 400;
   font-size: var(--font-body);
   color: var(--ink);
 }
@@ -698,7 +668,6 @@ button:disabled {
 .back-btn {
   display: inline-flex;
   align-items: center;
-  background: none;
   color: var(--ink2);
   font-size: var(--font-ui);
   font-weight: 500;
@@ -725,9 +694,6 @@ button:disabled {
   gap: var(--space-hairline);
   min-height: 46px;
   border-radius: var(--radius-sm);
-  font: inherit;
-  font-weight: 400;
-  color: inherit;
   padding: var(--space-1) 0;
 }
 .cal-cell:active {
