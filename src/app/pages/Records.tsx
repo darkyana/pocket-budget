@@ -123,27 +123,29 @@ export function Records() {
 
   return (
     <>
-      <h1>流水</h1>
-      <div className="sub">
-        {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
-        {' · '}
-        <button type="button" className="link" onClick={() => setAdding(true)}>
-          ＋ 记一笔
-        </button>
-      </div>
-      <div className="chips">
-        <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
-          {accountFilter ? `账户 · ${accountFilter}` : '按账户筛选'}
-        </button>
-        <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
-          {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
-        </button>
-        <button type="button" className={`btn2 ${catFilter.length ? 'on' : ''}`} onClick={() => setFilterSheet('cat')}>
-          {catFilter.length ? `分类 · ${catFilter.length} 项` : '按分类筛选'}
-        </button>
-        <button type="button" className="btn2 push-end" onClick={() => setDataSheet(true)}>
-          数据管理
-        </button>
+      <div className="page-head">
+        <h1>流水</h1>
+        <div className="sub">
+          {hasFilter ? `筛选中 · ${filtered.length}/${records.length} 笔` : `本机记录的全部流水 · ${records.length} 笔`}
+          {' · '}
+          <button type="button" className="link" onClick={() => setAdding(true)}>
+            ＋ 记一笔
+          </button>
+        </div>
+        <div className="chips">
+          <button type="button" className={`btn2 ${accountFilter ? 'on' : ''}`} onClick={() => setFilterSheet('account')}>
+            {accountFilter ? `账户 · ${accountFilter}` : '按账户筛选'}
+          </button>
+          <button type="button" className={`btn2 ${dateLabel ? 'on' : ''}`} onClick={() => setFilterSheet('date')}>
+            {dateLabel ? `日期 · ${dateLabel}` : '按日期筛选'}
+          </button>
+          <button type="button" className={`btn2 ${catFilter.length ? 'on' : ''}`} onClick={() => setFilterSheet('cat')}>
+            {catFilter.length ? `分类 · ${catFilter.length} 项` : '按分类筛选'}
+          </button>
+          <button type="button" className="btn2 push-end" onClick={() => setDataSheet(true)}>
+            数据管理
+          </button>
+        </div>
       </div>
       {groups.length > 0 ? (
         groups.map((g) => (

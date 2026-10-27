@@ -42,9 +42,11 @@ export function Today() {
 
   return (
     <>
-      <h1>今日</h1>
-      <div className="sub">
-        {todayHeadline(now)} · 日型：{todayDayType(settings, now)}
+      <div className="page-head">
+        <h1>今日</h1>
+        <div className="sub">
+          {todayHeadline(now)} · 日型：{todayDayType(settings, now)}
+        </div>
       </div>
 
       <div className="card">

@@ -34,7 +34,9 @@ export function App() {
   if (!ready) return null
   return (
     <div className="phone">
-      <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>
+      <span className="expe-tag-anchor">
+        <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>
+      </span>
       <div>
         {overlay === 'quickRetro' ? (
           <QuickRetro />
