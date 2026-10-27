@@ -93,24 +93,23 @@ body {
   margin-top: calc(-1 * (env(safe-area-inset-top) + var(--space-4)));
 }
 
-.expe-tag-anchor {
-  position: sticky;
-  top: 6px;
-  z-index: var(--z-tag);
-  display: block;
-  height: 0;
-  margin: calc(6px - (env(safe-area-inset-top) + var(--space-4))) calc(-1 * var(--space-4)) 0;
+.phone-frame {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
 }
 
 .expe-tag {
   position: absolute;
-  top: 0;
+  top: 6px;
   right: 12px;
   font-size: var(--font-caption);
   color: var(--ink2);
   background: var(--chip);
   padding: var(--space-hairline) var(--space-2);
   border-radius: var(--radius-sm);
+  z-index: var(--z-tag);
 }
 
 .page-head {
