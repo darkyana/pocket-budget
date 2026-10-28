@@ -33,30 +33,32 @@ export function App() {
 
   if (!ready) return null
   return (
-    <div className="phone">
+    <div className="phone-frame">
       <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>
-      <div>
-        {overlay === 'quickRetro' ? (
-          <QuickRetro />
-        ) : (
-          <>
-            {tab === 'today' && <Today />}
-            {tab === 'records' && <Records />}
-            {tab === 'settings' && <SettingsPage />}
-          </>
-        )}
+      <div className="phone">
+        <div>
+          {overlay === 'quickRetro' ? (
+            <QuickRetro />
+          ) : (
+            <>
+              {tab === 'today' && <Today />}
+              {tab === 'records' && <Records />}
+              {tab === 'settings' && <SettingsPage />}
+            </>
+          )}
+        </div>
+        <nav className="tabs">
+          {TABS.map(({ key, Icon, label }) => (
+            <button type="button" key={key} className={tab === key ? 'on' : ''} onClick={() => goTab(key)}>
+              <span className="ic">
+                <Icon size={22} strokeWidth={2} />
+              </span>
+              {label}
+            </button>
+          ))}
+        </nav>
+        {toastMsg ? <div className="toast">{toastMsg}</div> : null}
       </div>
-      <nav className="tabs">
-        {TABS.map(({ key, Icon, label }) => (
-          <button type="button" key={key} className={tab === key ? 'on' : ''} onClick={() => goTab(key)}>
-            <span className="ic">
-              <Icon size={22} strokeWidth={2} />
-            </span>
-            {label}
-          </button>
-        ))}
-      </nav>
-      {toastMsg ? <div className="toast">{toastMsg}</div> : null}
     </div>
   )
 }

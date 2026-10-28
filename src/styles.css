@@ -38,7 +38,8 @@
   --radius-md: 18px;
   --radius-lg: 24px;
   --radius-pill: 999px;
-  --z-tag: 5;
+  --z-head: 30;
+  --z-tag: 35;
   --z-drag: 10;
   --z-float: 30;
   --z-nav: 40;
@@ -78,9 +79,25 @@ body {
   max-width: 430px;
   height: 100%;
   overflow-y: scroll;
+  scrollbar-width: none;
   background: var(--bg);
   position: relative;
   padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) 130px;
+}
+
+.phone::-webkit-scrollbar {
+  display: none;
+}
+
+.phone > div {
+  margin-top: calc(-1 * (env(safe-area-inset-top) + var(--space-4)));
+}
+
+.phone-frame {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
 }
 
 .expe-tag {
@@ -93,6 +110,21 @@ body {
   padding: var(--space-hairline) var(--space-2);
   border-radius: var(--radius-sm);
   z-index: var(--z-tag);
+}
+
+.page-head {
+  position: sticky;
+  top: calc(-1 * (env(safe-area-inset-top) + var(--space-4)));
+  z-index: var(--z-head);
+  margin: 0 calc(-1 * var(--space-4));
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) var(--space-4);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+.page-head > :last-child {
+  margin-bottom: 0;
 }
 
 h1 {
@@ -201,7 +233,9 @@ button:disabled {
   transform: translateX(-50%);
   width: calc(100% - var(--space-6));
   max-width: 398px;
-  background: var(--card);
+  background: color-mix(in srgb, var(--card) 40%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-lg);
@@ -660,6 +694,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: var(--space-hairline);
+  margin-top: calc(env(safe-area-inset-top) + var(--space-4));
   margin-bottom: var(--space-hairline);
 }
 .retro-head h1 {
