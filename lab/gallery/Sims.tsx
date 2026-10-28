@@ -20,18 +20,20 @@ export function Sims() {
   if (!ready) return null
   return (
     <div className="lab-stage">
-      <div className="phone">
+      <div className="device">
         <span className="expe-tag">设计实验室 · mock 数据</span>
-        <div>
-          {overlay === 'quickRetro' ? (
-            <QuickRetro />
-          ) : (
-            <>
-              {tab === 'today' && <Today />}
-              {tab === 'records' && <Records />}
-              {tab === 'settings' && <SettingsPage />}
-            </>
-          )}
+        <div className="phone">
+          <div>
+            {overlay === 'quickRetro' ? (
+              <QuickRetro />
+            ) : (
+              <>
+                {tab === 'today' && <Today />}
+                {tab === 'records' && <Records />}
+                {tab === 'settings' && <SettingsPage />}
+              </>
+            )}
+          </div>
         </div>
         <nav className="tabs">
           {TABS.map(({ key, Icon, label }) => (

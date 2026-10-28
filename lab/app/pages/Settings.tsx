@@ -236,8 +236,10 @@ export function SettingsPage() {
 
   return (
     <>
-      <h1>设置</h1>
-      <div className="sub">日常 · 预算 · 固定支出</div>
+      <div className="page-head">
+        <h1>设置</h1>
+        <div className="sub">日常 · 预算 · 固定支出</div>
+      </div>
       <SegmentedControl<Seg>
         value={seg}
         options={[
