@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -257,5 +257,80 @@ describe('CLI 入口', () => {
     const out = execSync(`node ${JSON.stringify(pushbackScript)} --root ${JSON.stringify(pair.root)}`).toString()
     expect(out).toContain('patch.diff')
     expect(existsSync(join(pair.root, 'lab', 'pushback', 'CHECKLIST.md'))).toBe(true)
+  })
+})
+
+function makeBaselineRepo(): { root: string; head: string } {
+  const root = mkdtempSync(join(tmpdir(), 'lab-baseline-'))
+  pairs.push(root)
+  for (const dir of ['src/app/components', 'src/app/pages', 'src/core', 'src/storage', 'lab']) {
+    mkdirSync(join(root, dir), { recursive: true })
+  }
+  const fixed = [
+    'src/styles.css',
+    'src/app/format.ts',
+    'src/app/statusColor.ts',
+    'src/app/store.ts',
+    'src/app/toast.ts',
+    'src/storage/migrate.ts',
+    'src/storage/voucher.ts',
+  ]
+  for (const f of fixed) writeFileSync(join(root, f), `fixture ${f}\n`)
+  writeFileSync(join(root, 'src/core/alpha.ts'), 'alpha v1\n')
+  writeFileSync(join(root, 'src/core/alpha.test.ts'), 'excluded\n')
+  writeFileSync(join(root, 'src/app/components/Badge.tsx'), 'badge\n')
+  execSync('git init -q && git add -A && git -c user.email=t@t -c user.name=t commit -qm base', { cwd: root })
+  const head = execSync('git rev-parse HEAD', { cwd: root }).toString().trim()
+  return { root, head }
+}
+
+describe('generate-baseline：基线重生成', () => {
+  const script = join(ROOT, 'lab', 'generate-baseline.mjs')
+  const run = (root: string, extra: string[] = []) =>
+    spawnSync('node', [script, '--root', root, ...extra], { encoding: 'utf8' })
+
+  it('重生成 commit 默认取 HEAD，与 applySync 推进语义一致；清单按枚举规则生成', () => {
+    const { root, head } = makeBaselineRepo()
+    const result = run(root)
+    expect(result.status, result.stderr).toBe(0)
+    const baseline = JSON.parse(readFileSync(join(root, 'lab', 'BASELINE.json'), 'utf8'))
+    expect(baseline.commit).toBe(head)
+    const srcs = baseline.files.map((f: any) => f.src)
+    expect(srcs).toEqual([...srcs].sort())
+    expect(srcs).toEqual([
+      'src/app/components/Badge.tsx',
+      'src/app/format.ts',
+      'src/app/statusColor.ts',
+      'src/app/store.ts',
+      'src/app/toast.ts',
+      'src/core/alpha.ts',
+      'src/storage/migrate.ts',
+      'src/storage/voucher.ts',
+      'src/styles.css',
+    ])
+    const alpha = baseline.files.find((f: any) => f.src === 'src/core/alpha.ts')
+    expect(alpha.hash).toBe(sha256('alpha v1\n'))
+    expect(result.stdout).toContain(head)
+  })
+
+  it('--commit / --ref 显式指定基点', () => {
+    const { root, head } = makeBaselineRepo()
+    writeFileSync(join(root, 'src/core/alpha.ts'), 'alpha v2\n')
+    execSync('git add -A && git -c user.email=t@t -c user.name=t commit -qm next && git branch anchor', { cwd: root })
+    const second = execSync('git rev-parse HEAD', { cwd: root }).toString().trim()
+    expect(run(root, ['--commit', head]).status).toBe(0)
+    expect(JSON.parse(readFileSync(join(root, 'lab', 'BASELINE.json'), 'utf8')).commit).toBe(head)
+    expect(run(root, ['--ref', 'anchor']).status).toBe(0)
+    expect(JSON.parse(readFileSync(join(root, 'lab', 'BASELINE.json'), 'utf8')).commit).toBe(second)
+  })
+
+  it('ref 不可解析时报一行可读错误、非零退出且不写 BASELINE.json', () => {
+    const { root } = makeBaselineRepo()
+    const result = run(root, ['--ref', 'no-such-ref'])
+    expect(result.status).not.toBe(0)
+    const output = `${result.stdout}${result.stderr}`
+    expect(output).toContain('no-such-ref')
+    expect(output).not.toContain('node:internal')
+    expect(existsSync(join(root, 'lab', 'BASELINE.json'))).toBe(false)
   })
 })

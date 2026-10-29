@@ -14,7 +14,7 @@
 
 ```json
 {
-  "commit": "<lab/25-design-lab 的 sha>",
+  "commit": "<主库 commit sha>",
   "files": [
     { "src": "src/styles.css", "hash": "sha256:<hex>" },
     { "src": "src/app/components/Sheet.tsx", "hash": "sha256:<hex>" }
@@ -22,7 +22,7 @@
 }
 ```
 
-- `commit`：镜像所对应的主库基线 commit（`lab/25-design-lab` 的 sha）
+- `commit`：镜像所对应的主库基线 commit。重生成时默认取当前 HEAD（与 `lab:sync` 写入后的推进语义一致）；需要复位到指定基点时用 `--commit <sha>` / `--ref <ref>` 显式指定，无法解析的引用会报错退出且不写文件
 - `files[].src`：主库路径；lab 镜像路径 = 把前缀 `src/` 换成 `lab/`
 - `files[].hash`：文件内容 sha256（`node:crypto`，对 lab 镜像文件计算；镜像逐字，故等于对 src 计算）
 - `files` 按 `src` 字典序稳定排列
