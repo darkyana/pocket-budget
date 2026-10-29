@@ -11,6 +11,7 @@ export interface SyncEntry {
   status: 'clean' | 'update' | 'merge' | 'drift' | 'conflict'
   changes: SyncChange[]
   merged?: string
+  isNew?: boolean
 }
 
 export interface SyncPlan {
@@ -31,6 +32,7 @@ export interface PushbackPlan {
 }
 
 export declare function mirrorPath(srcPath: string): string
+export declare function mirrorScope(root: string): string[]
 export declare function readBaseline(root: string): { commit: string; files: { src: string; hash: string }[] }
 export declare function parseCssUnits(css: string): { key: string; text: string; line: number }[]
 export declare function syncPlan(root: string): SyncPlan

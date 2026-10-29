@@ -22,7 +22,9 @@ function brief(text) {
 const plan = syncPlan(root)
 for (const entry of plan.entries) {
   if (entry.status === 'clean') continue
-  console.log(`${entry.src} — ${statusLabel[entry.status]}`)
+  const label = entry.isNew ? '发现新镜像文件（写入 lab 并进基线清单）' : statusLabel[entry.status]
+  console.log(`${entry.src} — ${label}`)
+  if (entry.isNew) continue
   for (const change of entry.changes) {
     const mark = change.kind === 'conflict' ? '  ⚠ 冲突' : '  变更'
     console.log(`${mark} [${change.key}]`)

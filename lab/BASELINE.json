@@ -1,5 +1,5 @@
 {
-  "commit": "a5f26362f93e636af10e37fc409e00db8ebed7ff",
+  "commit": "103eceb6fe63cd7dbc6fb5a33ebe711981e7bfe4",
   "files": [
     {
       "src": "src/app/components/AccountPicker.tsx",
@@ -59,15 +59,15 @@
     },
     {
       "src": "src/app/pages/Records.tsx",
-      "hash": "sha256:b91f18b52ae77338655dbbcde7172fc019d1bc329c140625da3fb7ec1ac8ed0f"
+      "hash": "sha256:cc601595e695b6b286e3ca863aff1628780b38b6bb588fe615c85a611ef57f7d"
     },
     {
       "src": "src/app/pages/Settings.tsx",
-      "hash": "sha256:fd70e6025676e6b5e456d4c3a1d7ce0ab3e032f819e7ca69c842a638de65adc7"
+      "hash": "sha256:448d161cc2cb68ebd574431a645e4f0eb0af7b0ce38d4204d4bef9ecafc61896"
     },
     {
       "src": "src/app/pages/Today.tsx",
-      "hash": "sha256:cce1f4a955103443ccaa616c0f64f4af18bc37e8165b12e28cb9058f0a028be2"
+      "hash": "sha256:4c7f259d81cc7030735227ce67262b7594a66b9a364ecbc5f2327e53c8315fe1"
     },
     {
       "src": "src/app/statusColor.ts",
@@ -96,6 +96,10 @@
     {
       "src": "src/core/recordsFilter.ts",
       "hash": "sha256:c7d398dfcba7e4a95aba6930187c60c8261f94c89451217a91a5c6d469cc379c"
+    },
+    {
+      "src": "src/core/sample.ts",
+      "hash": "sha256:aeec98593fa64c54b54f588ae59d3eea203308d51dffd7763469876613e03ccb"
     },
     {
       "src": "src/core/seed.ts",

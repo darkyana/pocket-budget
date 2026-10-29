@@ -53,6 +53,12 @@ describe('lab 基线', () => {
     }
   })
 
+  it('基线清单覆盖全部应镜像文件', async () => {
+    const { mirrorScope } = await import('../scripts/lab-pair.mjs')
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'))
+    expect(baseline.files.map((f: { src: string }) => f.src)).toEqual(mirrorScope(ROOT))
+  })
+
   it('镜像文件与基线哈希一致（token 表、样式表、全部组件与页面）', () => {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'))
     const srcs = baseline.files.map((f: { src: string }) => f.src)

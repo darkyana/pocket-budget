@@ -27,8 +27,9 @@
 - `files[].hash`：文件内容 sha256（`node:crypto`，对 lab 镜像文件计算；镜像逐字，故等于对 src 计算）
 - `files` 按 `src` 字典序稳定排列
 - 重新生成：`node lab/generate-baseline.mjs`
+- 新文件发现：`lab:sync` 按同一枚举规则（固定清单 + components / pages / core 下的 .ts/.tsx，排除 *.test.ts）扫描 src，发现清单外的应镜像文件时 dry-run 会报告「发现新镜像文件」，确认后写入镜像并补进清单
 
-守卫测试：`src/lab.guard.test.ts`（主 tsconfig/build 不含 lab、src 不 import lab、基线哈希与镜像一致）。
+守卫测试：`src/lab.guard.test.ts`（主 tsconfig/build 不含 lab、src 不 import lab、基线清单覆盖全部应镜像文件、基线哈希与镜像一致）。
 
 ## 主题变体（#27）
 

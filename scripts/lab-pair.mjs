@@ -1,10 +1,39 @@
 import { execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export function mirrorPath(srcPath) {
   return srcPath.replace(/^src\//, 'lab/')
+}
+
+const FIXED_FILES = [
+  'src/styles.css',
+  'src/app/format.ts',
+  'src/app/statusColor.ts',
+  'src/app/store.ts',
+  'src/app/toast.ts',
+  'src/storage/migrate.ts',
+  'src/storage/voucher.ts',
+]
+
+const SCOPED_DIRS = ['src/app/components', 'src/app/pages', 'src/core']
+
+export function mirrorScope(root) {
+  const fixed = FIXED_FILES.filter((f) => existsSync(join(root, f)))
+  const discovered = []
+  for (const dir of SCOPED_DIRS) {
+    let names
+    try {
+      names = readdirSync(join(root, dir))
+    } catch {
+      continue
+    }
+    for (const name of names) {
+      if (/\.(ts|tsx)$/.test(name) && !/\.test\.ts$/.test(name)) discovered.push(`${dir}/${name}`)
+    }
+  }
+  return [...fixed, ...discovered].sort()
 }
 
 export function readBaseline(root) {
@@ -155,12 +184,26 @@ function classifyFile(srcPath, base, src, lab) {
 export function syncPlan(root) {
   const baseline = readBaseline(root)
   const entries = []
+  const known = new Set()
   for (const entry of baseline.files) {
+    known.add(entry.src)
     const src = readFileSync(join(root, entry.src), 'utf8')
     const lab = readFileSync(join(root, mirrorPath(entry.src)), 'utf8')
     const base = gitShow(root, baseline.commit, entry.src)
     entries.push({ src: entry.src, ...classifyFile(entry.src, base, src, lab) })
   }
+  for (const src of mirrorScope(root)) {
+    if (known.has(src)) continue
+    const content = readFileSync(join(root, src), 'utf8')
+    entries.push({
+      src,
+      status: 'update',
+      isNew: true,
+      changes: [{ key: '<new-file>', from: '', to: content }],
+      merged: content,
+    })
+  }
+  entries.sort((a, b) => (a.src < b.src ? -1 : a.src > b.src ? 1 : 0))
   return {
     entries,
     hasUpdates: entries.some((e) => e.status === 'update' || e.status === 'merge'),
@@ -181,7 +224,13 @@ export function applySync(root, plan) {
   if (written.length > 0) {
     const baseline = readBaseline(root)
     const bySrc = new Map(baseline.files.map((f) => [f.src, f]))
-    for (const src of written) bySrc.get(src).hash = sha(readFileSync(join(root, src), 'utf8'))
+    for (const src of written) {
+      const hash = sha(readFileSync(join(root, src), 'utf8'))
+      const entry = bySrc.get(src)
+      if (entry) entry.hash = hash
+      else baseline.files.push({ src, hash })
+    }
+    baseline.files.sort((a, b) => (a.src < b.src ? -1 : a.src > b.src ? 1 : 0))
     try {
       baseline.commit = execSync('git rev-parse HEAD', { cwd: root, encoding: 'utf8' }).trim()
     } catch {
