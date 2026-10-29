@@ -17,7 +17,11 @@ const ref = opt('--commit') ?? opt('--ref') ?? 'HEAD'
 
 let commit
 try {
-  commit = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], { cwd: ROOT, encoding: 'utf8' }).trim()
+  commit = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim()
 } catch {
   console.error(`generate-baseline: 无法解析 git 引用 "${ref}"（在 ${ROOT} 下）`)
   process.exit(1)

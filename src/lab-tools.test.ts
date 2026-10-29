@@ -329,7 +329,9 @@ describe('generate-baseline：基线重生成', () => {
     const result = run(root, ['--ref', 'no-such-ref'])
     expect(result.status).not.toBe(0)
     const output = `${result.stdout}${result.stderr}`
+    expect(output.trim().split('\n')).toHaveLength(1)
     expect(output).toContain('no-such-ref')
+    expect(output).not.toContain('fatal')
     expect(output).not.toContain('node:internal')
     expect(existsSync(join(root, 'lab', 'BASELINE.json'))).toBe(false)
   })
