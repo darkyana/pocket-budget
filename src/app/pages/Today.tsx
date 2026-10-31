@@ -110,46 +110,45 @@ export function Today() {
           <b>预算</b>
         </div>
         {budgets.length > 0 ? (
-          budgets.map((p) => (
-            <button
-              type="button"
-              className="budget-row"
-              key={p.name}
-              onClick={() => {
-                if (budgetPress.guardClick()) return
-                setEntry({ type: 'budget', budget: p.name })
-              }}
-              onPointerDown={(e) => {
-                pressBudget.current = p.name
-                budgetPress.onPointerDown(e)
-              }}
-              onPointerMove={budgetPress.onPointerMove}
-              onPointerUp={budgetPress.onPointerUp}
-              onPointerCancel={budgetPress.onPointerCancel}
-              onContextMenu={budgetPress.onContextMenu}
-            >
-              <div className="row">
-                <span>{p.name}</span>
-                <b className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
-                  还能花 {money(p.weekLeft)}
-                </b>
-              </div>
-              <div className="bar">
-                <i
-                  style={{
-                    width: `${pct(p.weekLeft / p.weekBudget)}%`,
-                    background: barColor(leftStatus(p.weekLeft, p.weekBudget)),
-                  }}
-                />
-              </div>
-            </button>
-          ))
+          budgets.map((p) => {
+            const weak = p.weekLeft <= 0
+            return (
+              <button
+                type="button"
+                className={`budget-row${weak ? ' is-weak' : ''}`}
+                key={p.name}
+                onClick={() => {
+                  if (budgetPress.guardClick()) return
+                  setEntry({ type: 'budget', budget: p.name })
+                }}
+                onPointerDown={(e) => {
+                  pressBudget.current = p.name
+                  budgetPress.onPointerDown(e)
+                }}
+                onPointerMove={budgetPress.onPointerMove}
+                onPointerUp={budgetPress.onPointerUp}
+                onPointerCancel={budgetPress.onPointerCancel}
+                onContextMenu={budgetPress.onContextMenu}
+              >
+                <div className="row">
+                  <span>{p.name}</span>
+                  <b className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
+                    {p.weekLeft >= 0 ? `还能花 ${money(p.weekLeft)}` : `超支 ${money(-p.weekLeft)}`}
+                  </b>
+                </div>
+                <div className="bar">
+                  <i
+                    style={{
+                      width: `${pct(p.weekLeft / p.weekBudget)}%`,
+                      background: barColor(leftStatus(p.weekLeft, p.weekBudget)),
+                    }}
+                  />
+                </div>
+              </button>
+            )
+          })
         ) : (
-          <div className="small muted block-gap">
-            {views.length > 0
-              ? '本期所有预算都已花完或超支——去流水页看详情，或设置里调整预算'
-              : '还没有预算，去设置里加'}
-          </div>
+          <div className="small muted block-gap">还没有预算，去设置里加</div>
         )}
       </div>
 

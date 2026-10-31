@@ -307,6 +307,12 @@ button:disabled {
   text-align: left;
   padding: var(--space-3) 0 var(--space-4);
 }
+.budget-row.is-weak > .row > span {
+  color: var(--ink2);
+}
+.budget-row.is-weak .bar {
+  opacity: 0.45;
+}
 
 .fixed-item {
   display: flex;
