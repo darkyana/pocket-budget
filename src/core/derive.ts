@@ -257,6 +257,46 @@ export function retroStats(month: DayRetro[]): RetroStats {
   }
 }
 
+export type MonthKindKey = 'routine' | 'budget' | 'fixed'
+
+export interface MonthKindStat {
+  key: MonthKindKey
+  count: number
+  amount: number
+}
+
+export interface MonthOverview {
+  kinds: MonthKindStat[]
+  totalAmount: number
+  totalCount: number
+  transfers: number
+  unassigned: { count: number; amount: number } | null
+}
+
+export function monthOverview(records: MoneyRecord[], now: Date): MonthOverview {
+  const key = monthKeyOf(now)
+  const inMonth = (ts: number) => monthKeyOf(ts) === key
+  const routineEntries = records.filter((e): e is RoutineEntry => e.kind === 'routine' && inMonth(e.ts))
+  const budgetEntries = records.filter((e): e is Extract<MoneyRecord, { kind: 'budget' }> => e.kind === 'budget' && inMonth(e.ts))
+  const assigned = budgetEntries.filter((e) => e.budget !== '')
+  const loose = budgetEntries.filter((e) => e.budget === '')
+  const fixedPaid = effectiveRecords(records).filter((e): e is Extract<MoneyRecord, { kind: 'fixed' }> => e.kind === 'fixed' && inMonth(e.ts))
+  const kinds: MonthKindStat[] = [
+    { key: 'routine', count: routineEntries.length, amount: routineEntries.reduce((s, e) => s + e.amount, 0) },
+    { key: 'budget', count: assigned.filter((e) => e.dir === 'out').length, amount: assigned.reduce((s, e) => s + (e.dir === 'out' ? e.amount : -e.amount), 0) },
+    { key: 'fixed', count: fixedPaid.length, amount: fixedPaid.reduce((s, e) => s + e.amount, 0) },
+  ]
+  const looseCount = loose.filter((e) => e.dir === 'out').length
+  const looseAmount = loose.reduce((s, e) => s + (e.dir === 'out' ? e.amount : -e.amount), 0)
+  return {
+    kinds,
+    totalAmount: kinds.reduce((s, k) => s + k.amount, 0) + looseAmount,
+    totalCount: kinds.reduce((s, k) => s + k.count, 0),
+    transfers: records.filter((e) => e.kind === 'transfer' && inMonth(e.ts)).length,
+    unassigned: looseCount > 0 || looseAmount !== 0 ? { count: looseCount, amount: looseAmount } : null,
+  }
+}
+
 export interface BudgetView {
   name: string
   month: number
@@ -264,20 +304,24 @@ export interface BudgetView {
   weekSpent: number
   weekLeft: number
   monthSpent: number
+  monthOutCount: number
+  monthBackflow: number
   projection: number
 }
 
+function budgetEntriesIn(records: MoneyRecord[], budgetName: string, inSpan: (ts: number) => boolean) {
+  return records.filter((e): e is Extract<MoneyRecord, { kind: 'budget' }> => e.kind === 'budget' && e.budget === budgetName && inSpan(e.ts))
+}
+
 function netBudgetSpend(records: MoneyRecord[], budgetName: string, inSpan: (ts: number) => boolean): number {
-  return records.reduce((sum, e) => {
-    if (e.kind !== 'budget' || e.budget !== budgetName || !inSpan(e.ts)) return sum
-    return sum + (e.dir === 'out' ? e.amount : -e.amount)
-  }, 0)
+  return budgetEntriesIn(records, budgetName, inSpan).reduce((sum, e) => sum + (e.dir === 'out' ? e.amount : -e.amount), 0)
 }
 
 export function budgetViews(records: MoneyRecord[], settings: Settings, now: Date): BudgetView[] {
   return settings.budgets.map((p) => {
     const weekSpent = netBudgetSpend(records, p.name, (ts) => isSameWeek(ts, now))
-    const monthSpent = netBudgetSpend(records, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
+    const monthEntries = budgetEntriesIn(records, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
+    const monthSpent = monthEntries.reduce((sum, e) => sum + (e.dir === 'out' ? e.amount : -e.amount), 0)
     return {
       name: p.name,
       month: p.month,
@@ -285,6 +329,8 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
       weekSpent,
       weekLeft: p.month / 4 - weekSpent,
       monthSpent,
+      monthOutCount: monthEntries.filter((e) => e.dir === 'out').length,
+      monthBackflow: monthEntries.filter((e) => e.dir === 'in').length,
       projection: projectMonthEnd(monthSpent, now),
     }
   })

@@ -260,18 +260,18 @@ describe('budgetViews', () => {
 
   it('visibleBudgets：全量保留，有余额在前按剩余降序，花完与超支殿后', () => {
     const views = [
-      { name: 'A', month: 1, weekBudget: 100, weekSpent: 70, weekLeft: 30, monthSpent: 70, projection: 0 },
-      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, projection: 0 },
-      { name: 'C', month: 1, weekBudget: 100, weekSpent: 10, weekLeft: 90, monthSpent: 10, projection: 0 },
-      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, projection: 0 },
+      { name: 'A', month: 1, weekBudget: 100, weekSpent: 70, weekLeft: 30, monthSpent: 70, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'C', month: 1, weekBudget: 100, weekSpent: 10, weekLeft: 90, monthSpent: 10, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthOutCount: 1, monthBackflow: 0, projection: 0 },
     ]
     expect(visibleBudgets(views).map((v) => v.name)).toEqual(['C', 'A', 'B', 'D'])
   })
 
   it('visibleBudgets：全部花完或超支时不再返回空列表', () => {
     const views = [
-      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, projection: 0 },
-      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, projection: 0 },
+      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthOutCount: 1, monthBackflow: 0, projection: 0 },
     ]
     expect(visibleBudgets(views).map((v) => v.name)).toEqual(['B', 'D'])
   })
