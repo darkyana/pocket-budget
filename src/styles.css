@@ -699,11 +699,11 @@ button:disabled {
 }
 
 .retro-head {
-  display: flex;
+  margin-top: 0;
+}
+.retro-head .row-block {
   align-items: center;
-  gap: var(--space-hairline);
-  margin-top: calc(env(safe-area-inset-top) + var(--space-4));
-  margin-bottom: var(--space-hairline);
+  gap: var(--space-1);
 }
 .retro-head h1 {
   margin-bottom: 0;

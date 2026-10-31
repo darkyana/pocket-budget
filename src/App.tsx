@@ -34,7 +34,7 @@ export function App() {
   if (!ready) return null
   return (
     <div className="phone-frame">
-      <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>
+      {tab === 'today' && overlay === null && <span className="expe-tag">实验版 最近更新 {updatedLabel}</span>}
       <div className="phone">
         <div>
           {overlay === 'quickRetro' ? (

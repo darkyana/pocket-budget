@@ -89,14 +89,16 @@ export function QuickRetro() {
 
   return (
     <div className="retro-ok-recap">
-      <div className="retro-head">
-        <button type="button" className="back-btn" onClick={closeOverlay}>
-          <ChevronLeft size={16} /> 今日
-        </button>
-        <h1>消费力回顾</h1>
-      </div>
-      <div className="sub">
-        {now.getFullYear()}年{now.getMonth() + 1}月 · 全口径月度总结
+      <div className="page-head retro-head">
+        <div className="row-block">
+          <button type="button" className="back-btn" onClick={closeOverlay}>
+            <ChevronLeft size={16} /> 今日
+          </button>
+          <h1>消费力回顾</h1>
+        </div>
+        <div className="sub">
+          {now.getFullYear()}年{now.getMonth() + 1}月 · 全口径月度总结
+        </div>
       </div>
 
       <div className="card retro-hero">
