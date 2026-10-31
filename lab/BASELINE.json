@@ -1,5 +1,5 @@
 {
-  "commit": "103eceb6fe63cd7dbc6fb5a33ebe711981e7bfe4",
+  "commit": "798a081f77843797fcf7a92f31dfb597a32321b5",
   "files": [
     {
       "src": "src/app/components/AccountPicker.tsx",
@@ -59,15 +59,15 @@
     },
     {
       "src": "src/app/pages/Records.tsx",
-      "hash": "sha256:cc601595e695b6b286e3ca863aff1628780b38b6bb588fe615c85a611ef57f7d"
+      "hash": "sha256:c3c29dd2a63f1decf97d67adb4866f0c5e6fab048148c4440a4da09c33fdd14e"
     },
     {
       "src": "src/app/pages/Settings.tsx",
-      "hash": "sha256:448d161cc2cb68ebd574431a645e4f0eb0af7b0ce38d4204d4bef9ecafc61896"
+      "hash": "sha256:e4596903109284a257172c3fb4ecfad3689e1117fa04906c2ebde9a32241cdb0"
     },
     {
       "src": "src/app/pages/Today.tsx",
-      "hash": "sha256:4c7f259d81cc7030735227ce67262b7594a66b9a364ecbc5f2327e53c8315fe1"
+      "hash": "sha256:865939b9eff8d32a33cc74b63736216b641db825dbd5db203121eba61b297c13"
     },
     {
       "src": "src/app/statusColor.ts",
@@ -75,7 +75,7 @@
     },
     {
       "src": "src/app/store.ts",
-      "hash": "sha256:4c00618ccef16a584235cadc5b62cd6f137de4b012096e0302d789d17e0f27cb"
+      "hash": "sha256:d029aa09dc069dcae7ce1142e816f7cf7f3fa4783e48f98a200c7f2fce8a9349"
     },
     {
       "src": "src/app/toast.ts",
@@ -83,7 +83,7 @@
     },
     {
       "src": "src/core/derive.ts",
-      "hash": "sha256:c01069e5ac0a175b41c2a25bd98bd14c46a1c3ac3e43cce166cad32a688299a5"
+      "hash": "sha256:54462ebb1b24d4dcf814530f4a17ff654cda33a8bb490f8de2040ce584dd6098"
     },
     {
       "src": "src/core/holiday-data.ts",
@@ -123,7 +123,7 @@
     },
     {
       "src": "src/styles.css",
-      "hash": "sha256:86db6baa72096c8241cb23df1e7ddab33617dd7f3d2a9a6b629f4bc1016209ed"
+      "hash": "sha256:703af07043b5866c965fd7a6fd5caa80deec6dc1dd0951659e163a7892d0bfac"
     }
   ]
 }
