@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MoneyRecord, Settings } from './types'
-import { budgetViews, monthOverview } from './derive'
+import { budgetViews, kindStatOf, monthOverview } from './derive'
 
 const settings: Settings = {
   dayType: '工作日',
@@ -31,8 +31,7 @@ const commit = (item: string, paid: boolean, periodKey: string, at: number, amou
 const transfer = (from: string, to: string, amount: number, at: number): MoneyRecord =>
   ({ id: `t${++seq}`, ts: at, kind: 'transfer', from, to, amount, note: '' })
 
-const kindOf = (view: ReturnType<typeof monthOverview>, key: 'routine' | 'budget' | 'fixed') =>
-  view.kinds.find((k) => k.key === key)!
+const kindOf = (view: ReturnType<typeof monthOverview>, key: 'routine' | 'budget' | 'fixed') => kindStatOf(view, key)
 
 describe('monthOverview 全口径月总览', () => {
   it('未归属预算支出计入 totalAmount 与 unassigned 字段，但不进三类笔数', () => {
@@ -55,6 +54,12 @@ describe('monthOverview 全口径月总览', () => {
     expect(settled.unassigned).toEqual({ count: 1, amount: 0 })
     expect(settled.totalAmount).toBe(0)
     expect(monthOverview([routine('三餐', 10, ts(5))], NOW).unassigned).toBeNull()
+  })
+
+  it('仅有未归属回血时不触发提醒：unassigned 为 null，净额仍冲减总数', () => {
+    const view = monthOverview([budgetIn('', 80, ts(5, 13))], NOW)
+    expect(view.unassigned).toBeNull()
+    expect(view.totalAmount).toBe(-80)
   })
 
   it('回血冲减预算净额：预算金额 = 支出 − 回血，笔数只数支出', () => {

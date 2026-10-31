@@ -709,7 +709,7 @@ button:disabled {
   margin-bottom: 0;
 }
 
-.retro-ok {
+.retro-ok-recap {
   --ok: var(--ok-recap);
   --calm: var(--ok-recap);
 }

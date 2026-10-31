@@ -4,6 +4,7 @@ import {
   budgetViews,
   dayRetroMonth,
   fixedExpensesThisPeriod,
+  kindStatOf,
   monthOverview,
   retroStats,
   routinePace,
@@ -17,7 +18,6 @@ import {
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { useLongPress } from '../components/dragSort'
-import { useToast } from '../toast'
 import { money } from '../format'
 import { statusColor } from '../statusColor'
 
@@ -40,12 +40,10 @@ export function QuickRetro() {
   const records = useApp((s) => s.records)
   const closeOverlay = useApp((s) => s.closeOverlay)
   const jumpToRecords = useApp((s) => s.jumpToRecords)
-  const toast = useToast((s) => s.show)
   const [detail, setDetail] = useState<DayRetro | null>(null)
 
   const unassignedPress = useLongPress(() => {
     jumpToRecords([])
-    toast('已跳转流水，可补选预算')
   })
 
   const [, setTick] = useState(0)
@@ -66,10 +64,9 @@ export function QuickRetro() {
 
   const now = new Date()
   const overview = monthOverview(records, now)
-  const kindOf = (key: MonthKindKey) => overview.kinds.find((k) => k.key === key)!
-  const routineKind = kindOf('routine')
-  const budgetKind = kindOf('budget')
-  const fixedKind = kindOf('fixed')
+  const routineKind = kindStatOf(overview, 'routine')
+  const budgetKind = kindStatOf(overview, 'budget')
+  const fixedKind = kindStatOf(overview, 'fixed')
   const fixedItems = fixedExpensesThisPeriod(records, settings, now)
   const fixedPaidCount = fixedItems.filter((c) => c.paid).length
   const views = budgetViews(records, settings, now)
@@ -91,7 +88,7 @@ export function QuickRetro() {
   ]
 
   return (
-    <div className="retro-ok">
+    <div className="retro-ok-recap">
       <div className="retro-head">
         <button type="button" className="back-btn" onClick={closeOverlay}>
           <ChevronLeft size={16} /> 今日
@@ -106,7 +103,7 @@ export function QuickRetro() {
         <div className="small muted">本月总支出</div>
         <b className="hero-num">{money(overview.totalAmount)}</b>
         <div className="small muted">
-          共 {overview.totalCount} 笔 · 日常 + 预算 + 固定 · 走账不计入
+          共 {overview.totalCount} 笔 · 日常 + 预算 + 未归属 + 固定 · 走账不计入
         </div>
       </div>
 
