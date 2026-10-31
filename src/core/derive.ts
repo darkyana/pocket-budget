@@ -291,7 +291,7 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
 }
 
 export function visibleBudgets(views: BudgetView[]): BudgetView[] {
-  return views.filter((v) => v.weekLeft > 0).sort((a, b) => b.weekLeft - a.weekLeft)
+  return [...views].sort((a, b) => b.weekLeft - a.weekLeft)
 }
 
 export function expensePeriodKey(now: Date, cycle: ExpenseCycle): string {

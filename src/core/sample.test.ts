@@ -24,7 +24,7 @@ describe('首跑示例数据', () => {
     }
   })
 
-  it('预算呈现省与贴近，超支预算退场', () => {
+  it('预算呈现省与贴近，超支预算弱化保留在末尾', () => {
     const views = budgetViews(records, settings, NOW)
     const by = new Map(views.map((v) => [v.name, v]))
     const shopping = by.get('购物')
@@ -32,7 +32,7 @@ describe('首跑示例数据', () => {
     expect(shopping !== undefined && shopping.weekLeft > 0 && shopping.weekLeft < shopping.weekBudget * 0.2).toBe(true)
     expect(study !== undefined && study.weekLeft >= study.weekBudget * 0.2).toBe(true)
     expect(by.get('娱乐')!.weekLeft).toBeLessThan(0)
-    expect(visibleBudgets(views).map((v) => v.name)).toEqual(['学习', '购物'])
+    expect(visibleBudgets(views).map((v) => v.name)).toEqual(['学习', '购物', '娱乐'])
   })
 
   it('固定支出已付未付并存且时间不晚于当前', () => {
