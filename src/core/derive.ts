@@ -328,6 +328,15 @@ function netBudgetSpend(records: MoneyRecord[], budgetName: string, inSpan: (ts:
   return netAmount(budgetEntriesIn(records, budgetName, inSpan))
 }
 
+export type BudgetEntry = Extract<MoneyRecord, { kind: 'budget' }>
+
+export function budgetMonthEntries(records: MoneyRecord[], budgetName: string, now: Date): BudgetEntry[] {
+  const key = monthKeyOf(now)
+  return records
+    .filter((e): e is BudgetEntry => e.kind === 'budget' && e.budget === budgetName && monthKeyOf(e.ts) === key)
+    .sort((a, b) => a.ts - b.ts)
+}
+
 export function budgetViews(records: MoneyRecord[], settings: Settings, now: Date): BudgetView[] {
   return settings.budgets.map((p) => {
     const weekSpent = netBudgetSpend(records, p.name, (ts) => isSameWeek(ts, now))
