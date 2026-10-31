@@ -10,6 +10,7 @@ import {
   budgetViews,
   monthQuickCalc,
   renameRecordAnchor,
+  retroMonthRange,
   retroStats,
   routinePace,
   routineToday,
@@ -117,6 +118,15 @@ describe('routinePace 当前消费力', () => {
     expect(view.ratio).toBe(0)
   })
 
+  it('历史月锚点：分母按整月累计（10 月整月 18 工作日 + 13 休息日），分子仍是该月流水', () => {
+    const anchor = new Date(2026, 9, 15, 20, 0)
+    const realNow = new Date(2026, 10, 1, 9, 0)
+    const records = [routine('三餐', 350, ts(11, 9))]
+    const view = routinePace(records, base, anchor, realNow)
+    expect(view.spent).toBe(350)
+    expect(view.possible).toBe(18 * 130 + 13 * 830)
+  })
+
   it('超 100% 返回原始比率，不截断', () => {
     const records = [routine('三餐', 8000, ts(11, 9))]
     const view = routinePace(records, base, NOW)
@@ -180,6 +190,15 @@ describe('dayRetroMonth 快速回顾 · 逐日', () => {
     expect(month[10].expect).toBe(830)
   })
 
+  it('历史月锚点：整月视为已过，且没有任何一天标 isToday', () => {
+    const anchor = new Date(2026, 9, 15, 20, 0)
+    const realNow = new Date(2026, 10, 1, 9, 0)
+    const month = dayRetroMonth([routine('三餐', 100, ts(1, 9))], base, anchor, realNow)
+    expect(month).toHaveLength(31)
+    expect(month.every((d) => d.passed)).toBe(true)
+    expect(month.some((d) => d.isToday)).toBe(false)
+  })
+
   it('月初第 1 天：只有一格已过，统计退化单日', () => {
     const nov1 = new Date(2026, 10, 1, 20, 0)
     const records = [routine('三餐', 100, new Date(2026, 10, 1, 9).getTime())]
@@ -190,6 +209,31 @@ describe('dayRetroMonth 快速回顾 · 逐日', () => {
     expect(stats.passedDays).toBe(1)
     expect(stats.restAvg?.days).toBe(1)
     expect(stats.workAvg).toBeNull()
+  })
+})
+
+describe('retroMonthRange 回顾页可切换月份边界', () => {
+  it('最早月 = 最早一笔流水的月份，最晚月 = 当前月（均为当月 1 号）', () => {
+    const records = [
+      routine('三餐', 30, new Date(2026, 7, 5, 9).getTime()),
+      routine('三餐', 50, ts(11, 9)),
+    ]
+    const range = retroMonthRange(records, new Date(2026, 10, 1, 9, 0))
+    expect(range.earliest).toEqual(new Date(2026, 7, 1))
+    expect(range.latest).toEqual(new Date(2026, 10, 1))
+  })
+
+  it('无流水时：最早月 = 当前月，不可回退', () => {
+    const now = new Date(2026, 10, 1, 9, 0)
+    const range = retroMonthRange([], now)
+    expect(range.earliest).toEqual(new Date(2026, 10, 1))
+    expect(range.latest).toEqual(new Date(2026, 10, 1))
+  })
+
+  it('未来月份流水不影响下界以外的任何边界', () => {
+    const records = [routine('三餐', 30, new Date(2027, 0, 5, 9).getTime())]
+    const range = retroMonthRange(records, new Date(2026, 10, 1, 9, 0))
+    expect(range.latest).toEqual(new Date(2026, 10, 1))
   })
 })
 

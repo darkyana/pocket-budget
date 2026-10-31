@@ -710,6 +710,20 @@ button:disabled {
 .retro-head h1 {
   margin-bottom: 0;
 }
+.retro-month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.retro-month-nav .link {
+  font-size: var(--font-body);
+  text-decoration: none;
+  padding: 0 var(--space-1);
+}
+.retro-month-nav .link:disabled {
+  color: var(--ink2);
+  opacity: 0.4;
+}
 
 .retro-ok-recap {
   --ok: var(--ok-recap);

@@ -7,6 +7,7 @@ import {
   fixedExpensesThisPeriod,
   kindStatOf,
   monthOverview,
+  retroMonthRange,
   retroStats,
   routinePace,
   statusOfRatio,
@@ -44,6 +45,7 @@ export function QuickRetro() {
   const jumpToRecords = useApp((s) => s.jumpToRecords)
   const [detail, setDetail] = useState<DayRetro | null>(null)
   const [budgetDetail, setBudgetDetail] = useState<BudgetView | null>(null)
+  const [anchor, setAnchor] = useState<Date | null>(null)
 
   const unassignedPress = useLongPress(() => {
     jumpToRecords([])
@@ -66,22 +68,31 @@ export function QuickRetro() {
   }, [])
 
   const now = new Date()
-  const overview = monthOverview(records, now)
+  const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const month = anchor && anchor < currentMonth ? anchor : now
+  const range = retroMonthRange(records, now)
+  const monthIdx = (d: Date) => d.getFullYear() * 12 + d.getMonth()
+  const canBack = monthIdx(month) > monthIdx(range.earliest)
+  const canForward = monthIdx(month) < monthIdx(currentMonth)
+  const step = (delta: number) =>
+    setAnchor(new Date(month.getFullYear(), month.getMonth() + delta, 1))
+  const overview = monthOverview(records, month)
   const routineKind = kindStatOf(overview, 'routine')
   const budgetKind = kindStatOf(overview, 'budget')
   const fixedKind = kindStatOf(overview, 'fixed')
-  const fixedItems = fixedExpensesThisPeriod(records, settings, now)
+  const fixedItems = fixedExpensesThisPeriod(records, settings, month)
   const fixedPaidCount = fixedItems.filter((c) => c.paid).length
-  const views = budgetViews(records, settings, now)
-  const pace = routinePace(records, settings, now)
-  const month = dayRetroMonth(records, settings, now)
-  const stats = retroStats(month)
+  const views = budgetViews(records, settings, month, now)
+  const pace = routinePace(records, settings, month, now)
+  const retroMonth = dayRetroMonth(records, settings, month, now)
+  const stats = retroStats(retroMonth)
   const pacePct = Math.round(pace.ratio * 100)
   const paceSt = statusOfRatio(pace.ratio)
-  const chartDays = month.filter((d) => d.passed).slice(-14)
+  const chartDays = retroMonth.filter((d) => d.passed).slice(-14)
   const chartMax = Math.max(1, ...chartDays.map((d) => Math.max(d.spent, d.expect)))
   const barH = (v: number) => `${Math.max(3, Math.round((v / chartMax) * 84))}px`
-  const leadPad = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7
+  const leadPad = (new Date(month.getFullYear(), month.getMonth(), 1).getDay() + 6) % 7
+  const monthLabel = `${month.getFullYear()}年${month.getMonth() + 1}月`
 
   const kindCards: Array<{ kind: MonthKindKey | 'transfer'; metric: string; note: string; sub: string }> = [
     { kind: 'routine', metric: money(routineKind.amount), note: '日常支出', sub: `${routineKind.count} 笔` },
@@ -99,13 +110,19 @@ export function QuickRetro() {
           </button>
           <h1>消费力回顾</h1>
         </div>
-        <div className="sub">
-          {now.getFullYear()}年{now.getMonth() + 1}月 · 全口径月度总结
+        <div className="sub retro-month-nav">
+          <button type="button" className="link" disabled={!canBack} onClick={() => step(-1)} aria-label="上一月">
+            ‹
+          </button>
+          <b>{monthLabel} · 全口径月度总结</b>
+          <button type="button" className="link" disabled={!canForward} onClick={() => step(1)} aria-label="下一月">
+            ›
+          </button>
         </div>
       </div>
 
       <div className="card retro-hero">
-        <div className="small muted">本月总支出</div>
+        <div className="small muted">{month.getMonth() + 1}月总支出</div>
         <b className="hero-num">{money(overview.totalAmount)}</b>
         <div className="small muted">
           共 {overview.totalCount} 笔 · 日常 + 预算 + 未归属 + 固定 · 走账不计入
@@ -145,7 +162,7 @@ export function QuickRetro() {
 
       <div className="card">
         <div className="row-block">
-          <b>{now.getMonth() + 1}月日历</b>
+          <b>{month.getMonth() + 1}月日历</b>
         </div>
         <div className="cal-grid">
           {CAL_WEEK.map((w) => (
@@ -156,7 +173,7 @@ export function QuickRetro() {
           {Array.from({ length: leadPad }, (_, i) => (
             <div key={`pad-${i}`} />
           ))}
-          {month.map((d) =>
+          {retroMonth.map((d) =>
             d.passed ? (
               <button
                 type="button"
@@ -208,7 +225,7 @@ export function QuickRetro() {
       <div className="card">
         <div className="row">
           <span>
-            <b>当前消费力</b> <span className="small muted">与今日页同口径</span>
+            <b>当月消费力</b> <span className="small muted">与今日页同口径</span>
           </span>
           <b className="hero-num" style={{ color: statusColor(paceSt) }}>{pacePct}%</b>
         </div>
@@ -301,7 +318,7 @@ export function QuickRetro() {
 
       {detail && (
         <Sheet
-          title={`${now.getMonth() + 1}/${detail.day} ${weekdayOf(detail.date)} · ${detail.dayType}`}
+          title={`${month.getMonth() + 1}/${detail.day} ${weekdayOf(detail.date)} · ${detail.dayType}`}
           onClose={() => setDetail(null)}
         >
           <div className="row-block">
@@ -338,9 +355,9 @@ export function QuickRetro() {
       )}
 
       {budgetDetail && (
-        <Sheet title={`${budgetDetail.name} · ${now.getMonth() + 1}月明细`} onClose={() => setBudgetDetail(null)}>
+        <Sheet title={`${budgetDetail.name} · ${month.getMonth() + 1}月明细`} onClose={() => setBudgetDetail(null)}>
           {(() => {
-            const entries = budgetMonthEntries(records, budgetDetail.name, now)
+            const entries = budgetMonthEntries(records, budgetDetail.name, month)
             const ratio = budgetDetail.monthSpent / budgetDetail.month
             const st = statusOfRatio(ratio)
             return (
