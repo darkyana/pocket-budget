@@ -1,6 +1,10 @@
 {
-  "commit": "798a081f77843797fcf7a92f31dfb597a32321b5",
+  "commit": "f1916ba505b57d4f7ffc592c7d48d41f0fc4ac80",
   "files": [
+    {
+      "src": "src/app/AccountSettingsSheet.tsx",
+      "hash": "sha256:0e7a0ebf79cdc3dbf7eeac397c7c66a8cd4545beab5549af22bc2ab85df9212c"
+    },
     {
       "src": "src/app/components/AccountPicker.tsx",
       "hash": "sha256:cf509e4d305724a970646b60e440cb3f927a623ae26d82ab1191e110f7bd72e4"

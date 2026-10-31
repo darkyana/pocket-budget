@@ -9,6 +9,7 @@ export function mirrorPath(srcPath) {
 
 const FIXED_FILES = [
   'src/styles.css',
+  'src/app/AccountSettingsSheet.tsx',
   'src/app/format.ts',
   'src/app/statusColor.ts',
   'src/app/store.ts',
