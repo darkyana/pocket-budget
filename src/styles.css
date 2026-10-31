@@ -752,6 +752,12 @@ button:disabled {
 .retro-warn .row b {
   color: var(--warn);
 }
+.budget-retro-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
 .back-btn {
   display: inline-flex;
   align-items: center;

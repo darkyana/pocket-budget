@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import {
+  budgetMonthEntries,
   budgetViews,
   dayRetroMonth,
   fixedExpensesThisPeriod,
@@ -20,6 +21,7 @@ import { Sheet } from '../components/Sheet'
 import { useLongPress } from '../components/dragSort'
 import { money } from '../format'
 import { statusColor } from '../statusColor'
+import type { BudgetView } from '../../core/derive'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 const statusText = (s: DayStatus) => (s === 'over' ? '超' : s === 'warn' ? '贴近' : '省')
@@ -41,6 +43,7 @@ export function QuickRetro() {
   const closeOverlay = useApp((s) => s.closeOverlay)
   const jumpToRecords = useApp((s) => s.jumpToRecords)
   const [detail, setDetail] = useState<DayRetro | null>(null)
+  const [budgetDetail, setBudgetDetail] = useState<BudgetView | null>(null)
 
   const unassignedPress = useLongPress(() => {
     jumpToRecords([])
@@ -272,7 +275,13 @@ export function QuickRetro() {
           {views.map((p) => {
             const ratio = p.monthSpent / p.month
             return (
-              <div key={p.name} className="block-gap">
+              <button
+                type="button"
+                key={p.name}
+                className="block-gap budget-retro-btn"
+                onClick={() => setBudgetDetail(p)}
+                aria-label={`${p.name} 本月净支出 ${money(p.monthSpent)}，额度 ${money(p.month)}，查看当月明细`}
+              >
                 <div className="row">
                   <span className="small">
                     {p.name} <span className="muted">· {p.monthOutCount} 笔{p.monthBackflow > 0 ? ` · 回血 ${p.monthBackflow} 笔` : ''}</span>
@@ -284,7 +293,7 @@ export function QuickRetro() {
                 <div className="bar">
                   <i style={{ width: `${pct(ratio)}%`, background: statusColor(statusOfRatio(ratio)) }} />
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
@@ -325,6 +334,54 @@ export function QuickRetro() {
               <div className="small muted">这一天没有日常流水</div>
             )}
           </div>
+        </Sheet>
+      )}
+
+      {budgetDetail && (
+        <Sheet title={`${budgetDetail.name} · ${now.getMonth() + 1}月明细`} onClose={() => setBudgetDetail(null)}>
+          {(() => {
+            const entries = budgetMonthEntries(records, budgetDetail.name, now)
+            const ratio = budgetDetail.monthSpent / budgetDetail.month
+            const st = statusOfRatio(ratio)
+            return (
+              <>
+                <div className="row-block">
+                  <span className="small muted">
+                    额度 {money(budgetDetail.month)} · 支出 {budgetDetail.monthOutCount} 笔
+                    {budgetDetail.monthBackflow > 0 ? ` · 回血 ${budgetDetail.monthBackflow} 笔` : ''}
+                  </span>
+                  <b style={{ color: statusColor(st) }}>
+                    净 {money(budgetDetail.monthSpent)} · {ratioText(ratio)}
+                  </b>
+                </div>
+                <div className="bar">
+                  <i style={{ width: `${pct(ratio)}%`, background: statusColor(st) }} />
+                </div>
+                <div className="small block-gap" style={{ color: statusColor(st) }}>
+                  {budgetDetail.monthSpent > budgetDetail.month
+                    ? `超 ${money(budgetDetail.monthSpent - budgetDetail.month)}`
+                    : `还剩 ${money(budgetDetail.month - budgetDetail.monthSpent)}`}
+                </div>
+                <div className="block-gap">
+                  {entries.length > 0 ? (
+                    entries.map((e) => (
+                      <div className="feed-item" key={e.id}>
+                        <span>
+                          {new Date(e.ts).getDate()} 日 {e.note && <span className="small muted">{e.note}</span>}
+                        </span>
+                        <b className={e.dir === 'in' ? 'amt-in' : 'amt-out'}>
+                          {e.dir === 'in' ? '+' : ''}
+                          {money(e.amount)}
+                        </b>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="small muted">这个月该预算还没有流水</div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
         </Sheet>
       )}
     </div>

@@ -6,6 +6,7 @@ import {
   fixedExpensesThisPeriod,
   dayLabel,
   groupByDay,
+  budgetMonthEntries,
   budgetViews,
   monthQuickCalc,
   renameRecordAnchor,
@@ -274,6 +275,32 @@ describe('budgetViews', () => {
       { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthOutCount: 1, monthBackflow: 0, projection: 0 },
     ]
     expect(visibleBudgets(views).map((v) => v.name)).toEqual(['B', 'D'])
+  })
+})
+
+describe('budgetMonthEntries 当月预算明细', () => {
+  it('只收当月该预算的支出与回血，按时间正序；他月、他预算、日常/固定/走账不进', () => {
+    const records = [
+      budgetOut('购物', 100, ts(11, 10)),
+      routine('三餐', 30, ts(11, 9)),
+      budgetOut('学习', 200, ts(11, 11)),
+      budgetOut('购物', 50, ts(5, 8)),
+      budgetIn('购物', 30, ts(11, 12)),
+      budgetOut('购物', 80, new Date(2026, 8, 30, 12).getTime()),
+    ]
+    const entries = budgetMonthEntries(records, '购物', NOW)
+    expect(entries.map((e) => e.amount)).toEqual([50, 100, 30])
+    expect(entries.map((e) => e.dir)).toEqual(['out', 'out', 'in'])
+  })
+
+  it('与 budgetViews 的 monthSpent / monthOutCount / monthBackflow 同口径', () => {
+    const records = [budgetOut('购物', 100, ts(4)), budgetIn('购物', 30, ts(11)), budgetOut('购物', 60, ts(11))]
+    const [view] = budgetViews(records, settings, NOW)
+    const entries = budgetMonthEntries(records, '购物', NOW)
+    const net = entries.reduce((s, e) => s + (e.dir === 'out' ? e.amount : -e.amount), 0)
+    expect(net).toBe(view.monthSpent)
+    expect(entries.filter((e) => e.dir === 'out').length).toBe(view.monthOutCount)
+    expect(entries.filter((e) => e.dir === 'in').length).toBe(view.monthBackflow)
   })
 })
 
