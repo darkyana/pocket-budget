@@ -703,7 +703,9 @@ button:disabled {
 }
 .retro-head .row-block {
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-1);
+  margin-bottom: 0;
 }
 .retro-head h1 {
   margin-bottom: 0;
