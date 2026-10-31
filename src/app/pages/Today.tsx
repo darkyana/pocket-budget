@@ -37,7 +37,6 @@ export function Today() {
   const views = budgetViews(records, settings, now)
   const budgets = visibleBudgets(views)
   const fixedExpenses = fixedExpensesThisPeriod(records, settings, now)
-  const unpaidSum = fixedExpenses.filter((c) => !c.paid).reduce((s, c) => s + c.amount, 0)
   const pages = Math.max(1, Math.ceil(routine.buckets.length / 4))
 
   return (
@@ -55,7 +54,7 @@ export function Today() {
             <b>日常</b>{' '}
             {pace.possible > 0 && (
               <button type="button" className="pace-chip" onClick={openQuickRetro}>
-                当前消费力 {Math.round(pace.ratio * 100)}%
+                {Math.round(pace.ratio * 100)}%
               </button>
             )}
           </span>
@@ -154,12 +153,12 @@ export function Today() {
 
       {fixedExpenses.length > 0 && (
         <div className="card">
-          <div className="row-block">
+          <div
+            className="row-block"
+            style={{ alignItems: 'center', marginBottom: fixedOpen ? undefined : 0 }}
+          >
             <span>
-              <b>固定支出 · 本期</b>{' '}
-              <span className="small muted">
-                {fixedExpenses.every((c) => c.paid) ? '已结清' : `未付 ${money(unpaidSum)}`}
-              </span>
+              <b>固定支出 · 本期</b>
             </span>
             <button
               type="button"
@@ -188,7 +187,7 @@ export function Today() {
                     {c.cycle === 'yearly' ? ' · 年' : ''}
                     {c.paid ? '（已付）' : ''}
                   </span>
-                  <span className={c.paid ? 'fixed-amt-paid' : 'fixed-amt-due'}>{money(c.amount)}</span>
+                  <span className={`small ${c.paid ? 'fixed-amt-paid' : 'fixed-amt-due'}`}>{money(c.amount)}</span>
                 </button>
               ))}
             </div>
@@ -196,7 +195,7 @@ export function Today() {
         </div>
       )}
 
-      <div className="center">
+      <div className="block-gap">
         <button type="button" className="btn2" onClick={() => setEntry({ type: 'transfer' })}>
           ＋ 记一笔走账（现金/转卡/投资划转）
         </button>

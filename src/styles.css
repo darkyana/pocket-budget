@@ -216,7 +216,7 @@ button:disabled {
   font-size: var(--font-caption);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  font-weight: 600;
+  font-weight: 500;
 }
 .btn-ghost {
   background: var(--chip);
@@ -317,6 +317,7 @@ button:disabled {
 .fixed-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   border-top: 1px dashed var(--line);
   padding: var(--space-4) 0;
