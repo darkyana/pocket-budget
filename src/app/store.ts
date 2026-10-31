@@ -69,6 +69,7 @@ interface AppState {
   tab: Tab
   overlay: Overlay | null
   pendingCatTokens: string[]
+  pendingAccount: string
   init(): Promise<void>
   addRhythm(category: string, amount: number, note: string, account: string, date: string): void
   addBudgetEntry(budget: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
@@ -94,9 +95,10 @@ interface AppState {
   goTab(tab: Tab): void
   openQuickRetro(): void
   closeOverlay(): void
-  jumpToRecords(tokens: string[]): void
+  jumpToRecords(tokens: string[], account?: string): void
   clearPendingCats(): void
   updateSettings(mutate: (draft: Settings) => void): void
+  removeAccount(name: string): void
   saveRoutine(dayType: string, index: number, next: Settings['dayPlans'][string][number]): void
   saveBudget(index: number, next: Settings['budgets'][number]): void
   clearRecords(): void
@@ -111,6 +113,7 @@ export const useApp = create<AppState>()((set, get) => ({
   tab: 'today',
   overlay: null,
   pendingCatTokens: [],
+  pendingAccount: '',
 
   async init() {
     const state = await loadState()
@@ -267,12 +270,12 @@ export const useApp = create<AppState>()((set, get) => ({
     set({ overlay: null })
   },
 
-  jumpToRecords(tokens) {
-    set({ tab: 'records', pendingCatTokens: tokens })
+  jumpToRecords(tokens, account) {
+    set({ tab: 'records', pendingCatTokens: tokens, pendingAccount: account ?? '' })
   },
 
   clearPendingCats() {
-    set({ pendingCatTokens: [] })
+    set({ pendingCatTokens: [], pendingAccount: '' })
   },
 
   saveRoutine(dayType, index, next) {
@@ -311,6 +314,25 @@ export const useApp = create<AppState>()((set, get) => ({
         ? { ...e, amount: changedAmounts.get(e.item)! }
         : e)
       return { settings: draft, records }
+    })
+    persist(get())
+  },
+
+  removeAccount(name) {
+    const s = get()
+    if (!s.settings.accounts.includes(name)) return
+    const used = s.records.filter((e) =>
+      (e.kind !== 'transfer' && e.account === name) ||
+      (e.kind === 'transfer' && (e.from === name || e.to === name)),
+    ).length
+    if (used > 0) throw new Error(`「${name}」还有 ${used} 笔流水，先处理后再删`)
+    set({
+      settings: {
+        ...s.settings,
+        accounts: s.settings.accounts.filter((a) => a !== name),
+        ...(s.settings.lastAccount === name ? { lastAccount: undefined } : {}),
+        ...(s.settings.lastTransferTo === name ? { lastTransferTo: undefined } : {}),
+      },
     })
     persist(get())
   },

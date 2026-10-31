@@ -9,6 +9,7 @@ import { ConfirmButton } from '../components/ConfirmButton'
 import { FormSheet, type FieldDef } from '../components/FormSheet'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { FormFooter } from '../components/FormFooter'
+import { AccountSettingsSheet } from '../AccountSettingsSheet'
 import { money } from '../format'
 
 type Seg = 'routine' | 'fixed' | 'budget'
@@ -32,6 +33,7 @@ export function SettingsPage() {
   const saveRoutine = useApp((s) => s.saveRoutine)
   const saveBudget = useApp((s) => s.saveBudget)
   const factoryReset = useApp((s) => s.factoryReset)
+  const [accountSheet, setAccountSheet] = useState(false)
   const toast = useToast((s) => s.show)
   const [seg, setSeg] = useState<Seg>('routine')
   const [form, setForm] = useState<FormSpec | null>(null)
@@ -459,7 +461,10 @@ export function SettingsPage() {
         })()}
       </div>
 
-      <div className="block-gap center">
+      <div className="chips" style={{ marginTop: 'var(--space-4)' }}>
+        <button type="button" className="btn2" onClick={() => setAccountSheet(true)}>
+          管理账户
+        </button>
         <ConfirmButton
           label="恢复出厂（清空一切，含记录）"
           confirmLabel="真的全部清空？"
@@ -469,6 +474,8 @@ export function SettingsPage() {
           }}
         />
       </div>
+
+      {accountSheet && <AccountSettingsSheet onClose={() => setAccountSheet(false)} />}
 
       {ratioSheet && (
         <Sheet title="调整日常实际比率" onClose={() => setRatioSheet(false)}>

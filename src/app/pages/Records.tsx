@@ -54,6 +54,7 @@ export function Records() {
   const storedRecords = useApp((s) => s.records)
   const records = effectiveRecords(storedRecords)
   const pendingCatTokens = useApp((s) => s.pendingCatTokens)
+  const pendingAccount = useApp((s) => s.pendingAccount)
   const clearPendingCats = useApp((s) => s.clearPendingCats)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -68,6 +69,10 @@ export function Records() {
   useEffect(() => {
     if (pendingCatTokens.length > 0) {
       setCatFilter(pendingCatTokens)
+      clearPendingCats()
+    }
+    if (pendingAccount) {
+      setAccountFilter(pendingAccount)
       clearPendingCats()
     }
   }, [])
