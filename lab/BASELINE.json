@@ -1,5 +1,5 @@
 {
-  "commit": "f2e9842ee0999bd05631e959f8f918ebbb10c913",
+  "commit": "5ce427e648c202a431375884c1ab19767513c923",
   "files": [
     {
       "src": "src/app/AccountSettingsSheet.tsx",
@@ -59,7 +59,7 @@
     },
     {
       "src": "src/app/pages/QuickRetro.tsx",
-      "hash": "sha256:9efdf456f738989811b375173bfb51d76deb0cbab0cfbb9f08657d936c2adce0"
+      "hash": "sha256:c5a3f8a387fa1b18811c01c2c94168b1367ed1c427c5faccd27770720cdd512d"
     },
     {
       "src": "src/app/pages/Records.tsx",
@@ -87,7 +87,7 @@
     },
     {
       "src": "src/core/derive.ts",
-      "hash": "sha256:34336b39354b032636ea094f8cbbac07012a07a3ab70578adc8baafbc4722830"
+      "hash": "sha256:27d66daca129b92f3802f35fa60e4c723454b64900aa69483477c2a4ed2bfb3d"
     },
     {
       "src": "src/core/holiday-data.ts",
@@ -127,7 +127,7 @@
     },
     {
       "src": "src/styles.css",
-      "hash": "sha256:002031bb501557131c0d7df20111eb75671f586da1d13de2827ff74eb58968b9"
+      "hash": "sha256:2e35e296be18d8da122c3fad4c8ebe8fed2b2c3dea224bcff7d6140c5832ad5d"
     }
   ]
 }
