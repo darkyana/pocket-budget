@@ -12,6 +12,7 @@
   --warn: #d97706;
   --over: #e5484d;
   --ok: #0e9f6e;
+  --ok-recap: #1aa85a;
   --calm: #414d47;
   --chip: #eef0f3;
   --shadow-sm: 0 1px 2px rgba(16, 18, 21, 0.05);
@@ -698,14 +699,58 @@ button:disabled {
 }
 
 .retro-head {
-  display: flex;
+  margin-top: 0;
+}
+.retro-head .row-block {
   align-items: center;
-  gap: var(--space-hairline);
-  margin-top: calc(env(safe-area-inset-top) + var(--space-4));
-  margin-bottom: var(--space-hairline);
+  justify-content: flex-start;
+  gap: var(--space-1);
+  margin-bottom: 0;
 }
 .retro-head h1 {
   margin-bottom: 0;
+}
+
+.retro-ok-recap {
+  --ok: var(--ok-recap);
+  --calm: var(--ok-recap);
+}
+
+.retro-hero {
+  text-align: center;
+}
+.retro-hero .hero-num {
+  display: block;
+  margin: var(--space-1) 0 var(--space-hairline);
+}
+
+.retro-kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.kind-card {
+  margin-bottom: 0;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.kind-num {
+  font-size: var(--font-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.retro-warn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 6%, var(--card));
+}
+.retro-warn .row span,
+.retro-warn .row b {
+  color: var(--warn);
 }
 .back-btn {
   display: inline-flex;
