@@ -17,3 +17,4 @@ scripts/gen-desktop-icon.mjs
 # pushback 产物为审查用本地文件
 lab/pushback/
 pnpm-lock.yaml
+.trae-html-share-packages/
