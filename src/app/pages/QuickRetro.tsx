@@ -227,7 +227,7 @@ export function QuickRetro() {
       <div className="card">
         <div className="row">
           <span>
-            <b>当月消费力</b> <span className="small muted">与今日页同口径</span>
+            <b>当月至今消费力</b>
           </span>
           <b className="hero-num" style={{ color: statusColor(paceSt) }}>{pacePct}%</b>
         </div>
@@ -243,7 +243,6 @@ export function QuickRetro() {
       <div className="card">
         <div className="row-block">
           <b>近 {chartDays.length} 天 · 日常实际 vs 计划</b>
-          <span className="small muted">深色实际 · 浅色计划</span>
         </div>
         <div className="chart">
           {chartDays.map((d) => (
@@ -289,7 +288,7 @@ export function QuickRetro() {
       {settings.budgets.length > 0 && (
         <div className="card">
           <div className="row-block">
-            <b>预算 · 本月额度消耗</b>
+            <b>预算</b>
           </div>
           {views.map((p) => {
             const ratio = p.monthSpent / p.month
