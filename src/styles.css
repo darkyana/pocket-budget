@@ -730,7 +730,7 @@ button:disabled {
   height: 44px;
   flex: none;
   border-radius: var(--radius-pill);
-  color: var(--accent);
+  color: var(--ink);
 }
 .month-arrow:active {
   background: color-mix(in srgb, var(--ink) 8%, var(--card));
