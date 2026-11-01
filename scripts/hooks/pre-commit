@@ -1,0 +1,7 @@
+#!/bin/sh
+# 任一扫描失败即阻断提交，否则后续命令的成功退出码会掩盖前面的失败
+set -e
+# 隐私扫描：扫描暂存内容，命中敏感信息则阻断提交
+node "$(git rev-parse --show-toplevel)/scripts/privacy-scan.mjs" --staged
+# 设计扫描：裸值/阶梯/内联检查，命中即阻断提交
+node "$(git rev-parse --show-toplevel)/scripts/design-scan.mjs" --staged
