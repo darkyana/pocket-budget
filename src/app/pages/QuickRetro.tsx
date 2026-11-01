@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   budgetMonthEntries,
   budgetViews,
@@ -110,22 +110,24 @@ export function QuickRetro() {
           </button>
           <h1>消费力回顾</h1>
         </div>
-        <div className="sub retro-month-nav">
-          <button type="button" className="link" disabled={!canBack} onClick={() => step(-1)} aria-label="上一月">
-            ‹
-          </button>
-          <b>{monthLabel} · 全口径月度总结</b>
-          <button type="button" className="link" disabled={!canForward} onClick={() => step(1)} aria-label="下一月">
-            ›
-          </button>
-        </div>
+        <div className="sub">{monthLabel} · 全口径月度总结</div>
       </div>
 
       <div className="card retro-hero">
-        <div className="small muted">{month.getMonth() + 1}月总支出</div>
-        <b className="hero-num">{money(overview.totalAmount)}</b>
-        <div className="small muted">
-          共 {overview.totalCount} 笔 · 日常 + 预算 + 未归属 + 固定 · 走账不计入
+        <div className="retro-hero-row">
+          <button type="button" className="month-arrow" disabled={!canBack} onClick={() => step(-1)} aria-label="上一月">
+            <ChevronLeft size={28} />
+          </button>
+          <div className="retro-hero-main">
+            <div className="small muted">{month.getMonth() + 1}月总支出</div>
+            <b className="hero-num">{money(overview.totalAmount)}</b>
+            <div className="small muted">
+              共 {overview.totalCount} 笔 · 日常 + 预算 + 未归属 + 固定 · 走账不计入
+            </div>
+          </div>
+          <button type="button" className="month-arrow" disabled={!canForward} onClick={() => step(1)} aria-label="下一月">
+            <ChevronRight size={28} />
+          </button>
         </div>
       </div>
 
