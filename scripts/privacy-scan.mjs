@@ -21,12 +21,19 @@ const staged = process.argv.includes('--staged')
 
 const GENERIC = [
   [/[\w.%+-]+@(?:gmail|qq|163|126|outlook|hotmail|yahoo)\.(?:com|net|org)/i, '个人邮箱'],
-  [/[\w-]+\.local\b/, '.local 内网主机名'],
+  [/(?<![\w._-])[a-z\d][a-z\d-]{2,}\.local\b/, '.local 内网主机名'],
   [/(?:招商|工商|光大|建设|农业|中国|交通|浦发|中信|民生|兴业|平安|邮储)银行[^\n]{0,6}\d{3,4}/, '银行名+卡号尾数'],
   [/\b\d{15,19}\b/, '疑似银行卡号'],
   [/\b1[3-9]\d{9}\b/, '疑似手机号'],
   [/\b\d{17}[\dXx]\b/, '疑似身份证号'],
 ]
+
+// 已确认的虚构样例值：长数字但非真实卡号，命中通用规则时跳过
+const ALLOWED_VALUES = new Set([
+  '9007199254740991', // Number.MAX_SAFE_INTEGER，审计快照里的边界值示例
+  '16666666666666666', // 审计快照虚构占位数字
+  '8181818181818175', // 审计快照虚构占位数字
+])
 
 const SKIP_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.icns', '.zip', '.woff', '.woff2', '.ttf', '.eot'])
 const SKIP_FILES = new Set(['package-lock.json'])
@@ -71,7 +78,7 @@ for (const file of listFiles()) {
   content.split('\n').forEach((line, i) => {
     for (const [re, label] of GENERIC) {
       const m = line.match(re)
-      if (m) hits.push(`${file}:${i + 1} [${label}] ${m[0]}`)
+      if (m && !ALLOWED_VALUES.has(m[0])) hits.push(`${file}:${i + 1} [${label}] ${m[0]}`)
     }
     for (const { term, re } of terms) {
       const hit = re ? re.test(line) : line.includes(term)
