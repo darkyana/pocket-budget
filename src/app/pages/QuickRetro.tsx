@@ -121,9 +121,7 @@ export function QuickRetro() {
           <div className="retro-hero-main">
             <div className="small muted">{month.getMonth() + 1}月总支出</div>
             <b className="hero-num">{money(overview.totalAmount)}</b>
-            <div className="small muted">
-              共 {overview.totalCount} 笔 · 日常 + 预算 + 未归属 + 固定 · 走账不计入
-            </div>
+            <div className="small muted">共 {overview.totalCount} 笔</div>
           </div>
           <button type="button" className="month-arrow" disabled={!canForward} onClick={() => step(1)} aria-label="下一月">
             <ChevronRight size={28} />
@@ -242,7 +240,7 @@ export function QuickRetro() {
 
       <div className="card">
         <div className="row-block">
-          <b>近 {chartDays.length} 天 · 日常实际 vs 计划</b>
+          <b>近 {chartDays.length} 天</b>
         </div>
         <div className="chart">
           {chartDays.map((d) => (
