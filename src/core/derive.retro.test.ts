@@ -139,4 +139,17 @@ describe('budgetViews 月口径', () => {
     expect(view.monthSpent).toBe(150)
     expect(view.monthOutCount).toBe(2)
   })
+
+  it('历史月锚点：projection 不再按天数外推，等于当月实际净支出', () => {
+    const anchor = new Date(2026, 9, 15, 20, 0)
+    const realNow = new Date(2026, 10, 1, 9, 0)
+    const [view] = budgetViews([budgetOut('购物', 150, ts(11, 10))], settings, anchor, realNow)
+    expect(view.monthSpent).toBe(150)
+    expect(view.projection).toBe(150)
+  })
+
+  it('当前月锚点：projection 仍按已过天数外推到月末', () => {
+    const [view] = budgetViews([budgetOut('购物', 150, ts(11, 10))], settings, NOW)
+    expect(view.projection).toBeCloseTo((150 * 31) / 11)
+  })
 })

@@ -141,11 +141,12 @@ export interface PaceView {
   ratio: number
 }
 
-export function routinePace(records: MoneyRecord[], settings: Settings, now: Date): PaceView {
+export function routinePace(records: MoneyRecord[], settings: Settings, now: Date, realNow: Date = now): PaceView {
   const key = monthKeyOf(now)
   const spent = records.reduce((sum, e) => (e.kind === 'routine' && monthKeyOf(e.ts) === key ? sum + e.amount : sum), 0)
+  const upto = monthKeyOf(now) < monthKeyOf(realNow) ? daysInMonth(now) : dayOfMonth(now)
   let possible = 0
-  for (let d = 1; d <= dayOfMonth(now); d++) {
+  for (let d = 1; d <= upto; d++) {
     possible += dayExpectSum(settings.dayPlans, new Date(now.getFullYear(), now.getMonth(), d))
   }
   return { spent, possible, ratio: possible > 0 ? spent / possible : 0 }
@@ -174,7 +175,20 @@ export function statusOfRatio(ratio: number): DayStatus {
   return 'ok'
 }
 
-export function dayRetroMonth(records: MoneyRecord[], settings: Settings, now: Date): DayRetro[] {
+export interface RetroMonthRange {
+  earliest: Date
+  latest: Date
+}
+
+export function retroMonthRange(records: MoneyRecord[], now: Date): RetroMonthRange {
+  const latest = new Date(now.getFullYear(), now.getMonth(), 1)
+  const keys = records.map((e) => monthKeyOf(e.ts)).filter((k) => k <= monthKeyOf(latest))
+  const earliestKey = keys.length > 0 ? keys.reduce((a, b) => (a < b ? a : b)) : monthKeyOf(latest)
+  const [y, m] = earliestKey.split('-').map(Number)
+  return { earliest: new Date(y, m - 1, 1), latest }
+}
+
+export function dayRetroMonth(records: MoneyRecord[], settings: Settings, now: Date, realNow: Date = now): DayRetro[] {
   const key = monthKeyOf(now)
   const byDay = new Map<number, RoutineEntry[]>()
   for (const e of records) {
@@ -184,7 +198,8 @@ export function dayRetroMonth(records: MoneyRecord[], settings: Settings, now: D
     if (list) list.push(e)
     else byDay.set(day, [e])
   }
-  const today = dayOfMonth(now)
+  const elapsed = monthKeyOf(now) < monthKeyOf(realNow)
+  const today = elapsed ? daysInMonth(now) + 1 : dayOfMonth(now)
   return Array.from({ length: daysInMonth(now) }, (_, i) => {
     const day = i + 1
     const date = new Date(now.getFullYear(), now.getMonth(), day)
@@ -202,7 +217,7 @@ export function dayRetroMonth(records: MoneyRecord[], settings: Settings, now: D
       ratio,
       status: statusOfRatio(ratio),
       passed: day <= today,
-      isToday: day === today,
+      isToday: !elapsed && day === today,
       entries,
     }
   })
@@ -337,7 +352,8 @@ export function budgetMonthEntries(records: MoneyRecord[], budgetName: string, n
     .sort((a, b) => a.ts - b.ts)
 }
 
-export function budgetViews(records: MoneyRecord[], settings: Settings, now: Date): BudgetView[] {
+export function budgetViews(records: MoneyRecord[], settings: Settings, now: Date, realNow: Date = now): BudgetView[] {
+  const elapsed = monthKeyOf(now) < monthKeyOf(realNow)
   return settings.budgets.map((p) => {
     const weekSpent = netBudgetSpend(records, p.name, (ts) => isSameWeek(ts, now))
     const monthEntries = budgetEntriesIn(records, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
@@ -351,7 +367,7 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
       monthSpent,
       monthOutCount: monthEntries.filter((e) => e.dir === 'out').length,
       monthBackflow: monthEntries.filter((e) => e.dir === 'in').length,
-      projection: projectMonthEnd(monthSpent, now),
+      projection: elapsed ? monthSpent : projectMonthEnd(monthSpent, now),
     }
   })
 }

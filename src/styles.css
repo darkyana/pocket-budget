@@ -710,6 +710,35 @@ button:disabled {
 .retro-head h1 {
   margin-bottom: 0;
 }
+.retro-hero {
+  text-align: center;
+}
+.retro-hero-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.retro-hero-main {
+  flex: 1;
+  min-width: 0;
+}
+.month-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+}
+.month-arrow:active {
+  background: color-mix(in srgb, var(--ink) 8%, var(--card));
+}
+.month-arrow:disabled {
+  color: var(--ink2);
+  opacity: 0.3;
+}
 
 .retro-ok-recap {
   --ok: var(--ok-recap);
