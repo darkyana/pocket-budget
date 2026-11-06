@@ -52,7 +52,7 @@ export function DataSheet({ onClose }: { onClose(): void }) {
           <button type="button" onClick={onExportLedgerVoucher}>
             导出记账凭证
           </button>
-          <div className="dm-hint">family ledger 可导入的凭证格式；不含走账</div>
+          <div className="dm-hint">family ledger 可导入的凭证格式；含走账（转账行）</div>
         </div>
       </div>
       <div className="dm-label">导入</div>
