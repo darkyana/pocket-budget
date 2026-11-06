@@ -1,5 +1,5 @@
 {
-  "commit": "e2e9d2ac4f0a9b96fd5423bf2a04a43caa935337",
+  "commit": "a9e6dfc53b835ef897ce92a9448e37c01e803de9",
   "files": [
     {
       "src": "src/app/AccountSettingsSheet.tsx",
@@ -7,7 +7,7 @@
     },
     {
       "src": "src/app/components/AccountPicker.tsx",
-      "hash": "sha256:cf509e4d305724a970646b60e440cb3f927a623ae26d82ab1191e110f7bd72e4"
+      "hash": "sha256:cae0896f359525bda13c9e14c9ecd64ab463fce5aeb8177783fbfaa0b71c9207"
     },
     {
       "src": "src/app/components/CategoryFilterSheet.tsx",
@@ -27,11 +27,11 @@
     },
     {
       "src": "src/app/components/EntrySheet.tsx",
-      "hash": "sha256:596e12fdc753b09d273fe658314b2d27a9a75bdba30c27194b65444946af10d2"
+      "hash": "sha256:7d481ed331f02e2986351a2e4d10d53de4ffff2db80c4dbb8b53b781e0be25a0"
     },
     {
       "src": "src/app/components/FixedExpenseSheet.tsx",
-      "hash": "sha256:04827cf40e19f7aebe3c63e874322ee2e7c837521580cb4d77eb6d4bf7347d36"
+      "hash": "sha256:ecfb1069912ce1e1a453425df71b056ebddbf1c61f5fdaaf1cbae2b91addb3d4"
     },
     {
       "src": "src/app/components/FormFooter.tsx",
@@ -63,7 +63,7 @@
     },
     {
       "src": "src/app/pages/Records.tsx",
-      "hash": "sha256:c3c29dd2a63f1decf97d67adb4866f0c5e6fab048148c4440a4da09c33fdd14e"
+      "hash": "sha256:d35967b6be79d64a7693b2861328f7007da640df4cdd093432d617d82ddd6cfb"
     },
     {
       "src": "src/app/pages/Settings.tsx",
@@ -71,7 +71,7 @@
     },
     {
       "src": "src/app/pages/Today.tsx",
-      "hash": "sha256:865939b9eff8d32a33cc74b63736216b641db825dbd5db203121eba61b297c13"
+      "hash": "sha256:9feed132876e571471ca9276450e7e9ae58886592f8e1a1578c51bf2d7cabc5d"
     },
     {
       "src": "src/app/statusColor.ts",
@@ -79,7 +79,7 @@
     },
     {
       "src": "src/app/store.ts",
-      "hash": "sha256:d029aa09dc069dcae7ce1142e816f7cf7f3fa4783e48f98a200c7f2fce8a9349"
+      "hash": "sha256:cf95807a57b953b105645959b3cc31a970ba602588ed5fac17cc89c169262cf7"
     },
     {
       "src": "src/app/toast.ts",
@@ -115,7 +115,7 @@
     },
     {
       "src": "src/core/types.ts",
-      "hash": "sha256:e9469022aad54a3a7019984af1d7859d60ec833ae9f2d647ea916e36db55b1fa"
+      "hash": "sha256:53cd092012c96d82b720dd592d65f654556f3f6f9a143c6c5e12bb599fae7ed7"
     },
     {
       "src": "src/storage/migrate.ts",

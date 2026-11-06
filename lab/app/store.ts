@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { SCHEMA_VERSION, type ExpenseCycle, type MoneyRecord, type PersistedState, type Settings } from '../core/types'
-import { effectiveRecords, fixedExpensePaid, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
+import { effectiveRecords, expensePeriodKey, renameRecordAnchor, syncedDayType, withAccount } from '../core/derive'
 import { timestampOf, validateRecordDate } from '../core/time'
 import { freshState } from '../storage/migrate'
 import { loadState, requestPersistence, saveState } from '../storage/db'
@@ -16,6 +16,12 @@ const uid = () => `${Date.now().toString(36)}-${(++seq).toString(36)}-${Math.ran
 function persist(s: { settings: Settings; records: MoneyRecord[] }) {
   const state: PersistedState = { schemaVersion: SCHEMA_VERSION, settings: s.settings, records: s.records }
   saveState(state).catch((err) => console.error('落盘失败', err))
+}
+
+function requireAccount(account: string): string {
+  const acct = account.trim()
+  if (!acct) throw new Error('账户不能为空')
+  return acct
 }
 
 function withUsedAccount(settings: Settings, account: string): Settings {
@@ -73,7 +79,7 @@ interface AppState {
   init(): Promise<void>
   addRhythm(category: string, amount: number, note: string, account: string, date: string): void
   addBudgetEntry(budget: string, dir: 'out' | 'in', amount: number, note: string, account: string, date: string): void
-  toggleFixedExpense(name: string): void
+  markFixedExpensePaid(name: string, payment: { account: string; date: string }): void
   addTransfer(from: string, to: string, amount: number, note: string, date: string): void
   editRecord(id: string, patch: { amount: number; note: string; account: string; date: string; from?: string; to?: string }): void
   saveEntryRecord(
@@ -123,7 +129,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   addRhythm(category, amount, note, account, date) {
     validateRecordDate(date)
-    const acct = account.trim()
+    const acct = requireAccount(account)
     const e: MoneyRecord = {
       id: uid(),
       ts: timestampOf(date),
@@ -131,7 +137,7 @@ export const useApp = create<AppState>()((set, get) => ({
       category,
       amount,
       note,
-      ...(acct ? { account: acct } : {}),
+      account: acct,
     }
     set((s) => ({ records: [...s.records, e], settings: withUsedAccount(s.settings, acct) }))
     persist(get())
@@ -139,7 +145,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   addBudgetEntry(budget, dir, amount, note, account, date) {
     validateRecordDate(date)
-    const acct = account.trim()
+    const acct = requireAccount(account)
     const e: MoneyRecord = {
       id: uid(),
       ts: timestampOf(date),
@@ -148,30 +154,33 @@ export const useApp = create<AppState>()((set, get) => ({
       dir,
       amount,
       note,
-      ...(acct ? { account: acct } : {}),
+      account: acct,
     }
     set((s) => ({ records: [...s.records, e], settings: withUsedAccount(s.settings, acct) }))
     persist(get())
   },
 
-  toggleFixedExpense(name) {
+  markFixedExpensePaid(name, payment) {
+    validateRecordDate(payment.date)
+    const acct = requireAccount(payment.account)
     const c = get().settings.fixedExpenses.find((x) => x.name === name)
     if (!c) return
     const cycle: ExpenseCycle = c.cycle ?? 'monthly'
-    const now = new Date()
-    const paid = !fixedExpensePaid(get().records, name, cycle, now)
+    const ts = timestampOf(payment.date)
+    const periodKey = expensePeriodKey(new Date(ts), cycle)
     const e: MoneyRecord = {
       id: uid(),
-      ts: Date.now(),
+      ts,
       kind: 'fixed',
       item: name,
       amount: c.amount,
-      periodKey: expensePeriodKey(now, cycle),
-      paid,
+      periodKey,
+      paid: true,
+      account: acct,
     }
     set((s) => {
-      const records = s.records.filter((r) => r.kind !== 'fixed' || r.item !== name || r.periodKey !== e.periodKey)
-      return { records: paid ? [...records, e] : records }
+      const records = s.records.filter((r) => r.kind !== 'fixed' || r.item !== name || r.periodKey !== periodKey)
+      return { records: [...records, e], settings: withUsedAccount(s.settings, acct) }
     })
     persist(get())
   },
@@ -191,15 +200,23 @@ export const useApp = create<AppState>()((set, get) => ({
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || e.kind === 'fixed') return e
-        const acct = patch.account.trim()
+        if (e.kind === 'transfer') {
+          return {
+            ...e,
+            amount: patch.amount,
+            note: patch.note,
+            ts: timestampOf(patch.date, new Date(e.ts)),
+            from: patch.from?.trim() ?? e.from,
+            to: patch.to?.trim() ?? e.to,
+          }
+        }
+        const acct = requireAccount(patch.account)
         return {
           ...e,
           amount: patch.amount,
           note: patch.note,
           ts: timestampOf(patch.date, new Date(e.ts)),
-          ...(e.kind === 'transfer'
-            ? { from: patch.from?.trim() ?? e.from, to: patch.to?.trim() ?? e.to }
-            : { account: acct || undefined }),
+          account: acct,
         }
       }),
     }))
@@ -208,14 +225,14 @@ export const useApp = create<AppState>()((set, get) => ({
 
   saveEntryRecord(id, next) {
     validateRecordDate(next.date)
+    const acct = requireAccount(next.account)
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || (e.kind !== 'routine' && e.kind !== 'budget')) return e
         const ts = timestampOf(next.date, new Date(e.ts))
-        const acct = next.account.trim()
         return next.kind === 'routine'
-          ? { id: e.id, ts, kind: 'routine', category: next.category ?? '', amount: next.amount, note: next.note, ...(acct ? { account: acct } : {}) }
-          : { id: e.id, ts, kind: 'budget', budget: next.budget ?? '', dir: next.dir, amount: next.amount, note: next.note, ...(acct ? { account: acct } : {}) }
+          ? { id: e.id, ts, kind: 'routine', category: next.category ?? '', amount: next.amount, note: next.note, account: acct }
+          : { id: e.id, ts, kind: 'budget', budget: next.budget ?? '', dir: next.dir, amount: next.amount, note: next.note, account: acct }
       }),
     }))
     persist(get())
@@ -223,6 +240,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   editFixedExpense(id, patch) {
     validateRecordDate(patch.date)
+    const acct = requireAccount(patch.account)
     const s = get()
     const payment = effectiveRecords(s.records).find((e) => e.id === id)
     if (!payment || payment.kind !== 'fixed') return
@@ -233,7 +251,7 @@ export const useApp = create<AppState>()((set, get) => ({
       throw new Error('该期间已有付款，请选择其他付款日期')
     }
     const records = s.records.filter((e) => e.kind !== 'fixed' || e.item !== payment.item || (e.periodKey !== payment.periodKey && e.periodKey !== periodKey))
-    records.push({ ...payment, ts, periodKey, account: patch.account.trim() || undefined })
+    records.push({ ...payment, ts, periodKey, account: acct })
     set({ records })
     persist(get())
   },

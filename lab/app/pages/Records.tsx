@@ -243,7 +243,7 @@ export function Records() {
           const ev = records.find((x) => x.id === editingId)
           if (!ev) return null
           if (ev.kind === 'fixed') {
-            return <FixedExpenseSheet event={ev} onClose={() => setEditingId(null)} />
+            return <FixedExpenseSheet target={{ kind: 'edit', event: ev }} onClose={() => setEditingId(null)} />
           }
           const target = targetOf(ev)
           return target ? <EntrySheet target={target} existing={ev} onClose={() => setEditingId(null)} /> : null
