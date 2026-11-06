@@ -48,58 +48,78 @@ function downloadJson(obj: unknown, name: string): string {
 
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '')
 
-export interface FamilyLedgerRow {
+export interface FamilyLedgerBaseRow {
   date: string
-  account: string
   amount: number
   description: string
   ref_id: string
 }
 
+export interface FamilyLedgerRow extends FamilyLedgerBaseRow {
+  account: string
+}
+
+export interface FamilyLedgerTransferRow extends FamilyLedgerBaseRow {
+  from_account: string
+  to_account: string
+}
+
 export interface FamilyLedgerVoucher {
-  voucher_schema_version: '1.0'
-  meta: { source: string; exported_at: string; rows: number; skipped_no_account: number }
-  rows: FamilyLedgerRow[]
+  voucher_schema_version: '1.1'
+  meta: { source: string; exported_at: string; rows: number; transfers: number; skipped_no_account: number }
+  rows: (FamilyLedgerRow | FamilyLedgerTransferRow)[]
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 export function buildFamilyLedgerVoucher(records: MoneyRecord[]): { voucher: FamilyLedgerVoucher; skipped: number } {
-  const rows: FamilyLedgerRow[] = []
+  const rows: (FamilyLedgerRow | FamilyLedgerTransferRow)[] = []
   let skipped = 0
+  let transfers = 0
   for (const e of effectiveRecords(records)) {
-    if (e.kind === 'transfer') continue
     if (e.kind === 'fixed' && !e.paid) continue
-    const account = e.account?.trim()
-    if (!account) {
-      skipped++
-      continue
-    }
     const date = dayKeyOf(e.ts)
     const suffix = 'note' in e && e.note.trim() ? ` — ${e.note.trim()}` : ''
     const amount = round2(e.amount)
-    if (e.kind === 'routine') {
-      rows.push({ date, account, amount: -amount, description: `日常 · ${e.category}${suffix}`, ref_id: e.id })
-    } else if (e.kind === 'budget') {
-      rows.push({
-        date,
-        account,
-        amount: e.dir === 'in' ? amount : -amount,
-        description: `预算 · ${e.budget}${e.dir === 'in' ? ' 回血' : ' 支出'}${suffix}`,
-        ref_id: e.id,
-      })
+    if (e.kind === 'transfer') {
+      const from = e.from.trim()
+      const to = e.to.trim()
+      if (!from || !to || !(amount > 0)) {
+        skipped++
+        continue
+      }
+      rows.push({ date, from_account: from, to_account: to, amount, description: `走账 · ${from} → ${to}${suffix}`, ref_id: e.id })
+      transfers++
     } else {
-      rows.push({ date, account, amount: -amount, description: `固定支出 · ${e.item}`, ref_id: e.id })
+      const account = e.account?.trim()
+      if (!account) {
+        skipped++
+        continue
+      }
+      if (e.kind === 'routine') {
+        rows.push({ date, account, amount: -amount, description: `日常 · ${e.category}${suffix}`, ref_id: e.id })
+      } else if (e.kind === 'budget') {
+        rows.push({
+          date,
+          account,
+          amount: e.dir === 'in' ? amount : -amount,
+          description: `预算 · ${e.budget}${e.dir === 'in' ? ' 回血' : ' 支出'}${suffix}`,
+          ref_id: e.id,
+        })
+      } else {
+        rows.push({ date, account, amount: -amount, description: `固定支出 · ${e.item}`, ref_id: e.id })
+      }
     }
   }
   rows.sort((a, b) => b.date.localeCompare(a.date))
   return {
     voucher: {
-      voucher_schema_version: '1.0',
+      voucher_schema_version: '1.1',
       meta: {
         source: '口袋账房 pocket-budget 记账凭证导出',
         exported_at: new Date().toISOString(),
         rows: rows.length,
+        transfers,
         skipped_no_account: skipped,
       },
       rows,
@@ -110,7 +130,7 @@ export function buildFamilyLedgerVoucher(records: MoneyRecord[]): { voucher: Fam
 
 export function downloadFamilyLedgerVoucher(records: MoneyRecord[]): { name: string; rows: number; skipped: number } {
   const { voucher, skipped } = buildFamilyLedgerVoucher(records)
-  if (voucher.rows.length === 0) throw new Error('没有可导出的记账凭证（需要带账户的收支记录）')
+  if (voucher.rows.length === 0) throw new Error('没有可导出的记账凭证（需要带账户的记录）')
   const name = downloadJson(voucher, `记账凭证-${stamp()}.json`)
   return { name, rows: voucher.rows.length, skipped }
 }
