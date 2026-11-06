@@ -27,23 +27,21 @@ export function FixedExpenseSheet({
   const lastAccount = useApp((s) => s.settings.lastAccount)
   const toast = useToast((s) => s.show)
 
-  const label = target.kind === 'mark' ? target.item.name : target.event.item
-  const amount = target.kind === 'mark' ? target.item.amount : target.event.amount
-  const cycle = target.kind === 'mark' ? target.item.cycle : undefined
-  const defaultAccount = target.kind === 'edit' ? target.event.account ?? '' : lastAccount ?? ''
-
-  const [account, setAccount] = useState(defaultAccount)
-  const [date, setDate] = useState(() => dayKeyOf(target.kind === 'edit' ? target.event.ts : new Date()))
+  const paid = target.kind === 'edit'
+  const { name: label, amount } = paid ? { name: target.event.item, amount: target.event.amount } : target.item
+  const cycle = paid ? undefined : target.item.cycle
+  const [account, setAccount] = useState(paid ? target.event.account ?? '' : lastAccount ?? '')
+  const [date, setDate] = useState(() => dayKeyOf(paid ? target.event.ts : new Date()))
   const canSubmit = account.trim() !== '' && date !== ''
 
   function save() {
     try {
-      if (target.kind === 'mark') {
-        markFixedExpensePaid(target.item.name, { account, date })
-        toast(`${label} ✓ 已付`)
-      } else {
+      if (paid) {
         editFixedExpense(target.event.id, { account, date })
         toast('已更新')
+      } else {
+        markFixedExpensePaid(target.item.name, { account, date })
+        toast(`${label} ✓ 已付`)
       }
       onClose()
     } catch (error) {
@@ -53,7 +51,7 @@ export function FixedExpenseSheet({
 
   return (
     <Sheet
-      title={target.kind === 'mark' ? `标记已付 · 固定支出 · ${label}` : `编辑 · 固定支出 · ${label}`}
+      title={paid ? `编辑 · 固定支出 · ${label}` : `标记已付 · 固定支出 · ${label}`}
       onClose={onClose}
     >
       <form
@@ -63,7 +61,7 @@ export function FixedExpenseSheet({
         }}
       >
         <div className="small muted field-row">
-          {target.kind === 'mark' ? '标记已付' : '编辑付款'} · {money(amount)}（金额在设置里改）
+          {paid ? '编辑付款' : '标记已付'} · {money(amount)}（金额在设置里改）
           {cycle === 'yearly' ? ' · 年付' : ''}
         </div>
         <div className="field-row">
@@ -82,7 +80,7 @@ export function FixedExpenseSheet({
           <input id="cs-date" className="field" type="date" required max={dayKeyOf(new Date())} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <FormFooter secondary={{ label: '取消', onClick: onClose }} submitLabel="保存" submitDisabled={!canSubmit} />
-        {target.kind === 'edit' && (
+        {paid && (
           <div className="block-gap center">
             <ConfirmButton
               label="删除这笔付款"
