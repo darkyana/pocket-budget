@@ -33,9 +33,9 @@ export interface Settings {
 }
 
 export type MoneyRecord =
-  | { id: string; ts: number; kind: 'routine'; category: string; amount: number; note: string; account?: string }
-  | { id: string; ts: number; kind: 'budget'; budget: string; dir: 'out' | 'in'; amount: number; note: string; account?: string }
-  | { id: string; ts: number; kind: 'fixed'; item: string; amount: number; periodKey: string; paid: boolean; account?: string }
+  | { id: string; ts: number; kind: 'routine'; category: string; amount: number; note: string; account: string }
+  | { id: string; ts: number; kind: 'budget'; budget: string; dir: 'out' | 'in'; amount: number; note: string; account: string }
+  | { id: string; ts: number; kind: 'fixed'; item: string; amount: number; periodKey: string; paid: boolean; account: string }
   | { id: string; ts: number; kind: 'transfer'; from: string; to: string; amount: number; note: string }
 
 export interface PersistedState {

@@ -24,26 +24,40 @@ afterEach(() => vi.useRealTimers())
 
 describe('fixed payment store actions', () => {
   it('keeps an amount edit retrospective when settings also rename the item', async () => {
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().markFixedExpensePaid('宠物粮', { account: '储蓄卡', date: '2026-10-20' })
     useApp.getState().updateSettings((draft) => { draft.fixedExpenses[0] = { name: '物业费', amount: 60 } })
     useApp.getState().renameAnchor('fixed', '宠物粮', '物业费')
     await useApp.getState().init()
     expect(useApp.getState().records[0]).toMatchObject({ item: '物业费', amount: 60 })
   })
 
-  it('toggles legacy histories without retaining old payments or changing unrelated periods', async () => {
+  it('marks a fixed expense paid with the given account and exports it', async () => {
+    useApp.getState().markFixedExpensePaid('宠物粮', { account: '储蓄卡', date: '2026-10-18' })
+    await useApp.getState().init()
+    expect(useApp.getState().records).toHaveLength(1)
+    expect(useApp.getState().records[0]).toMatchObject({ item: '宠物粮', amount: 40, paid: true, periodKey: '2026-10', account: '储蓄卡' })
+    expect(useApp.getState().settings.lastAccount).toBe('储蓄卡')
+    expect(useApp.getState().settings.accounts).toContain('储蓄卡')
+    expect(buildFamilyLedgerVoucher(useApp.getState().records).voucher.rows).toHaveLength(1)
+  })
+
+  it('rejects marking paid without an account', () => {
+    expect(() => useApp.getState().markFixedExpensePaid('宠物粮', { account: '  ', date: '2026-10-18' })).toThrow('账户不能为空')
+    expect(useApp.getState().records).toEqual([])
+  })
+
+  it('repays into a period after deletion without retaining old payments or changing unrelated periods', async () => {
     const payment = { id: 'old', kind: 'fixed' as const, item: '宠物粮', amount: 40, paid: true, periodKey: '2026-10', ts: new Date(2026, 9, 9).getTime(), account: '储蓄卡' }
     const previous = { ...payment, id: 'previous', periodKey: '2026-09' }
     useApp.setState({ records: [previous, payment, { ...payment, id: 'latest', ts: payment.ts + 1 }] })
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().deleteRecord('latest')
     await useApp.getState().init()
     expect(useApp.getState().records).toEqual([previous])
-    useApp.getState().toggleFixedExpense('宠物粮')
-    useApp.getState().toggleFixedExpense('宠物粮')
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().markFixedExpensePaid('宠物粮', { account: '备用金', date: '2026-10-20' })
     await useApp.getState().init()
-    expect(useApp.getState().records).toHaveLength(2)
-    expect(buildFamilyLedgerVoucher(useApp.getState().records).voucher.rows.map((r) => r.ref_id)).toEqual(['previous'])
+    const records = useApp.getState().records
+    expect(records).toHaveLength(2)
+    expect(buildFamilyLedgerVoucher(records).voucher.rows.map((r) => r.ref_id).sort()).toEqual(['previous', records[1]!.id].sort())
   })
 
   it('deletes an effective legacy payment without restoring earlier toggles', async () => {
@@ -96,23 +110,22 @@ describe('fixed payment store actions', () => {
   })
 
   it('cancels a payment and pays afresh without restoring its account or identity', async () => {
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().markFixedExpensePaid('宠物粮', { account: '储蓄卡', date: '2026-10-20' })
     const old = useApp.getState().records[0]
     useApp.getState().editFixedExpense(old.id, { account: '储蓄卡', date: '2026-10-20' })
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().deleteRecord(old.id)
     expect(useApp.getState().records).toEqual([])
     await useApp.getState().init()
     expect(groupByDay(useApp.getState().records)).toEqual([])
     expect(buildFamilyLedgerVoucher(useApp.getState().records).voucher.rows).toEqual([])
     vi.setSystemTime(new Date(2026, 9, 21, 12))
     useApp.getState().updateSettings((draft) => { draft.fixedExpenses[0].amount = 60 })
-    useApp.getState().toggleFixedExpense('宠物粮')
+    useApp.getState().markFixedExpensePaid('宠物粮', { account: '备用金', date: '2026-10-21' })
     await useApp.getState().init()
     const records = useApp.getState().records
     expect(records).toHaveLength(1)
-    expect(records[0]).toMatchObject({ amount: 60, ts: new Date(2026, 9, 21, 12).getTime(), paid: true })
+    expect(records[0]).toMatchObject({ amount: 60, paid: true, account: '备用金' })
     expect(records[0].id).not.toBe(old.id)
-    expect(records[0]).not.toHaveProperty('account')
-    expect(buildFamilyLedgerVoucher(records).skipped).toBe(1)
+    expect(buildFamilyLedgerVoucher(records).skipped).toBe(0)
   })
 })

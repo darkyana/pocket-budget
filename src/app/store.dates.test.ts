@@ -20,10 +20,10 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 const existing: MoneyRecord[] = [
-  { id: 'routine', kind: 'routine', category: '宠物粮', amount: 20, note: '', ts: new Date(2026, 9, 21, 12).getTime() },
-  { id: 'budget', kind: 'budget', budget: '宠物粮', dir: 'out', amount: 20, note: '', ts: new Date(2026, 9, 21, 12).getTime() },
+  { id: 'routine', kind: 'routine', category: '宠物粮', amount: 20, note: '', account: '现金', ts: new Date(2026, 9, 21, 12).getTime() },
+  { id: 'budget', kind: 'budget', budget: '宠物粮', dir: 'out', amount: 20, note: '', account: '现金', ts: new Date(2026, 9, 21, 12).getTime() },
   { id: 'transfer', kind: 'transfer', from: '储蓄卡', to: '备用金', amount: 20, note: '', ts: new Date(2026, 9, 21, 12).getTime() },
-  { id: 'fixed', kind: 'fixed', item: '物业费', periodKey: '2026-10', paid: true, amount: 20, ts: new Date(2026, 9, 21, 12).getTime() },
+  { id: 'fixed', kind: 'fixed', item: '物业费', periodKey: '2026-10', paid: true, amount: 20, account: '储蓄卡', ts: new Date(2026, 9, 21, 12).getTime() },
 ]
 
 describe('record editing dates', () => {
@@ -35,13 +35,13 @@ describe('record editing dates', () => {
     expect(useApp.getState().records).toEqual(future)
     useApp.getState().importVoucher(JSON.stringify(buildVoucher(state)))
     expect(useApp.getState().records).toEqual(future)
-    useApp.getState().addRhythm('宠物粮', 10, '', '', '2026-10-23')
+    useApp.getState().addRhythm('宠物粮', 10, '', '储蓄卡', '2026-10-23')
     expect(useApp.getState().records.slice(0, 4)).toEqual(future)
     expect(vi.mocked(saveState).mock.lastCall?.[0].records.slice(0, 4)).toEqual(future)
   })
 
   it.each(['', '2026-02-30'])('rejects an invalid date %s rather than silently substituting a day', (date) => {
-    expect(() => useApp.getState().addRhythm('宠物粮', 20, '', '', date)).toThrow('请选择有效日期')
+    expect(() => useApp.getState().addRhythm('宠物粮', 20, '', '储蓄卡', date)).toThrow('请选择有效日期')
     expect(useApp.getState().records).toEqual([])
   })
   it.each(['routine', 'budget', 'transfer', 'fixed'] as const)('validates %s edits without altering rejected records', (kind) => {
@@ -65,9 +65,9 @@ describe('record editing dates', () => {
 describe('record creation dates', () => {
   it('uses the local calendar day at the end of the day', () => {
     vi.setSystemTime(new Date(2026, 9, 23, 23, 45))
-    useApp.getState().addRhythm('宠物粮', 20, '', '', '2026-10-23')
+    useApp.getState().addRhythm('宠物粮', 20, '', '储蓄卡', '2026-10-23')
     expect(dayKeyOf(useApp.getState().records[0].ts)).toBe('2026-10-23')
-    expect(() => useApp.getState().addRhythm('宠物粮', 20, '', '', '2026-10-24')).toThrow('日期不能晚于今天')
+    expect(() => useApp.getState().addRhythm('宠物粮', 20, '', '储蓄卡', '2026-10-24')).toThrow('日期不能晚于今天')
   })
   it.each(['budget', 'transfer'] as const)('validates %s creation before changing records or settings', (kind) => {
     const create = (date: string) => kind === 'budget'

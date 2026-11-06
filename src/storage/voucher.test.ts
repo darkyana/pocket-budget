@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildFamilyLedgerVoucher } from './voucher'
 import { timestampOf } from '../core/time'
+import type { MoneyRecord } from '../core/types'
 
 const ts = (date: string) => timestampOf(date, new Date(2026, 0, 1, 12, 0, 0))
 
@@ -24,8 +25,8 @@ describe('buildFamilyLedgerVoucher', () => {
   it('走账与未付固定支出不导出；无账户记录跳过并计数', () => {
     const { voucher, skipped } = buildFamilyLedgerVoucher([
       { id: 't', ts: ts('2026-10-02'), kind: 'transfer', from: '现金', to: '储蓄卡', amount: 500, note: '' },
-      { id: 'u', ts: ts('2026-10-02'), kind: 'fixed', item: '物业费', amount: 3000, periodKey: '2026-10', paid: false },
-      { id: 'n', ts: ts('2026-10-02'), kind: 'routine', category: '咖啡', amount: 18, note: '' },
+      { id: 'u', ts: ts('2026-10-02'), kind: 'fixed', item: '物业费', amount: 3000, periodKey: '2026-10', paid: false, account: '储蓄卡' },
+      { id: 'n', ts: ts('2026-10-02'), kind: 'routine', category: '咖啡', amount: 18, note: '', account: '' } as MoneyRecord,
       { id: 'p', ts: ts('2026-10-02'), kind: 'fixed', item: '宠物粮', amount: 400, periodKey: '2026-10', paid: true, account: '储蓄卡' },
     ])
     expect(voucher.rows.map((r) => r.ref_id)).toEqual(['p'])

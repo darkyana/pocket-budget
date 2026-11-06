@@ -6,12 +6,14 @@ export function AccountPicker({
   onChange,
   accounts,
   placeholder,
+  required,
 }: {
   id: string
   value: string
   onChange(v: string): void
   accounts: string[]
   placeholder?: string
+  required?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [typed, setTyped] = useState(false)
@@ -26,6 +28,7 @@ export function AccountPicker({
         value={value}
         placeholder={placeholder}
         autoComplete="off"
+        required={required}
         onFocus={() => setOpen(true)}
         onBlur={() => {
           setOpen(false)
