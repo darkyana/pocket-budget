@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
+import { effectiveRecords, expensePeriodKey, fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
+import { FixedExpenseSheet, type FixedTarget } from '../components/FixedExpenseSheet'
 import { money, todayHeadline } from '../format'
 import { barColor, leftStatus, statusColor } from '../statusColor'
 
@@ -12,11 +13,11 @@ const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 export function Today() {
   const settings = useApp((s) => s.settings)
   const records = useApp((s) => s.records)
-  const toggleFixedExpense = useApp((s) => s.toggleFixedExpense)
   const jumpToRecords = useApp((s) => s.jumpToRecords)
   const openQuickRetro = useApp((s) => s.openQuickRetro)
   const toast = useToast((s) => s.show)
   const [entry, setEntry] = useState<EntryTarget | null>(null)
+  const [fixedSheet, setFixedSheet] = useState<FixedTarget | null>(null)
   const [fixedOpen, setFixedOpen] = useState(false)
 
   const pressBudget = useRef('')
@@ -178,8 +179,15 @@ export function Today() {
                   className="fixed-item"
                   key={c.name}
                   onClick={() => {
-                    toggleFixedExpense(c.name)
-                    toast(`${c.name}${c.paid ? ' 改回未付' : ' ✓ 已付'}`)
+                    const periodKey = expensePeriodKey(now, c.cycle ?? 'monthly')
+                    const payment = effectiveRecords(records).find(
+                      (e) => e.kind === 'fixed' && e.item === c.name && e.periodKey === periodKey,
+                    )
+                    setFixedSheet(
+                      c.paid && payment?.kind === 'fixed'
+                        ? { kind: 'edit', event: payment }
+                        : { kind: 'mark', item: { name: c.name, amount: c.amount, cycle: c.cycle } },
+                    )
                   }}
                 >
                   <span>
@@ -202,6 +210,7 @@ export function Today() {
       </div>
 
       {entry && <EntrySheet target={entry} onClose={() => setEntry(null)} />}
+      {fixedSheet && <FixedExpenseSheet target={fixedSheet} onClose={() => setFixedSheet(null)} />}
     </>
   )
 }

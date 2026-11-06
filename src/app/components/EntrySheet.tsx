@@ -74,7 +74,7 @@ export function EntrySheet({
   const canSubmit =
     formKind === 'transfer'
       ? transferOk
-      : amountOk && (formKind === 'routine' ? categoryPick !== '' : budgetPick !== '')
+      : amountOk && account.trim() !== '' && (formKind === 'routine' ? categoryPick !== '' : budgetPick !== '')
   const kindPickable = kindSwitchable || target.type === 'free'
 
   function submit() {
@@ -222,13 +222,14 @@ export function EntrySheet({
         )}
         {formKind !== 'transfer' && (
           <div className="field-row">
-            <label htmlFor="ef-account">用的哪个账户（可空）</label>
+            <label htmlFor="ef-account">用的哪个账户</label>
             <AccountPicker
               id="ef-account"
               value={account}
               onChange={setAccount}
               accounts={accounts}
-              placeholder="如：现金 / 微信"
+              placeholder="如：现金 / 电子钱包"
+              required
             />
           </div>
         )}

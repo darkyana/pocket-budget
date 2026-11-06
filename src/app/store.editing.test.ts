@@ -50,15 +50,29 @@ describe('record editing persistence', () => {
     const convertedKind = kind === 'routine' ? 'budget' : 'routine'
     useApp.getState().saveEntryRecord(id, {
       kind: convertedKind, category: '物业费', budget: '', dir: 'out', amount: 18,
-      note: '', account: '', date: '2026-10-20',
+      note: '', account: '现金', date: '2026-10-20',
     })
 
     await expectSavedRecords([{
-      id, ts: new Date(2026, 9, 20, 14, 25, 36).getTime(), amount: 18, note: '',
+      id, ts: new Date(2026, 9, 20, 14, 25, 36).getTime(), amount: 18, note: '', account: '现金',
       ...(convertedKind === 'routine'
         ? { kind: convertedKind, category: '物业费' }
         : { kind: convertedKind, budget: '', dir: 'out' }),
     }])
+  })
+
+  it.each(['routine', 'budget'] as const)('rejects %s creation and edits without an account', (kind) => {
+    if (kind === 'routine') expect(() => useApp.getState().addRhythm('宠物粮', 20, '', ' ', '2026-10-22')).toThrow('账户不能为空')
+    else expect(() => useApp.getState().addBudgetEntry('宠物粮', 'out', 20, '', '', '2026-10-22')).toThrow('账户不能为空')
+    expect(useApp.getState().records).toEqual([])
+
+    if (kind === 'routine') useApp.getState().addRhythm('宠物粮', 20, '', '储蓄卡', '2026-10-22')
+    else useApp.getState().addBudgetEntry('宠物粮', 'out', 20, '', '储蓄卡', '2026-10-22')
+    const id = useApp.getState().records[0].id
+    expect(() => useApp.getState().saveEntryRecord(id, {
+      kind, category: '宠物粮', budget: '宠物粮', dir: 'out', amount: 5, note: '', account: '', date: '2026-10-22',
+    })).toThrow('账户不能为空')
+    expect(useApp.getState().records[0]).toMatchObject({ amount: useApp.getState().records[0].kind === 'routine' ? 20 : 20 })
   })
 
   it('preserves transfer endpoints when omitted and never converts transfers to budget records', async () => {
@@ -81,7 +95,7 @@ describe('record editing persistence', () => {
     useApp.getState().updateSettings((settings) => {
       settings.fixedExpenses = [{ name: '会员年费', amount: 120, cycle: 'yearly' }]
     })
-    useApp.getState().toggleFixedExpense('会员年费')
+    useApp.getState().markFixedExpensePaid('会员年费', { account: '储蓄卡', date: '2026-10-22' })
     const original = useApp.getState().records[0]
 
     useApp.getState().editFixedExpense(original.id, { account: ' 电子钱包 ', date: '2026-10-21' })
@@ -91,12 +105,8 @@ describe('record editing persistence', () => {
       account: '电子钱包', ts: new Date(2026, 9, 21, 14, 25, 36).getTime(),
     }])
 
-    useApp.getState().editFixedExpense(original.id, { account: '', date: '2026-10-20' })
-
-    await expectSavedRecords([{
-      id: original.id, kind: 'fixed', item: '会员年费', amount: 120, periodKey: '2026', paid: true,
-      account: undefined, ts: new Date(2026, 9, 20, 14, 25, 36).getTime(),
-    }])
+    expect(() => useApp.getState().editFixedExpense(original.id, { account: '', date: '2026-10-20' })).toThrow('账户不能为空')
+    expect(useApp.getState().records[0]).toMatchObject({ account: '电子钱包' })
   })
 
   it('saves both transfer accounts, date, amount and note without changing identity', async () => {

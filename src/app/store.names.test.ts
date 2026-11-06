@@ -70,8 +70,8 @@ describe('configuration names', () => {
 
   it('renames same-name historical routines without adding day-type attribution', async () => {
     useApp.getState().updateSettings((s) => { s.dayPlans.周末日.push({ name: '宠物粮', expect: 30 }) })
-    useApp.getState().addRhythm('宠物粮', 10, '', '', '2026-01-01')
-    useApp.getState().addRhythm('宠物粮', 20, '', '', '2026-01-03')
+    useApp.getState().addRhythm('宠物粮', 10, '', '现金', '2026-01-01')
+    useApp.getState().addRhythm('宠物粮', 20, '', '现金', '2026-01-03')
     const records = useApp.getState().records
     useApp.getState().saveRoutine('工作日', 0, { name: '家政服务', expect: 40 })
     await useApp.getState().init()
@@ -84,8 +84,8 @@ describe('configuration names', () => {
       s.dayPlans.工作日.push({ name: '家政服务', expect: 40 })
       s.budgets.push({ name: '会员年费', month: 200 })
     })
-    useApp.getState().addRhythm('家政服务', 10, '', '', '2026-01-01')
-    useApp.getState().addBudgetEntry('会员年费', 'out', 10, '', '', '2026-01-01')
+    useApp.getState().addRhythm('家政服务', 10, '', '现金', '2026-01-01')
+    useApp.getState().addBudgetEntry('会员年费', 'out', 10, '', '现金', '2026-01-01')
     const before = structuredClone(storage.saved)
     for (let attempt = 0; attempt < 2; attempt++) {
       expect(() => useApp.getState().saveRoutine('工作日', 1, { name: ' 宠物粮 ', expect: 50 })).toThrow('已存在')

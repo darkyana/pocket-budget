@@ -21,13 +21,13 @@ const ts = (d: number, h = 12) => new Date(2026, 9, d, h, 0).getTime()
 
 let seq = 0
 const routine = (category: string, amount: number, at: number): MoneyRecord =>
-  ({ id: `r${++seq}`, ts: at, kind: 'routine', category, amount, note: '' })
+  ({ id: `r${++seq}`, ts: at, kind: 'routine', category, amount, note: '', account: '现金' })
 const budgetOut = (budget: string, amount: number, at: number): MoneyRecord =>
-  ({ id: `po${++seq}`, ts: at, kind: 'budget', budget, dir: 'out', amount, note: '' })
+  ({ id: `po${++seq}`, ts: at, kind: 'budget', budget, dir: 'out', amount, note: '', account: '现金' })
 const budgetIn = (budget: string, amount: number, at: number): MoneyRecord =>
-  ({ id: `pi${++seq}`, ts: at, kind: 'budget', budget, dir: 'in', amount, note: '' })
+  ({ id: `pi${++seq}`, ts: at, kind: 'budget', budget, dir: 'in', amount, note: '', account: '现金' })
 const commit = (item: string, paid: boolean, periodKey: string, at: number, amount = 420): MoneyRecord =>
-  ({ id: `c${++seq}`, ts: at, kind: 'fixed', item, amount, periodKey, paid })
+  ({ id: `c${++seq}`, ts: at, kind: 'fixed', item, amount, periodKey, paid, account: '现金' })
 const transfer = (from: string, to: string, amount: number, at: number): MoneyRecord =>
   ({ id: `t${++seq}`, ts: at, kind: 'transfer', from, to, amount, note: '' })
 

@@ -3,10 +3,10 @@ import type { MoneyRecord } from './types'
 import { filterRecords } from './recordsFilter'
 
 const records: MoneyRecord[] = [
-  { id: 'before', kind: 'routine', category: '宠物粮', amount: 20, note: '', ts: new Date(2026, 9, 20, 23, 59).getTime() },
-  { id: 'start', kind: 'routine', category: '宠物粮', amount: 20, note: '', ts: new Date(2026, 9, 21, 0, 0).getTime() },
+  { id: 'before', kind: 'routine', category: '宠物粮', amount: 20, note: '', account: '现金', ts: new Date(2026, 9, 20, 23, 59).getTime() },
+  { id: 'start', kind: 'routine', category: '宠物粮', amount: 20, note: '', account: '现金', ts: new Date(2026, 9, 21, 0, 0).getTime() },
   { id: 'end', kind: 'transfer', from: '储蓄卡', to: '备用金', amount: 20, note: '', ts: new Date(2026, 9, 22, 23, 59).getTime() },
-  { id: 'after', kind: 'budget', budget: '宠物粮', dir: 'in', amount: 20, note: '', ts: new Date(2026, 9, 23, 0, 0).getTime() },
+  { id: 'after', kind: 'budget', budget: '宠物粮', dir: 'in', amount: 20, note: '', account: '现金', ts: new Date(2026, 9, 23, 0, 0).getTime() },
 ]
 
 describe('流水 filtering', () => {
