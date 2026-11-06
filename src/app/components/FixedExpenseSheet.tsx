@@ -30,7 +30,7 @@ export function FixedExpenseSheet({
   const label = target.kind === 'mark' ? target.item.name : target.event.item
   const amount = target.kind === 'mark' ? target.item.amount : target.event.amount
   const cycle = target.kind === 'mark' ? target.item.cycle : undefined
-  const defaultAccount = target.kind === 'edit' && target.event.account ? target.event.account : lastAccount ?? accounts[0] ?? ''
+  const defaultAccount = target.kind === 'edit' ? target.event.account ?? '' : lastAccount ?? ''
 
   const [account, setAccount] = useState(defaultAccount)
   const [date, setDate] = useState(() => dayKeyOf(target.kind === 'edit' ? target.event.ts : new Date()))
@@ -73,7 +73,7 @@ export function FixedExpenseSheet({
             value={account}
             onChange={setAccount}
             accounts={accounts}
-            placeholder="如：现金 / 微信"
+            placeholder="如：现金 / 电子钱包"
             required
           />
         </div>

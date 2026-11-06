@@ -18,6 +18,12 @@ function persist(s: { settings: Settings; records: MoneyRecord[] }) {
   saveState(state).catch((err) => console.error('落盘失败', err))
 }
 
+function requireAccount(account: string): string {
+  const acct = account.trim()
+  if (!acct) throw new Error('账户不能为空')
+  return acct
+}
+
 function withUsedAccount(settings: Settings, account: string): Settings {
   const next = withAccount(settings, account)
   return account && next.lastAccount !== account ? { ...next, lastAccount: account } : next
@@ -123,8 +129,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   addRhythm(category, amount, note, account, date) {
     validateRecordDate(date)
-    const acct = account.trim()
-    if (!acct) throw new Error('账户不能为空')
+    const acct = requireAccount(account)
     const e: MoneyRecord = {
       id: uid(),
       ts: timestampOf(date),
@@ -140,8 +145,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   addBudgetEntry(budget, dir, amount, note, account, date) {
     validateRecordDate(date)
-    const acct = account.trim()
-    if (!acct) throw new Error('账户不能为空')
+    const acct = requireAccount(account)
     const e: MoneyRecord = {
       id: uid(),
       ts: timestampOf(date),
@@ -158,8 +162,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   markFixedExpensePaid(name, payment) {
     validateRecordDate(payment.date)
-    const acct = payment.account.trim()
-    if (!acct) throw new Error('账户不能为空')
+    const acct = requireAccount(payment.account)
     const c = get().settings.fixedExpenses.find((x) => x.name === name)
     if (!c) return
     const cycle: ExpenseCycle = c.cycle ?? 'monthly'
@@ -207,8 +210,7 @@ export const useApp = create<AppState>()((set, get) => ({
             to: patch.to?.trim() ?? e.to,
           }
         }
-        const acct = patch.account.trim()
-        if (!acct) throw new Error('账户不能为空')
+        const acct = requireAccount(patch.account)
         return {
           ...e,
           amount: patch.amount,
@@ -223,8 +225,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   saveEntryRecord(id, next) {
     validateRecordDate(next.date)
-    const acct = next.account.trim()
-    if (!acct) throw new Error('账户不能为空')
+    const acct = requireAccount(next.account)
     set((s) => ({
       records: s.records.map((e): MoneyRecord => {
         if (e.id !== id || (e.kind !== 'routine' && e.kind !== 'budget')) return e
@@ -239,8 +240,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   editFixedExpense(id, patch) {
     validateRecordDate(patch.date)
-    const acct = patch.account.trim()
-    if (!acct) throw new Error('账户不能为空')
+    const acct = requireAccount(patch.account)
     const s = get()
     const payment = effectiveRecords(s.records).find((e) => e.id === id)
     if (!payment || payment.kind !== 'fixed') return

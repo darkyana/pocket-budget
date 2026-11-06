@@ -228,7 +228,7 @@ export function EntrySheet({
               value={account}
               onChange={setAccount}
               accounts={accounts}
-              placeholder="如：现金 / 微信"
+              placeholder="如：现金 / 电子钱包"
               required
             />
           </div>

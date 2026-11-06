@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { effectiveRecords, fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
+import { effectiveRecords, expensePeriodKey, fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
@@ -179,7 +179,10 @@ export function Today() {
                   className="fixed-item"
                   key={c.name}
                   onClick={() => {
-                    const payment = effectiveRecords(records).find((e) => e.kind === 'fixed' && e.item === c.name)
+                    const periodKey = expensePeriodKey(now, c.cycle ?? 'monthly')
+                    const payment = effectiveRecords(records).find(
+                      (e) => e.kind === 'fixed' && e.item === c.name && e.periodKey === periodKey,
+                    )
                     setFixedSheet(
                       c.paid && payment?.kind === 'fixed'
                         ? { kind: 'edit', event: payment }
