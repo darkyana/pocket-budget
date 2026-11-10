@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { effectiveRecords, expensePeriodKey, fixedExpensesThisPeriod, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
+import { effectiveRecords, expensePeriodKey, fixedExpensesThisPeriod, budgetMonthPace, budgetViews, routinePace, routineToday, todayDayType, visibleBudgets } from '../../core/derive'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
@@ -37,6 +37,7 @@ export function Today() {
   const pace = routinePace(records, settings, now)
   const views = budgetViews(records, settings, now)
   const budgets = visibleBudgets(views)
+  const budgetPace = budgetMonthPace(views)
   const fixedExpenses = fixedExpensesThisPeriod(records, settings, now)
   const pages = Math.max(1, Math.ceil(routine.buckets.length / 4))
 
@@ -54,7 +55,7 @@ export function Today() {
           <span>
             <b>日常</b>{' '}
             {pace.possible > 0 && (
-              <button type="button" className="pace-chip" onClick={openQuickRetro}>
+              <button type="button" className="pace-chip" onClick={() => openQuickRetro()}>
                 {Math.round(pace.ratio * 100)}%
               </button>
             )}
@@ -107,7 +108,14 @@ export function Today() {
 
       <div className="card">
         <div className="row-block">
-          <b>预算</b>
+          <span>
+            <b>预算</b>{' '}
+            {budgetPace.possible > 0 && (
+              <button type="button" className="pace-chip" onClick={() => openQuickRetro('budget')}>
+                {Math.round(budgetPace.ratio * 100)}%
+              </button>
+            )}
+          </span>
         </div>
         {budgets.length > 0 ? (
           budgets.map((p) => {
@@ -132,9 +140,14 @@ export function Today() {
               >
                 <div className="row">
                   <span>{p.name}</span>
-                  <b className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
-                    {p.weekLeft >= 0 ? `还能花 ${money(p.weekLeft)}` : `超支 ${money(-p.weekLeft)}`}
-                  </b>
+                  <span className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
+                    <b>
+                      {p.weekLeft >= 0 ? `本周还能花 ${money(p.weekLeft)}` : `本周超支 ${money(-p.weekLeft)}`}
+                    </b>
+                    <span className={p.monthStatus === 'ok' ? 'muted' : ''} style={p.monthStatus === 'ok' ? undefined : { color: statusColor(p.monthStatus) }}>
+                      {p.monthLeft >= 0 ? `（全月还剩 ${money(p.monthLeft)}）` : `（全月超支 ${money(-p.monthLeft)}）`}
+                    </span>
+                  </span>
                 </div>
                 <div className="bar">
                   <i
