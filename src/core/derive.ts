@@ -330,6 +330,8 @@ export interface BudgetView {
   weekSpent: number
   weekLeft: number
   monthSpent: number
+  monthLeft: number
+  monthStatus: DayStatus
   monthOutCount: number
   monthBackflow: number
   projection: number
@@ -358,6 +360,7 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
     const weekSpent = netBudgetSpend(records, p.name, (ts) => isSameWeek(ts, now))
     const monthEntries = budgetEntriesIn(records, p.name, (ts) => monthKeyOf(ts) === monthKeyOf(now))
     const monthSpent = netAmount(monthEntries)
+    const monthRatio = monthSpent / p.month
     return {
       name: p.name,
       month: p.month,
@@ -365,6 +368,8 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
       weekSpent,
       weekLeft: p.month / 4 - weekSpent,
       monthSpent,
+      monthLeft: p.month - monthSpent,
+      monthStatus: statusOfRatio(monthRatio),
       monthOutCount: monthEntries.filter((e) => e.dir === 'out').length,
       monthBackflow: monthEntries.filter((e) => e.dir === 'in').length,
       projection: elapsed ? monthSpent : projectMonthEnd(monthSpent, now),
@@ -374,6 +379,12 @@ export function budgetViews(records: MoneyRecord[], settings: Settings, now: Dat
 
 export function visibleBudgets(views: BudgetView[]): BudgetView[] {
   return [...views].sort((a, b) => b.weekLeft - a.weekLeft)
+}
+
+export function budgetMonthPace(views: BudgetView[]): PaceView {
+  const spent = views.reduce((s, v) => s + v.monthSpent, 0)
+  const possible = views.reduce((s, v) => s + v.month, 0)
+  return { spent, possible, ratio: possible > 0 ? spent / possible : 0 }
 }
 
 export function expensePeriodKey(now: Date, cycle: ExpenseCycle): string {

@@ -7,7 +7,9 @@ import {
   dayLabel,
   groupByDay,
   budgetMonthEntries,
+  budgetMonthPace,
   budgetViews,
+  type BudgetView,
   monthQuickCalc,
   renameRecordAnchor,
   retroMonthRange,
@@ -296,6 +298,18 @@ describe('budgetViews', () => {
     expect(view.projection).toBeCloseTo(70 * (31 / 11))
   })
 
+  it('月剩余与月消费力状态：80% 起警示、超 100% 记超支', () => {
+    const records = [
+      budgetOut('购物', 640, ts(11, 10)),
+      budgetOut('学习', 301, ts(11, 11)),
+    ]
+    const [shop, study] = budgetViews(records, settings, NOW)
+    expect(shop.monthLeft).toBe(160)
+    expect(shop.monthStatus).toBe('warn')
+    expect(study.monthLeft).toBe(-1)
+    expect(study.monthStatus).toBe('over')
+  })
+
   it('跨周隔离：上周流水不进本周，但仍计本月', () => {
     const records = [budgetOut('购物', 50, ts(4)), budgetOut('购物', 100, ts(11))]
     const [view] = budgetViews(records, settings, NOW)
@@ -304,21 +318,48 @@ describe('budgetViews', () => {
   })
 
   it('visibleBudgets：全量保留，有余额在前按剩余降序，花完与超支殿后', () => {
-    const views = [
-      { name: 'A', month: 1, weekBudget: 100, weekSpent: 70, weekLeft: 30, monthSpent: 70, monthOutCount: 1, monthBackflow: 0, projection: 0 },
-      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthOutCount: 1, monthBackflow: 0, projection: 0 },
-      { name: 'C', month: 1, weekBudget: 100, weekSpent: 10, weekLeft: 90, monthSpent: 10, monthOutCount: 1, monthBackflow: 0, projection: 0 },
-      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+    const views: BudgetView[] = [
+      { name: 'A', month: 1, weekBudget: 100, weekSpent: 70, weekLeft: 30, monthSpent: 70, monthLeft: 30, monthStatus: 'ok', monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthLeft: 0, monthStatus: 'warn', monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'C', month: 1, weekBudget: 100, weekSpent: 10, weekLeft: 90, monthSpent: 10, monthLeft: 90, monthStatus: 'ok', monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthLeft: -50, monthStatus: 'over', monthOutCount: 1, monthBackflow: 0, projection: 0 },
     ]
     expect(visibleBudgets(views).map((v) => v.name)).toEqual(['C', 'A', 'B', 'D'])
   })
 
   it('visibleBudgets：全部花完或超支时不再返回空列表', () => {
-    const views = [
-      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthOutCount: 1, monthBackflow: 0, projection: 0 },
-      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthOutCount: 1, monthBackflow: 0, projection: 0 },
+    const views: BudgetView[] = [
+      { name: 'B', month: 1, weekBudget: 100, weekSpent: 100, weekLeft: 0, monthSpent: 100, monthLeft: 0, monthStatus: 'warn', monthOutCount: 1, monthBackflow: 0, projection: 0 },
+      { name: 'D', month: 1, weekBudget: 100, weekSpent: 150, weekLeft: -50, monthSpent: 150, monthLeft: -50, monthStatus: 'over', monthOutCount: 1, monthBackflow: 0, projection: 0 },
     ]
     expect(visibleBudgets(views).map((v) => v.name)).toEqual(['B', 'D'])
+  })
+})
+
+describe('budgetMonthPace 预算合计月消费力', () => {
+  it('分子 = Σ各预算月净支出；分母 = Σ各预算月额度；比率不截断', () => {
+    const records = [
+      budgetOut('购物', 700, ts(11, 10)),
+      budgetIn('购物', 60, ts(11, 11)),
+      budgetOut('学习', 300, ts(11, 12)),
+    ]
+    const view = budgetMonthPace(budgetViews(records, settings, NOW))
+    expect(view.spent).toBe(940)
+    expect(view.possible).toBe(1100)
+    expect(view.ratio).toBeCloseTo(940 / 1100)
+  })
+
+  it('上月流水不计入分子', () => {
+    const records = [budgetOut('购物', 400, new Date(2026, 8, 15, 12).getTime())]
+    const view = budgetMonthPace(budgetViews(records, settings, NOW))
+    expect(view.spent).toBe(0)
+    expect(view.ratio).toBe(0)
+  })
+
+  it('无预算：possible = 0，ratio = 0，界面据此隐藏', () => {
+    const view = budgetMonthPace(budgetViews([], paceSettings, NOW))
+    expect(view.possible).toBe(0)
+    expect(view.ratio).toBe(0)
   })
 })
 

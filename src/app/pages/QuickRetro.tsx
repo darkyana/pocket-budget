@@ -60,6 +60,12 @@ export function QuickRetro() {
   useEffect(() => {
     const scroller = document.querySelector('.phone')
     if (!scroller) return
+    const focus = useApp.getState().consumeRetroFocus()
+    const target = focus === 'budget' ? document.getElementById('retro-budget') : null
+    if (target) {
+      scroller.scrollTop = target.offsetTop - 8
+      return
+    }
     const saved = scroller.scrollTop
     scroller.scrollTop = 0
     return () => {
@@ -162,7 +168,14 @@ export function QuickRetro() {
 
       <div className="card">
         <div className="row-block">
-          <b>{month.getMonth() + 1}月日历</b>
+          {monthIdx(month) === monthIdx(now) && pace.possible > 0 ? (
+            <b>
+              {month.getMonth() + 1}月 至今消费力{' '}
+              <span style={{ color: statusColor(paceSt) }}>{pacePct}%</span>
+            </b>
+          ) : (
+            <b>{month.getMonth() + 1}月日历</b>
+          )}
         </div>
         <div className="cal-grid">
           {CAL_WEEK.map((w) => (
@@ -220,22 +233,12 @@ export function QuickRetro() {
             <span>超</span>
           </div>
         </div>
-      </div>
-
-      <div className="card">
-        <div className="row">
-          <span>
-            <b>当月至今消费力</b>
-          </span>
-          <b className="hero-num" style={{ color: statusColor(paceSt) }}>{pacePct}%</b>
-        </div>
-        <div className="bar">
-          <i style={{ width: `${pct(pace.ratio)}%`, background: statusColor(paceSt) }} />
-        </div>
-        <div className="small muted block-gap">
-          本月日常实际 {money(pace.spent)} ÷ 已过 {stats.passedDays} 天计划 {money(pace.possible)} ·{' '}
-          {stats.saved >= 0 ? `比计划省下 ${money(stats.saved)}` : `比计划超 ${money(-stats.saved)}`}
-        </div>
+        {pace.possible > 0 && (
+          <div className="small muted block-gap">
+            本月日常实际 {money(pace.spent)} ÷ 已过 {stats.passedDays} 天计划 {money(pace.possible)} ·{' '}
+            {stats.saved >= 0 ? `比计划省下 ${money(stats.saved)}` : `比计划超 ${money(-stats.saved)}`}
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -284,7 +287,7 @@ export function QuickRetro() {
       </div>
 
       {settings.budgets.length > 0 && (
-        <div className="card">
+        <div className="card" id="retro-budget">
           <div className="row-block">
             <b>预算</b>
           </div>

@@ -74,6 +74,7 @@ interface AppState {
   records: MoneyRecord[]
   tab: Tab
   overlay: Overlay | null
+  retroFocus: 'budget' | null
   pendingCatTokens: string[]
   pendingAccount: string
   init(): Promise<void>
@@ -99,7 +100,8 @@ interface AppState {
   deleteRecord(id: string): void
   renameAnchor(kind: 'routine' | 'budget' | 'fixed', from: string, to: string): void
   goTab(tab: Tab): void
-  openQuickRetro(): void
+  openQuickRetro(focus?: 'budget'): void
+  consumeRetroFocus(): 'budget' | null
   closeOverlay(): void
   jumpToRecords(tokens: string[], account?: string): void
   clearPendingCats(): void
@@ -118,6 +120,7 @@ export const useApp = create<AppState>()((set, get) => ({
   records: [],
   tab: 'today',
   overlay: null,
+  retroFocus: null,
   pendingCatTokens: [],
   pendingAccount: '',
 
@@ -280,12 +283,18 @@ export const useApp = create<AppState>()((set, get) => ({
     set({ tab, overlay: null })
   },
 
-  openQuickRetro() {
-    set({ overlay: 'quickRetro' })
+  openQuickRetro(focus?: 'budget') {
+    set({ overlay: 'quickRetro', retroFocus: focus ?? null })
+  },
+
+  consumeRetroFocus() {
+    const focus = get().retroFocus
+    if (focus) set({ retroFocus: null })
+    return focus
   },
 
   closeOverlay() {
-    set({ overlay: null })
+    set({ overlay: null, retroFocus: null })
   },
 
   jumpToRecords(tokens, account) {
