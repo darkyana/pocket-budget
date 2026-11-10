@@ -119,6 +119,7 @@ export function Today() {
         </div>
         {budgets.length > 0 ? (
           budgets.map((p) => {
+            const weekSt = leftStatus(p.weekLeft, p.weekBudget)
             const weak = p.weekLeft <= 0
             return (
               <button
@@ -140,20 +141,22 @@ export function Today() {
               >
                 <div className="row">
                   <span>{p.name}</span>
-                  <span className="small" style={{ color: statusColor(leftStatus(p.weekLeft, p.weekBudget)) }}>
+                  <span className="small" style={{ color: statusColor(weekSt) }}>
                     <b>
                       {p.weekLeft >= 0 ? `本周还能花 ${money(p.weekLeft)}` : `本周超支 ${money(-p.weekLeft)}`}
                     </b>
-                    <span className={p.monthStatus === 'ok' ? 'muted' : ''} style={p.monthStatus === 'ok' ? undefined : { color: statusColor(p.monthStatus) }}>
-                      {p.monthLeft >= 0 ? `（全月还剩 ${money(p.monthLeft)}）` : `（全月超支 ${money(-p.monthLeft)}）`}
-                    </span>
+                    {weekSt === 'ok' && p.monthStatus !== 'ok' && (
+                      <span style={{ color: statusColor(p.monthStatus) }}>
+                        {p.monthLeft >= 0 ? `（全月还剩 ${money(p.monthLeft)}）` : `（全月超支 ${money(-p.monthLeft)}）`}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="bar">
                   <i
                     style={{
                       width: `${pct(p.weekLeft / p.weekBudget)}%`,
-                      background: barColor(leftStatus(p.weekLeft, p.weekBudget)),
+                      background: barColor(weekSt),
                     }}
                   />
                 </div>

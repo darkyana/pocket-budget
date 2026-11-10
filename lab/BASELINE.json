@@ -1,5 +1,5 @@
 {
-  "commit": "b2e61abf7a6924436d49773caafb9b9132dcbd5a",
+  "commit": "6fd00db9937a4b67ed04d36f518d8d72ecdf9d8b",
   "files": [
     {
       "src": "src/app/AccountSettingsSheet.tsx",
@@ -71,7 +71,7 @@
     },
     {
       "src": "src/app/pages/Today.tsx",
-      "hash": "sha256:c554f6dd170e6de8d2648d9ed795f6a02930b6d8b676476800e350cc5ede150c"
+      "hash": "sha256:44b54327040ed718b0c0cddfb7f4a295c84c23a1ef930be1885e7f9d899079e9"
     },
     {
       "src": "src/app/statusColor.ts",
