@@ -21,10 +21,9 @@ import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { useLongPress } from '../components/dragSort'
 import { money } from '../format'
-import { statusColor } from '../statusColor'
+import { remainBar, statusColor } from '../statusColor'
 import type { BudgetView } from '../../core/derive'
 
-const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
 const statusText = (s: DayStatus) => (s === 'over' ? '超' : s === 'warn' ? '贴近' : '省')
 const ratioText = (r: number) => (Number.isFinite(r) ? `${Math.round(r * 100)}%` : '超支')
 const diffText = (d: DayRetro) => (d.spent > d.expect ? `超 ${money(d.spent - d.expect)}` : `省 ${money(d.expect - d.spent)}`)
@@ -262,7 +261,9 @@ export function QuickRetro() {
         <div className="row-block">
           <b>节奏透视</b>
         </div>
-        {[stats.workAvg, stats.restAvg].filter((g): g is GroupAvg => !!g).map((g) => (
+        {[stats.workAvg, stats.restAvg].filter((g): g is GroupAvg => !!g).map((g) => {
+          const remain = g.expect - g.spent
+          return (
           <div key={g.label} className="block-gap">
             <div className="row">
               <span className="small">
@@ -273,10 +274,11 @@ export function QuickRetro() {
               </span>
             </div>
             <div className="bar">
-              <i style={{ width: `${pct(g.ratio)}%`, background: statusColor(statusOfRatio(g.ratio)) }} />
+              <i style={remainBar(remain, g.expect)} />
             </div>
           </div>
-        ))}
+          )
+        })}
         {(stats.best || stats.worst) && (
           <div className="small muted block-gap">
             {stats.best && <>最省 {stats.best.day} 日（{ratioText(stats.best.ratio)} · {diffText(stats.best)}）</>}
@@ -293,6 +295,7 @@ export function QuickRetro() {
           </div>
           {views.map((p) => {
             const ratio = p.monthSpent / p.month
+            const remain = p.month - p.monthSpent
             return (
               <button
                 type="button"
@@ -310,7 +313,7 @@ export function QuickRetro() {
                   </span>
                 </div>
                 <div className="bar">
-                  <i style={{ width: `${pct(ratio)}%`, background: statusColor(statusOfRatio(ratio)) }} />
+                  <i style={remainBar(remain, p.month)} />
                 </div>
               </button>
             )
@@ -332,7 +335,7 @@ export function QuickRetro() {
             </b>
           </div>
           <div className="bar">
-            <i style={{ width: `${pct(detail.ratio)}%`, background: statusColor(detail.status) }} />
+            <i style={remainBar(detail.expect - detail.spent, detail.expect)} />
           </div>
           <div className="small block-gap" style={{ color: statusColor(detail.status) }}>
             {detail.spent > detail.expect
@@ -362,6 +365,7 @@ export function QuickRetro() {
             const entries = budgetMonthEntries(records, budgetDetail.name, month)
             const ratio = budgetDetail.monthSpent / budgetDetail.month
             const st = statusOfRatio(ratio)
+            const remain = budgetDetail.month - budgetDetail.monthSpent
             return (
               <>
                 <div className="row-block">
@@ -374,7 +378,7 @@ export function QuickRetro() {
                   </b>
                 </div>
                 <div className="bar">
-                  <i style={{ width: `${pct(ratio)}%`, background: statusColor(st) }} />
+                  <i style={remainBar(remain, budgetDetail.month)} />
                 </div>
                 <div className="small block-gap" style={{ color: statusColor(st) }}>
                   {budgetDetail.monthSpent > budgetDetail.month

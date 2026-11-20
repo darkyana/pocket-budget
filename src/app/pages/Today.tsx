@@ -6,9 +6,7 @@ import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { FixedExpenseSheet, type FixedTarget } from '../components/FixedExpenseSheet'
 import { money, moneyExact, todayHeadline } from '../format'
-import { barColor, leftStatus, statusColor } from '../statusColor'
-
-const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
+import { remainBar, statusColor } from '../statusColor'
 
 export function Today() {
   const settings = useApp((s) => s.settings)
@@ -86,12 +84,7 @@ export function Today() {
                         <span className="small muted">{money(b.spent)}</span>
                       </div>
                       <div className="bar">
-                        <i
-                          style={{
-                            width: `${pct(b.left / b.expect)}%`,
-                            background: barColor(leftStatus(b.left, b.expect)),
-                          }}
-                        />
+                        <i style={remainBar(b.left, b.expect)} />
                       </div>
                     </button>
                   )
@@ -153,12 +146,7 @@ export function Today() {
                   </span>
                 </div>
                 <div className="bar">
-                  <i
-                    style={{
-                      width: `${pct(p.weekLeft / p.weekBudget)}%`,
-                      background: barColor(weekSt),
-                    }}
-                  />
+                  <i style={remainBar(p.weekLeft, p.weekBudget)} />
                 </div>
               </button>
             )

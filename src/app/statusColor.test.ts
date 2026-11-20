@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { statusOfRatio } from '../core/derive'
-import { barColor, leftStatus, statusColor } from './statusColor'
+import { barColor, leftStatus, pct, remainBar, statusColor } from './statusColor'
 
 describe('statusColor', () => {
   it('maps each day status to its semantic color token', () => {
@@ -21,6 +21,31 @@ describe('barColor', () => {
     expect(barColor('ok')).toBe('var(--bar-accent)')
     expect(barColor('warn')).toBe('var(--warn)')
     expect(barColor('over')).toBe('var(--over)')
+  })
+})
+
+describe('pct', () => {
+  it('converts a ratio to a clamped percentage string', () => {
+    expect(pct(0)).toBe('0%')
+    expect(pct(0.42)).toBe('42%')
+    expect(pct(1)).toBe('100%')
+  })
+
+  it('clamps below zero and above one', () => {
+    expect(pct(-0.3)).toBe('0%')
+    expect(pct(1.7)).toBe('100%')
+  })
+})
+
+describe('remainBar', () => {
+  it('builds a remaining-fraction bar style with semantic colors', () => {
+    expect(remainBar(50, 100)).toEqual({ width: '50%', background: 'var(--bar-accent)' })
+    expect(remainBar(15, 100)).toEqual({ width: '15%', background: 'var(--warn)' })
+    expect(remainBar(-10, 100)).toEqual({ width: '0%', background: 'var(--over)' })
+  })
+
+  it('renders a zero-width over bar when the limit is not positive', () => {
+    expect(remainBar(-30, 0)).toEqual({ width: '0%', background: 'var(--over)' })
   })
 })
 
