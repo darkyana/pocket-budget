@@ -6,7 +6,7 @@ import { AccountPicker } from './AccountPicker'
 import { useApp } from '../store'
 import { useToast } from '../toast'
 import { dayKeyOf } from '../../core/time'
-import { money } from '../format'
+import { moneyExact } from '../format'
 import type { FixedExpense, MoneyRecord } from '../../core/types'
 
 export type FixedTarget =
@@ -61,7 +61,7 @@ export function FixedExpenseSheet({
         }}
       >
         <div className="small muted field-row">
-          {paid ? '编辑付款' : '标记已付'} · {money(amount)}（金额在设置里改）
+          {paid ? '编辑付款' : '标记已付'} · {moneyExact(amount)}（金额在设置里改）
           {cycle === 'yearly' ? ' · 年付' : ''}
         </div>
         <div className="field-row">

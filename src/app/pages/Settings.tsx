@@ -10,7 +10,7 @@ import { FormSheet, type FieldDef } from '../components/FormSheet'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { FormFooter } from '../components/FormFooter'
 import { AccountSettingsSheet } from '../AccountSettingsSheet'
-import { money } from '../format'
+import { money, moneyExact } from '../format'
 
 type Seg = 'routine' | 'fixed' | 'budget'
 
@@ -332,7 +332,7 @@ export function SettingsPage() {
                 >
                   {c.name}{' '}
                   <span className="small muted">
-                    {money(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
+                    {moneyExact(c.amount)}/{c.cycle === 'yearly' ? '年' : '月'}
                   </span>
                 </button>
                 <ConfirmButton
