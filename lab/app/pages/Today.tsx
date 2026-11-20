@@ -5,7 +5,7 @@ import { useToast } from '../toast'
 import { useLongPress } from '../components/dragSort'
 import { EntrySheet, type EntryTarget } from '../components/EntrySheet'
 import { FixedExpenseSheet, type FixedTarget } from '../components/FixedExpenseSheet'
-import { money, todayHeadline } from '../format'
+import { money, moneyExact, todayHeadline } from '../format'
 import { barColor, leftStatus, statusColor } from '../statusColor'
 
 const pct = (n: number) => Math.max(0, Math.min(100, n * 100))
@@ -211,7 +211,7 @@ export function Today() {
                     {c.cycle === 'yearly' ? ' · 年' : ''}
                     {c.paid ? '（已付）' : ''}
                   </span>
-                  <span className={`small ${c.paid ? 'fixed-amt-paid' : 'fixed-amt-due'}`}>{money(c.amount)}</span>
+                  <span className={`small ${c.paid ? 'fixed-amt-paid' : 'fixed-amt-due'}`}>{moneyExact(c.amount)}</span>
                 </button>
               ))}
             </div>

@@ -1,5 +1,5 @@
 {
-  "commit": "6fd00db9937a4b67ed04d36f518d8d72ecdf9d8b",
+  "commit": "576e9c4d7848540e010a14a9f0fd85e2257fb908",
   "files": [
     {
       "src": "src/app/AccountSettingsSheet.tsx",
@@ -31,7 +31,7 @@
     },
     {
       "src": "src/app/components/FixedExpenseSheet.tsx",
-      "hash": "sha256:ecfb1069912ce1e1a453425df71b056ebddbf1c61f5fdaaf1cbae2b91addb3d4"
+      "hash": "sha256:1f0b5ce8100b5e9c6f55dcee85a885d8bbe217d6be8f5d1bcaee0de5ee31ef13"
     },
     {
       "src": "src/app/components/FormFooter.tsx",
@@ -67,11 +67,11 @@
     },
     {
       "src": "src/app/pages/Settings.tsx",
-      "hash": "sha256:e4596903109284a257172c3fb4ecfad3689e1117fa04906c2ebde9a32241cdb0"
+      "hash": "sha256:5d2a97b41f5b7617f0d82228db20fe39892febadcf6a13dbe50586bb56ee4b83"
     },
     {
       "src": "src/app/pages/Today.tsx",
-      "hash": "sha256:44b54327040ed718b0c0cddfb7f4a295c84c23a1ef930be1885e7f9d899079e9"
+      "hash": "sha256:62e97d6aa3543306837e5cbe61360fb79f401159be2deb66ab74be559927ba7f"
     },
     {
       "src": "src/app/statusColor.ts",
